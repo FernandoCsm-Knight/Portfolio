@@ -519,7 +519,7 @@ p strong{color:var(--texto);font-weight:600}
   width:100vw;height:100vh;
   overflow:hidden;
   isolation:isolate;
-  background:#052630;
+  background:#061326;
 }
 .mapa-projetos-canvas{
   position:absolute;inset:0;z-index:1;
@@ -764,63 +764,6 @@ p strong{color:var(--texto);font-weight:600}
 @media(max-width:760px){
   .caderno{padding-top:88px}
   .trajetoria li{padding-left:26px}
-}
-
-/* ===== ESCAFANDRO =====
-   Emoldura a janela como o visor de um capacete de mergulho: o corpo do
-   capacete come os cantos, um aro de latão rebitado contorna o vidro e um
-   reflexo diagonal sugere a curvatura. Tudo em CSS e `pointer-events:none` —
-   não custa draw call na cena nem intercepta clique. */
-.escafandro{
-  --raio-visor:clamp(46px,9vw,132px);
-  --recuo-rebite:6px;
-  position:fixed;inset:0;z-index:3;
-  pointer-events:none;
-  border-radius:var(--raio-visor);
-}
-.escafandro::before{
-  content:'';position:absolute;inset:0;border-radius:inherit;
-  box-shadow:
-    /* corpo do capacete: preenche tudo o que sobra fora do visor */
-    0 0 0 100vmax #04121f,
-    /* flange externa escura */
-    inset 0 0 0 10px #46381f,
-    /* filete de latão polido */
-    inset 0 0 0 14px var(--gold),
-    /* aro interno, separando o metal do vidro */
-    inset 0 0 0 19px #241c10,
-    /* sombra que o aro projeta sobre o vidro */
-    inset 0 0 46px 18px rgba(1,6,14,.5);
-}
-/* Rebites como um tracejado sobre o próprio contorno arredondado: comprimento
-   de traço zero + ponta redonda = um ponto, e o `stroke-dasharray` distribui
-   esses pontos ao longo do caminho, curvas inclusas. Gradientes repetidos não
-   davam conta disso — `repeat-x`/`repeat-y` só andam em linha reta, então nos
-   cantos o pontilhado cortava a curva em vez de contorná-la. */
-.escafandro .rebites{
-  position:absolute;
-  inset:var(--recuo-rebite);
-  width:calc(100% - var(--recuo-rebite) * 2);
-  height:calc(100% - var(--recuo-rebite) * 2);
-  overflow:visible;
-  filter:drop-shadow(0 1px 0 rgba(6,3,0,.75));
-}
-.escafandro .rebites rect{
-  rx:calc(var(--raio-visor) - var(--recuo-rebite));
-  fill:none;
-  stroke:var(--gold-claro);
-  stroke-width:3.4;
-  stroke-linecap:round;
-  stroke-dasharray:0.01 26;
-  opacity:.92;
-}
-/* vidro: reflexo diagonal e um leve véu de luz vindo de cima */
-.escafandro::after{
-  content:'';position:absolute;inset:19px;
-  border-radius:calc(var(--raio-visor) - 19px);
-  background:
-    linear-gradient(122deg, rgba(255,255,255,.055) 0 15%, transparent 31%),
-    radial-gradient(78% 54% at 50% -8%, rgba(127,227,208,.07), transparent 62%);
 }
 
 footer{

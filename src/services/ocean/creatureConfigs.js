@@ -17,9 +17,6 @@ export const M_BARRACUDA = {
 export const M_MACHADO = {
   organico: { body: '#2e4a5c', spot: '#9fd8e8', glow: '#5ae8f0', tail: '#6fa8c0', len: 3.2, thick: 0.62, depth: 0.22, spotCut: 0.5, pearl: 0.34, shade: 0.4, tailFan: 0.5, finReach: 0.3, bodyCount: 70, tailCount: 18, finCount: 12 },
 };
-export const M_BALEIA = {
-  baleia: { body: '#335a70', belly: '#91b0b7', deep: '#061521', len: 13.6, thick: 1.72, depth: 0.68, bodyCount: 330, bellyCount: 76, finCount: 116, tailCount: 154 },
-};
 export const M_LANTERNA = {
   organico: { body: '#18283c', spot: '#5ae8b8', glow: '#5ae8b8', tail: '#213752', len: 5.1, thick: 0.48, depth: 0.32, spotCut: 0.7, pearl: 0.08, shade: 0.58, tailFan: 0.46, darkFin: true, bodyCount: 135, tailCount: 32, finCount: 20 },
 };

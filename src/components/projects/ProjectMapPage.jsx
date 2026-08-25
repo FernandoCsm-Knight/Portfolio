@@ -132,12 +132,6 @@ export default function ProjectMapPage({ onReady }) {
   return (
     <main className="mapa-projetos-page">
       <VoltarAoMergulho ancora="#projetos" />
-      {/* visor do capacete; o retângulo arredondado do SVG carrega os rebites */}
-      <div className="escafandro" aria-hidden="true">
-        <svg className="rebites">
-          <rect x="0" y="0" width="100%" height="100%" />
-        </svg>
-      </div>
       <canvas
         ref={canvasRef}
         className="mapa-projetos-canvas"
