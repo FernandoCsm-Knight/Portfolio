@@ -21,6 +21,7 @@ const SPECIES = [
 const LOGO_AQUA = new THREE.Color('#7fe3d0');
 const LOGO_GOLD = new THREE.Color('#c69749');
 const LOGO_PALE_GOLD = new THREE.Color('#e7d3a8');
+const FISHES_TO_CONSOLIDATE = 10;
 
 function randomBetween(min, max) {
   return min + Math.random() * (max - min);
@@ -47,14 +48,14 @@ function makeLetterTargets(particleCount, centerZ) {
   const context = canvas.getContext('2d', { willReadFrequently: true });
   context.clearRect(0, 0, canvas.width, canvas.height);
   context.fillStyle = '#ffffff';
-  context.font = "italic 700 900px 'Cormorant Garamond', serif";
+  context.font = "400 900px 'Norican', cursive";
   context.textAlign = 'center';
   context.textBaseline = 'alphabetic';
-  const metrics = context.measureText('f');
+  const metrics = context.measureText('F');
   const ascent = metrics.actualBoundingBoxAscent || 680;
   const descent = metrics.actualBoundingBoxDescent || 190;
   const baseline = canvas.height * 0.5 + (ascent - descent) * 0.5;
-  context.fillText('f', canvas.width * 0.5, baseline);
+  context.fillText('F', canvas.width * 0.5, baseline);
 
   const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
   const candidates = [];
@@ -172,12 +173,69 @@ export function makeFishOcean(surfaceHeightAt, reducedMotion = false) {
   }));
   points.frustumCulled = false;
   points.renderOrder = 4;
+  const group = new THREE.Group();
+  group.add(points);
+
+  /* Uma amostra das partículas do F ganha uma segunda vida como neve
+     marinha. O limite mantém o custo estável mesmo se novos cardumes forem
+     adicionados no futuro. */
+  const snowCount = Math.min(900, Math.max(180, Math.floor(particleCount * 0.18)));
+  const snowPositions = new Float32Array(snowCount * 3);
+  const snowColors = new Float32Array(snowCount * 3);
+  const snowFallSpeeds = new Float32Array(snowCount);
+  const snowPhases = new Float32Array(snowCount);
+  const snowCycles = new Uint16Array(snowCount);
+  const snowGeometry = new THREE.BufferGeometry();
+  snowGeometry.setAttribute('position', new THREE.BufferAttribute(snowPositions, 3));
+  snowGeometry.setAttribute('color', new THREE.BufferAttribute(snowColors, 3));
+  const snowMaterial = new THREE.PointsMaterial({
+    size: 0.18,
+    vertexColors: true,
+    transparent: true,
+    opacity: 0,
+    depthWrite: false,
+    depthTest: false,
+    blending: THREE.NormalBlending,
+    sizeAttenuation: true,
+  });
+  const marineSnow = new THREE.Points(snowGeometry, snowMaterial);
+  marineSnow.visible = false;
+  marineSnow.frustumCulled = false;
+  marineSnow.renderOrder = 5;
+  group.add(marineSnow);
+
+  for (let index = 0; index < snowCount; index++) {
+    const offset = index * 3;
+    const warmth = deterministicUnit(index, 19);
+    const snowColor = new THREE.Color('#bfe8e5').lerp(new THREE.Color('#e7d3a8'), warmth * 0.48);
+    snowColors[offset] = snowColor.r;
+    snowColors[offset + 1] = snowColor.g;
+    snowColors[offset + 2] = snowColor.b;
+    snowFallSpeeds[index] = 0.72 + deterministicUnit(index, 20) * 1.18;
+    snowPhases[index] = deterministicUnit(index, 21) * Math.PI * 2;
+  }
   const motionScale = reducedMotion ? 0.28 : 1;
   const effectScale = reducedMotion ? 0.55 : 1;
+  let capturedFishCount = 0;
+  let consolidated = false;
+  let exploding = false;
+  let explosionStart = 0;
+
+  function consolidateLetter(time) {
+    consolidated = true;
+    fish.forEach((item, index) => {
+      if (item.captured) return;
+      item.captured = true;
+      /* O pequeno escalonamento faz os cardumes serem puxados em uma onda,
+         sem atrasar demais a leitura do F completo. */
+      item.captureStart = time + (index % 9) * 0.025;
+    });
+  }
 
   function captureFish(item, pointer, time) {
     item.captured = true;
     item.captureStart = time;
+    capturedFishCount++;
     const end = (item.start + item.count) * 3;
     for (let offset = item.start * 3; offset < end; offset += 3) {
       const particle = offset / 3;
@@ -193,11 +251,94 @@ export function makeFishOcean(surfaceHeightAt, reducedMotion = false) {
       velocities[offset + 1] += directionY * impulse;
       velocities[offset + 2] += randomBetween(-0.04, 0.09) * effectScale;
     }
+    if (capturedFishCount >= FISHES_TO_CONSOLIDATE) consolidateLetter(time);
+  }
+
+  function explodeLetter(time) {
+    exploding = true;
+    explosionStart = time;
+    for (let offset = 0; offset < positions.length; offset += 3) {
+      const particle = offset / 3;
+      const dx = positions[offset];
+      const dy = positions[offset + 1];
+      const dz = positions[offset + 2] - cloudCenterZ;
+      const distance = Math.hypot(dx, dy, dz) || 1;
+      const fallback = particle * 2.399963;
+      const directionX = distance > 0.08 ? dx / distance : Math.cos(fallback);
+      const directionY = distance > 0.08 ? dy / distance : Math.sin(fallback);
+      const directionZ = distance > 0.08 ? dz / distance : Math.sin(fallback * 0.73) * 0.35;
+      const impulse = (0.3 + deterministicUnit(particle, 11) * 0.38)
+        * (reducedMotion ? 0.55 : 1);
+      velocities[offset] = directionX * impulse
+        + (deterministicUnit(particle, 12) - 0.5) * 0.28;
+      velocities[offset + 1] = directionY * impulse
+        + (deterministicUnit(particle, 13) - 0.5) * 0.28;
+      velocities[offset + 2] = directionZ * impulse
+        + (deterministicUnit(particle, 14) - 0.5) * 0.34;
+    }
+
+    /* A neve é uma camada nova, preparada acima do visor. Ela não nasce no F:
+       só entra depois que a explosão já atravessou as bordas da página. */
+    for (let index = 0; index < snowCount; index++) {
+      const snowOffset = index * 3;
+      snowPositions[snowOffset] = (deterministicUnit(index, 31) - 0.5) * 108;
+      snowPositions[snowOffset + 1] = 35 + deterministicUnit(index, 47) * 13;
+      snowPositions[snowOffset + 2] = cloudCenterZ - 8 + deterministicUnit(index, 59) * 18;
+    }
+    marineSnow.visible = false;
+    snowGeometry.attributes.position.needsUpdate = true;
   }
 
   function update(time, dt, pointer) {
     const step = Math.min(3, dt * 60);
     const initialized = dt === 0;
+
+    if (exploding) {
+      const age = time - explosionStart;
+      const friction = Math.pow(0.995, step);
+      for (let offset = 0; offset < positions.length; offset += 3) {
+        velocities[offset] *= friction;
+        velocities[offset + 1] *= friction;
+        velocities[offset + 2] *= friction;
+        positions[offset] += velocities[offset] * step;
+        positions[offset + 1] += velocities[offset + 1] * step;
+        positions[offset + 2] += velocities[offset + 2] * step;
+      }
+      const explosionDuration = reducedMotion ? 1.15 : 3.15;
+      points.material.opacity = 0.92;
+      points.visible = age < explosionDuration;
+
+      const snowStart = reducedMotion ? 1.05 : 2.85;
+      const snowAge = age - snowStart;
+      if (snowAge >= 0) {
+        marineSnow.visible = true;
+        for (let index = 0; index < snowCount; index++) {
+          const offset = index * 3;
+          const drift = Math.sin(time * 0.62 + snowPhases[index]) * 0.24;
+          snowPositions[offset] += drift * dt;
+          snowPositions[offset + 1] -= snowFallSpeeds[index] * dt;
+          snowPositions[offset + 2] += Math.cos(time * 0.39 + snowPhases[index]) * 0.055 * dt;
+
+          if (snowPositions[offset + 1] < -35) {
+            const cycle = ++snowCycles[index];
+            snowPositions[offset] = (deterministicUnit(index, 31 + cycle) - 0.5) * 108;
+            snowPositions[offset + 1] = 35 + deterministicUnit(index, 47 + cycle) * 8;
+            snowPositions[offset + 2] = cloudCenterZ - 8 + deterministicUnit(index, 59 + cycle) * 18;
+          }
+        }
+        snowMaterial.opacity = 0.82 * THREE.MathUtils.smootherstep(snowAge, 0, 0.7);
+        snowGeometry.attributes.position.needsUpdate = true;
+      }
+      geometry.attributes.position.needsUpdate = true;
+      return {
+        formationProgress: 1,
+        consolidated: true,
+        capturedFishCount: FISHES_TO_CONSOLIDATE,
+        exploded: true,
+      };
+    }
+
+    let formedParticleCount = 0;
 
     fish.forEach((item) => {
       let wrapShiftX = 0;
@@ -236,6 +377,7 @@ export function makeFishOcean(surfaceHeightAt, reducedMotion = false) {
       const formation = item.captured
         ? THREE.MathUtils.smootherstep(time - item.captureStart, 0.22, 2.9)
         : 0;
+      formedParticleCount += item.count * formation;
       const spring = item.captured ? THREE.MathUtils.lerp(0.018, 0.082, formation) : 0.2;
       const friction = Math.pow(item.captured ? 0.89 : 0.8, step);
       const end = (item.start + item.count) * 3;
@@ -284,8 +426,20 @@ export function makeFishOcean(surfaceHeightAt, reducedMotion = false) {
 
     geometry.attributes.position.needsUpdate = true;
     geometry.attributes.color.needsUpdate = true;
+    /* Depois do gatilho, o monograma é o núcleo do carrossel: permanece
+       legível mesmo quando um card atravessa a metade frontal do anel. */
+    points.renderOrder = consolidated ? 10 : 4;
+    points.material.depthTest = !consolidated;
+    const formationProgress = formedParticleCount / particleCount;
+    if (consolidated && formationProgress >= 0.995) explodeLetter(time);
+    return {
+      formationProgress,
+      consolidated,
+      capturedFishCount: Math.min(capturedFishCount, FISHES_TO_CONSOLIDATE),
+      exploded: false,
+    };
   }
 
   update(0, 0);
-  return { group: points, update };
+  return { group, update };
 }

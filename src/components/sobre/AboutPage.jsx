@@ -13,6 +13,7 @@ export default function AboutPage({ onReady }) {
       <div id="fundo" className="fundo-caderno" />
       {!cenaIndisponivel && <canvas id="mar" ref={canvasRef} />}
       <div id="vinheta" />
+      <div className="sobre-overlay" aria-hidden="true" />
 
       <VoltarAoMergulho ancora="#sobre" />
 

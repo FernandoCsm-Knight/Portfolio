@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { disposeSceneResources, getWebGLPixelRatio, precompileRenderer } from '../ocean/webglUtils';
 import { makeFishOcean } from './fish';
+import { makeProjectCarousel } from './projectCarousel';
 import { makeProjectTerrain } from './terrain';
 
 /**
@@ -33,6 +34,12 @@ export function createProjectMapScene(canvas, projects, { reducedMotion = false 
   scene.add(projectTerrain);
   const fishOcean = makeFishOcean(projectTerrain.userData.surfaceHeightAt, reducedMotion);
   scene.add(fishOcean.group);
+  const carousel = makeProjectCarousel(
+    projects,
+    projectTerrain.userData.surfaceHeightAt(0, 0) + 4,
+    reducedMotion,
+  );
+  scene.add(carousel.group);
 
   const pointer = { x: 0, y: 0, worldX: 0, worldY: 0, active: false };
   const pointerDirection = new THREE.Vector3();
@@ -41,8 +48,14 @@ export function createProjectMapScene(canvas, projects, { reducedMotion = false 
   const pointerPlaneNormal = new THREE.Vector3();
   const pointerPlaneOrigin = new THREE.Vector3();
   const pointerRay = new THREE.Ray();
+  const oceanColor = new THREE.Color(0x061326);
+  const voidColor = new THREE.Color(0x01040c);
+  const currentClearColor = oceanColor.clone();
   let targetRotX = 0;
   let targetRotY = 0;
+  let hoveredProject = null;
+  let oceanVisibility = 1;
+  let nativeCursorAnnounced = false;
   let last = performance.now();
 
   function resize(width, height) {
@@ -83,7 +96,23 @@ export function createProjectMapScene(canvas, projects, { reducedMotion = false 
   }
 
   function handleClick() {
-    return null;
+    return hoveredProject;
+  }
+
+  function navigateCarousel(direction) {
+    return carousel.navigate(direction);
+  }
+
+  function beginCarouselDrag() {
+    return carousel.beginDrag();
+  }
+
+  function dragCarousel(distance, viewportWidth) {
+    return carousel.dragBy(distance, viewportWidth);
+  }
+
+  function endCarouselDrag(distance) {
+    return carousel.endDrag(distance);
   }
 
   function update() {
@@ -94,9 +123,31 @@ export function createProjectMapScene(canvas, projects, { reducedMotion = false 
     scene.rotation.x += (targetRotX - scene.rotation.x) * ease;
     scene.rotation.y += (targetRotY - scene.rotation.y) * ease;
     if (pointer.active) updatePointerWorld();
-    fishOcean.update(now / 1000, dt, pointer);
+    const fishState = fishOcean.update(now / 1000, dt, pointer);
+    if (fishState.exploded && !nativeCursorAnnounced) {
+      nativeCursorAnnounced = true;
+      window.dispatchEvent(new CustomEvent('ocean-native-cursor', { detail: { active: true } }));
+    }
+    const oceanTarget = fishState.consolidated ? 0 : 1;
+    const oceanEase = reducedMotion ? 1 : Math.min(1, dt * 1.65);
+    oceanVisibility += (oceanTarget - oceanVisibility) * oceanEase;
+    projectTerrain.material.transparent = oceanVisibility < 0.999;
+    projectTerrain.material.opacity = oceanVisibility;
+    projectTerrain.visible = oceanVisibility > 0.008;
+    currentClearColor.copy(voidColor).lerp(oceanColor, oceanVisibility);
+    renderer.setClearColor(currentClearColor, 1);
+    carousel.update(
+      now / 1000,
+      dt,
+      fishState.formationProgress,
+      fishState.consolidated,
+      pointer,
+      camera,
+      scene,
+    );
+    hoveredProject = carousel.pick(pointer, camera, scene);
     renderer.render(scene, camera);
-    return { hoveredProject: null };
+    return { hoveredProject, carouselVisible: carousel.isVisible() };
   }
 
   function prepare() {
@@ -104,9 +155,24 @@ export function createProjectMapScene(canvas, projects, { reducedMotion = false 
   }
 
   function dispose() {
+    if (nativeCursorAnnounced) {
+      window.dispatchEvent(new CustomEvent('ocean-native-cursor', { detail: { active: false } }));
+    }
     disposeSceneResources(scene);
     renderer.dispose();
   }
 
-  return { resize, updatePointer, clearPointer, handleClick, prepare, update, dispose };
+  return {
+    resize,
+    updatePointer,
+    clearPointer,
+    handleClick,
+    navigateCarousel,
+    beginCarouselDrag,
+    dragCarousel,
+    endCarouselDrag,
+    prepare,
+    update,
+    dispose,
+  };
 }

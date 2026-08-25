@@ -5,8 +5,10 @@ import VoltarAoMergulho from '../VoltarAoMergulho';
 
 export default function ProjectMapPage({ onReady }) {
   const canvasRef = useRef(null);
+  const apiRef = useRef(null);
   const generationRef = useRef(0);
   const [falhou, setFalhou] = useState(false);
+  const [carrosselVisivel, setCarrosselVisivel] = useState(false);
 
   useEffect(() => {
     const generation = ++generationRef.current;
@@ -20,8 +22,11 @@ export default function ProjectMapPage({ onReady }) {
     let rafId;
     let resizeRaf = null;
     let pendingPointer = null;
+    let dragStartX = null;
+    let suppressClick = false;
     let lastFrameTime = 0;
     let framesAquecidos = 0;
+    let ultimoEstadoCarrossel = false;
     const isCurrent = () => ativo && generationRef.current === generation;
     const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
     /* 60 divide 60Hz e 120Hz; 45 não dividia nenhum dos dois e produzia judder */
@@ -37,6 +42,7 @@ export default function ProjectMapPage({ onReady }) {
 
     function handlePointerMove(e) {
       pendingPointer = { x: e.clientX, y: e.clientY };
+      if (dragStartX !== null) api?.dragCarousel(e.clientX - dragStartX, window.innerWidth);
     }
 
     function handlePointerLeave() {
@@ -45,9 +51,52 @@ export default function ProjectMapPage({ onReady }) {
     }
 
     function handleClick() {
+      if (suppressClick) {
+        suppressClick = false;
+        return;
+      }
       const projeto = api?.handleClick();
       if (!projeto?.href || projeto.href === '#') return;
       window.open(projeto.href, '_blank', 'noopener,noreferrer');
+    }
+
+    function handlePointerDown(e) {
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
+      dragStartX = e.clientX;
+      api?.beginCarouselDrag();
+      canvas.classList.add('arrastando');
+      canvas.setPointerCapture?.(e.pointerId);
+    }
+
+    function handlePointerUp(e) {
+      if (dragStartX === null) return;
+      const distance = e.clientX - dragStartX;
+      dragStartX = null;
+      canvas.classList.remove('arrastando');
+      const moved = api?.endCarouselDrag(distance) ?? false;
+      if (moved) {
+        suppressClick = true;
+        window.setTimeout(() => { suppressClick = false; }, 80);
+      }
+    }
+
+    function handlePointerCancel() {
+      if (dragStartX !== null) api?.endCarouselDrag(0);
+      dragStartX = null;
+      canvas.classList.remove('arrastando');
+    }
+
+    function handleWheel(e) {
+      if (Math.abs(e.deltaX) < 8 && Math.abs(e.deltaY) < 8) return;
+      e.preventDefault();
+      const direction = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+      api?.navigateCarousel(direction > 0 ? 1 : -1);
+    }
+
+    function handleKeyDown(e) {
+      if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+      e.preventDefault();
+      api?.navigateCarousel(e.key === 'ArrowRight' ? 1 : -1);
     }
 
     /* Mesmo evento que a cena do oceano dispara na home, então o rótulo do
@@ -81,10 +130,20 @@ export default function ProjectMapPage({ onReady }) {
       if (hover !== ultimoHover) {
         ultimoHover = hover;
         anunciarHover(hover);
+        canvas.classList.toggle('sobre-card', Boolean(hover));
+      }
+      const estadoCarrossel = Boolean(frame?.carouselVisible);
+      if (estadoCarrossel !== ultimoEstadoCarrossel) {
+        ultimoEstadoCarrossel = estadoCarrossel;
+        setCarrosselVisivel(estadoCarrossel);
       }
     }
 
     async function iniciarMapa() {
+      /* A Norican só é usada para amostrar o glifo no canvas, portanto o
+         navegador não a considera necessariamente ao resolver `fonts.ready`.
+         A carga explícita impede que a formação nasça com a fonte fallback. */
+      if (document.fonts?.load) await document.fonts.load("900px 'Norican'", 'F');
       if (document.fonts?.ready) await document.fonts.ready;
       if (!isCurrent()) return;
       await new Promise((resolve) => requestAnimationFrame(resolve));
@@ -98,10 +157,16 @@ export default function ProjectMapPage({ onReady }) {
         return;
       }
       api = novaApi;
+      apiRef.current = novaApi;
       window.addEventListener('resize', handleResize);
       canvas.addEventListener('pointermove', handlePointerMove);
       canvas.addEventListener('pointerleave', handlePointerLeave);
+      canvas.addEventListener('pointerdown', handlePointerDown);
+      canvas.addEventListener('pointerup', handlePointerUp);
+      canvas.addEventListener('pointercancel', handlePointerCancel);
+      canvas.addEventListener('wheel', handleWheel, { passive: false });
       canvas.addEventListener('click', handleClick);
+      window.addEventListener('keydown', handleKeyDown);
       rafId = requestAnimationFrame(loop);
     }
 
@@ -121,13 +186,24 @@ export default function ProjectMapPage({ onReady }) {
       window.removeEventListener('resize', handleResize);
       canvas.removeEventListener('pointermove', handlePointerMove);
       canvas.removeEventListener('pointerleave', handlePointerLeave);
+      canvas.removeEventListener('pointerdown', handlePointerDown);
+      canvas.removeEventListener('pointerup', handlePointerUp);
+      canvas.removeEventListener('pointercancel', handlePointerCancel);
+      canvas.removeEventListener('wheel', handleWheel);
       canvas.removeEventListener('click', handleClick);
+      canvas.classList.remove('arrastando', 'sobre-card');
+      window.removeEventListener('keydown', handleKeyDown);
       /* sem isto o rótulo fica preso na tela ao voltar para a home */
       anunciarHover(null);
       document.body.style.overflow = overflowAnterior;
       api?.dispose();
+      apiRef.current = null;
     };
   }, [onReady]);
+
+  function navegarCarrossel(direction) {
+    apiRef.current?.navigateCarousel(direction);
+  }
 
   return (
     <main className="mapa-projetos-page">
@@ -138,6 +214,18 @@ export default function ProjectMapPage({ onReady }) {
         aria-label="Mapa interativo de projetos"
         hidden={falhou}
       />
+      <nav
+        className={`mapa-carrossel-controles${carrosselVisivel ? ' visivel' : ''}`}
+        aria-label="Navegação dos projetos"
+        aria-hidden={!carrosselVisivel}
+      >
+        <button type="button" onClick={() => navegarCarrossel(-1)} aria-label="Projeto anterior">
+          <span aria-hidden="true">‹</span>
+        </button>
+        <button type="button" onClick={() => navegarCarrossel(1)} aria-label="Próximo projeto">
+          <span aria-hidden="true">›</span>
+        </button>
+      </nav>
       {/* Fora da vista, como a lista da home: a cena só responde a ponteiro e
           a WebGL, então sem isto a rota seria um beco sem saída para teclado e
           leitor de tela. Reaparece quando um link recebe foco. */}

@@ -35,6 +35,7 @@ export function useCustomCursor() {
       bloqueiaScroll: false,
     };
     const torpedosAtivos = new Set();
+    let nativeMode = false;
     let scrollRafId = null;
     let ultimoScroll = 0;
 
@@ -142,6 +143,7 @@ export function useCustomCursor() {
     }
 
     function handlePointerMove(e) {
+      if (nativeMode) return;
       cur.ativo = true;
       cur.x = e.clientX;
       cur.y = e.clientY;
@@ -159,6 +161,7 @@ export function useCustomCursor() {
     }
 
     function handleClick(e) {
+      if (nativeMode) return;
       if (!cur.ativo || e.button !== 0 || e.defaultPrevented) return;
       if (e.target instanceof Element && e.target.closest('a,button,input,textarea,select')) return;
 
@@ -188,6 +191,7 @@ export function useCustomCursor() {
        evento ao passar sobre um marcador de projeto. A home não usa mais
        criaturas clicáveis, então aqui só o mapa aciona isto. */
     function handleFishHover(e) {
+      if (nativeMode) return;
       cur.fish = Boolean(e.detail?.active);
       ring.classList.toggle('peixe', cur.fish);
       label.classList.toggle('visivel', cur.fish);
@@ -197,19 +201,36 @@ export function useCustomCursor() {
       }
     }
 
+    function handleNativeCursor(e) {
+      nativeMode = Boolean(e.detail?.active);
+      document.body.classList.toggle('cursor-personalizado', !nativeMode);
+      document.body.classList.toggle('cursor-nativo-projetos', nativeMode);
+      if (!nativeMode) return;
+      cur.ativo = false;
+      cur.fish = false;
+      pararRolagemBorda();
+      ring.classList.remove('alvo', 'peixe', 'movendo');
+      label.classList.remove('visivel');
+      torpedosAtivos.forEach(removerTorpedo);
+      torpedosAtivos.clear();
+    }
+
     window.addEventListener('pointermove', handlePointerMove, { passive: true });
     document.documentElement.addEventListener('pointerleave', handlePointerLeave);
     window.addEventListener('click', handleClick);
     window.addEventListener('ocean-project-hover', handleFishHover);
+    window.addEventListener('ocean-native-cursor', handleNativeCursor);
 
     return () => {
       if (rafId !== null) cancelAnimationFrame(rafId);
       pararRolagemBorda();
       document.body.classList.remove('cursor-personalizado');
+      document.body.classList.remove('cursor-nativo-projetos');
       window.removeEventListener('pointermove', handlePointerMove);
       document.documentElement.removeEventListener('pointerleave', handlePointerLeave);
       window.removeEventListener('click', handleClick);
       window.removeEventListener('ocean-project-hover', handleFishHover);
+      window.removeEventListener('ocean-native-cursor', handleNativeCursor);
       torpedosAtivos.forEach(removerTorpedo);
       torpedosAtivos.clear();
     };
