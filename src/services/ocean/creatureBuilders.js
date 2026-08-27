@@ -241,24 +241,46 @@ export function construirCaranguejoOrganico(cfg, escala) {
   return { geo, base, n };
 }
 
+/**
+ * Sprites de partícula são desenhados sempre de frente e em poucos pixels, por
+ * isso as texturas nascem sem mipmap. Num `Points`, o nível de mip vem das
+ * derivadas de `gl_PointCoord`, que boa parte dos drivers móveis calcula mal:
+ * o ponto acaba amostrando um mip minúsculo — quase a média da imagem — e a
+ * máscara redonda vira um quadrado apagado. Sem a cadeia de mips a amostragem é
+ * sempre do nível 0, o que também gasta menos memória de textura.
+ */
+function texturaPlana(canvas) {
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.generateMipmaps = false;
+  tex.minFilter = THREE.LinearFilter;
+  tex.magFilter = THREE.LinearFilter;
+  return tex;
+}
+
+/**
+ * Halo da bioluminescência. 128px porque este é o único sprite que aparece
+ * ampliado: o brilho do tamboril mede 7 unidades de mundo e, num celular cujo
+ * canvas ainda é reescalado para a resolução física da tela, a textura acaba
+ * esticada várias vezes.
+ */
 export function texBrilho(cor) {
   const c = document.createElement('canvas');
-  c.width = c.height = 64;
+  c.width = c.height = 128;
   const ctx = c.getContext('2d');
-  const g = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+  const g = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
   g.addColorStop(0, cor);
   g.addColorStop(1, 'rgba(0,0,0,0)');
   ctx.fillStyle = g;
-  ctx.fillRect(0, 0, 64, 64);
-  return new THREE.CanvasTexture(c);
+  ctx.fillRect(0, 0, 128, 128);
+  return texturaPlana(c);
 }
 
 /**
  * Máscara redonda para as partículas. `PointsMaterial` sem `map` desenha cada
  * ponto como um quadrado — imperceptível num ponto de 2px, evidente nos peixes
- * do abismo, e mais ainda no celular: o FOV vertical é fixo em 50°, então uma
- * tela estreita enquadra uma fatia bem menor do mundo e cada criatura aparece
- * várias vezes maior do que no desktop.
+ * do abismo, e mais ainda no celular: lá o canvas é renderizado bem abaixo da
+ * resolução física da tela (`getWebGLPixelRatio` + a escala adaptativa) e a
+ * ampliação entrega a silhueta de cada ponto.
  *
  * O núcleo fica cheio até 62% do raio e só a borda esvanece: um disco inscrito
  * já perde π/4 da área do quadrado, e um degradê até o centro apagaria o brilho
@@ -276,5 +298,5 @@ export function texPonto() {
   g.addColorStop(1, 'rgba(255,255,255,0)');
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, 64, 64);
-  return new THREE.CanvasTexture(c);
+  return texturaPlana(c);
 }
