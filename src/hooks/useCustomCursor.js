@@ -5,7 +5,7 @@ import { useEffect, useRef } from 'react';
  * segue com lerp, apontando para o deslocamento restante. Alterna a classe
  * "alvo" quando o mouse está sobre um elemento interativo.
  */
-export function useCustomCursor() {
+export function useCustomCursor({ clickEffectsEnabled = true } = {}) {
   const ringRef = useRef(null);
   const labelRef = useRef(null);
 
@@ -14,9 +14,48 @@ export function useCustomCursor() {
     const label = labelRef.current;
     if (!ring || !label) return undefined;
 
+    const mobileMedia = matchMedia('(max-width: 760px)');
+    const bolhasClique = new Set();
+
+    function removerBolhaClique(bolha) {
+      bolha.remove();
+      bolhasClique.delete(bolha);
+    }
+
+    function handleMobileBubbleClick(e) {
+      if (!mobileMedia.matches || e.button !== 0 || e.defaultPrevented) return;
+      if (e.target instanceof Element
+          && e.target.closest('a,button,input,textarea,select,[data-alvo]')) return;
+
+      const quantidade = 5 + Math.floor(Math.random() * 3);
+      for (let i = 0; i < quantidade; i++) {
+        const bolha = document.createElement('span');
+        const tamanho = 5 + Math.random() * 9;
+        bolha.className = 'cursor-bolha-clique';
+        bolha.setAttribute('aria-hidden', 'true');
+        bolha.style.left = `${e.clientX + (Math.random() - 0.5) * 28}px`;
+        bolha.style.top = `${e.clientY + (Math.random() - 0.5) * 18}px`;
+        bolha.style.setProperty('--bolha-tamanho', `${tamanho}px`);
+        bolha.style.setProperty('--bolha-deriva', `${(Math.random() - 0.5) * 62}px`);
+        bolha.style.setProperty('--bolha-subida', `${-(e.clientY + tamanho + 24)}px`);
+        bolha.style.setProperty('--bolha-duracao', `${2.7 + Math.random() * 1.5}s`);
+        bolha.style.setProperty('--bolha-atraso', `${i * 0.045}s`);
+        document.body.appendChild(bolha);
+        bolhasClique.add(bolha);
+        bolha.addEventListener('animationend', () => removerBolhaClique(bolha), { once: true });
+      }
+    }
+
+    if (clickEffectsEnabled) window.addEventListener('click', handleMobileBubbleClick);
+
     /* Em telas touch o cursor nem é exibido; não há motivo para manter um
        listener e um loop de animação ativos. */
-    if (!matchMedia('(pointer: fine)').matches) return undefined;
+    if (!matchMedia('(pointer: fine)').matches) {
+      return () => {
+        window.removeEventListener('click', handleMobileBubbleClick);
+        bolhasClique.forEach(removerBolhaClique);
+      };
+    }
 
     /* Só agora escondemos o cursor nativo. Enquanto o `cursor:none` era global
        no CSS, qualquer falha em carregar/montar este efeito deixava a página
@@ -38,6 +77,12 @@ export function useCustomCursor() {
     let nativeMode = false;
     let scrollRafId = null;
     let ultimoScroll = 0;
+
+    function anunciarPosicaoSubmarino(active = cur.ativo) {
+      window.dispatchEvent(new CustomEvent('ocean-submarine-move', {
+        detail: { clientX: cur.rx, clientY: cur.ry, active },
+      }));
+    }
 
     function intensidadeRolagemBorda() {
       if (!cur.ativo || cur.bloqueiaScroll
@@ -118,6 +163,7 @@ export function useCustomCursor() {
     function animateRing() {
       cur.rx += (cur.x - cur.rx) * 0.18;
       cur.ry += (cur.y - cur.ry) * 0.18;
+      anunciarPosicaoSubmarino();
       const dx = cur.x - cur.rx;
       const dy = cur.y - cur.ry;
       const distancia = Math.hypot(dx, dy);
@@ -129,7 +175,7 @@ export function useCustomCursor() {
         );
         cur.angle += angleDelta * 0.24;
       }
-      const scale = cur.fish ? 1.28 : cur.hover ? 1.14 : 1;
+      const scale = cur.hover ? 1.14 : 1;
       ring.style.transform = `translate(${cur.rx}px,${cur.ry}px) translate(-50%,-50%) rotate(${cur.angle}rad) scale(${scale})`;
       ring.classList.toggle('movendo', distancia > 0.8);
       sincronizarRolagemBorda();
@@ -150,20 +196,22 @@ export function useCustomCursor() {
       label.style.transform = `translate(${e.clientX}px,${e.clientY}px)`;
       cur.hover = e.target instanceof Element && !!e.target.closest('a,button,[data-alvo]');
       cur.bloqueiaScroll = e.target instanceof Element
-        && !!e.target.closest('a,button,input,textarea,select,#sonar');
+        && !!e.target.closest('a,button,input,textarea,select,[data-alvo],#sonar');
       ring.classList.toggle('alvo', cur.hover);
       if (rafId === null) rafId = requestAnimationFrame(animateRing);
     }
 
     function handlePointerLeave() {
       cur.ativo = false;
+      anunciarPosicaoSubmarino(false);
       pararRolagemBorda();
     }
 
     function handleClick(e) {
-      if (nativeMode) return;
+      if (nativeMode || mobileMedia.matches) return;
       if (!cur.ativo || e.button !== 0 || e.defaultPrevented) return;
-      if (e.target instanceof Element && e.target.closest('a,button,input,textarea,select')) return;
+      if (e.target instanceof Element
+          && e.target.closest('a,button,input,textarea,select,[data-alvo]')) return;
 
       const cos = Math.cos(cur.angle);
       const sin = Math.sin(cur.angle);
@@ -201,6 +249,13 @@ export function useCustomCursor() {
       }
     }
 
+    function handleCreatureHover(e) {
+      if (nativeMode) return;
+      cur.fish = Boolean(e.detail?.active);
+      ring.classList.toggle('peixe', cur.fish);
+      if (rafId === null) rafId = requestAnimationFrame(animateRing);
+    }
+
     function handleNativeCursor(e) {
       nativeMode = Boolean(e.detail?.active);
       document.body.classList.toggle('cursor-personalizado', !nativeMode);
@@ -217,8 +272,9 @@ export function useCustomCursor() {
 
     window.addEventListener('pointermove', handlePointerMove, { passive: true });
     document.documentElement.addEventListener('pointerleave', handlePointerLeave);
-    window.addEventListener('click', handleClick);
+    if (clickEffectsEnabled) window.addEventListener('click', handleClick);
     window.addEventListener('ocean-project-hover', handleFishHover);
+    window.addEventListener('ocean-fish-hover', handleCreatureHover);
     window.addEventListener('ocean-native-cursor', handleNativeCursor);
 
     return () => {
@@ -229,12 +285,16 @@ export function useCustomCursor() {
       window.removeEventListener('pointermove', handlePointerMove);
       document.documentElement.removeEventListener('pointerleave', handlePointerLeave);
       window.removeEventListener('click', handleClick);
+      window.removeEventListener('click', handleMobileBubbleClick);
       window.removeEventListener('ocean-project-hover', handleFishHover);
+      window.removeEventListener('ocean-fish-hover', handleCreatureHover);
       window.removeEventListener('ocean-native-cursor', handleNativeCursor);
+      anunciarPosicaoSubmarino(false);
       torpedosAtivos.forEach(removerTorpedo);
       torpedosAtivos.clear();
+      bolhasClique.forEach(removerBolhaClique);
     };
-  }, []);
+  }, [clickEffectsEnabled]);
 
   return { ringRef, labelRef };
 }

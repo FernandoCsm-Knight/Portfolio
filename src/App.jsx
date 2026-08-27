@@ -4,11 +4,14 @@ import CustomCursor from './components/CustomCursor';
 import ErrorBoundary from './components/ErrorBoundary';
 import HomePage from './components/HomePage';
 import LoadingScreen from './components/LoadingScreen';
+import SonarNav from './components/SonarNav';
 
 /* cena 3D separada e pesada (Three.js) usada só em /projetos — não deve
    entrar no bundle/execução inicial de quem visita a home. */
 const ProjectMapPage = lazy(() => import('./components/projects/ProjectMapPage'));
 const AboutPage = lazy(() => import('./components/sobre/AboutPage'));
+const ContactPage = lazy(() => import('./components/contact/ContactPage'));
+const AdminPage = lazy(() => import('./components/admin/AdminPage'));
 
 /* '/' vira ''; '/portfolio/' vira '/portfolio'. Sem isto o roteador compara a
    rota crua contra '/projetos' e nunca casa quando o site é servido de um
@@ -25,7 +28,7 @@ function normalizePathname(pathname) {
    para um arquivo estático (os PDFs do currículo em /docs, por exemplo) seria
    engolido pelo roteador: viraria um pushState e renderizaria a home no lugar
    de o navegador abrir o arquivo. */
-const ROTAS = ['/', '/projetos', '/sobre'];
+const ROTAS = ['/', '/projetos', '/sobre', '/contato', '/admin'];
 
 function App() {
   const [route, setRoute] = useState(() => normalizePathname(window.location.pathname));
@@ -103,12 +106,15 @@ function App() {
 
   const isProjectMap = route === '/projetos';
   const isSobre = route === '/sobre';
+  const isContato = route === '/contato';
+  const isAdmin = route === '/admin';
   const handlePageReady = useCallback(() => setCarregando(false), []);
 
   return (
     <>
       <LoadingScreen visible={carregando} route={route} />
-      <CustomCursor />
+      <CustomCursor clickEffectsEnabled={route === '/'} />
+      {!isAdmin && <SonarNav route={route} />}
       <ErrorBoundary
         fallback={<a className="voltar-oceano" href={import.meta.env.BASE_URL}>VOLTAR AO MERGULHO</a>}
       >
@@ -122,7 +128,17 @@ function App() {
             <AboutPage onReady={handlePageReady} />
           </Suspense>
         )}
-        {!isProjectMap && !isSobre && <HomePage onReady={handlePageReady} />}
+        {isContato && (
+          <Suspense fallback={null}>
+            <ContactPage onReady={handlePageReady} />
+          </Suspense>
+        )}
+        {isAdmin && (
+          <Suspense fallback={null}>
+            <AdminPage onReady={handlePageReady} />
+          </Suspense>
+        )}
+        {!isProjectMap && !isSobre && !isContato && !isAdmin && <HomePage onReady={handlePageReady} />}
       </ErrorBoundary>
     </>
   );

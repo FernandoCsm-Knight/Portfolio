@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { PROJECTS } from '../../data/projects';
 import { createProjectMapScene } from '../../services/projectMap/sceneService';
-import VoltarAoMergulho from '../VoltarAoMergulho';
 
 export default function ProjectMapPage({ onReady }) {
   const canvasRef = useRef(null);
@@ -50,18 +49,19 @@ export default function ProjectMapPage({ onReady }) {
       api?.clearPointer();
     }
 
-    function handleClick() {
+    function handleClick(e) {
       if (suppressClick) {
         suppressClick = false;
         return;
       }
-      const projeto = api?.handleClick();
+      const projeto = api?.handleClick(e.clientX, e.clientY);
       if (!projeto?.href || projeto.href === '#') return;
       window.open(projeto.href, '_blank', 'noopener,noreferrer');
     }
 
     function handlePointerDown(e) {
       if (e.pointerType === 'mouse' && e.button !== 0) return;
+      api?.updatePointer(e.clientX, e.clientY);
       dragStartX = e.clientX;
       api?.beginCarouselDrag();
       canvas.classList.add('arrastando');
@@ -103,6 +103,7 @@ export default function ProjectMapPage({ onReady }) {
        cursor (#c-alvo) e o realce do anel funcionam aqui sem nenhum código
        novo do lado do cursor. */
     let ultimoHover = null;
+    let ultimoHoverLetra = false;
     function anunciarHover(projeto) {
       window.dispatchEvent(new CustomEvent('ocean-project-hover', {
         detail: {
@@ -127,10 +128,15 @@ export default function ProjectMapPage({ onReady }) {
         if (framesAquecidos === 4) onReady?.();
       }
       const hover = frame?.hoveredProject ?? null;
-      if (hover !== ultimoHover) {
+      const hoverLetra = Boolean(frame?.letterHovered);
+      const hoverMudou = hover !== ultimoHover;
+      if (hoverMudou) {
         ultimoHover = hover;
         anunciarHover(hover);
-        canvas.classList.toggle('sobre-card', Boolean(hover));
+      }
+      if (hoverMudou || hoverLetra !== ultimoHoverLetra) {
+        ultimoHoverLetra = hoverLetra;
+        canvas.classList.toggle('sobre-card', Boolean(hover) || hoverLetra);
       }
       const estadoCarrossel = Boolean(frame?.carouselVisible);
       if (estadoCarrossel !== ultimoEstadoCarrossel) {
@@ -207,7 +213,6 @@ export default function ProjectMapPage({ onReady }) {
 
   return (
     <main className="mapa-projetos-page">
-      <VoltarAoMergulho ancora="#projetos" />
       <canvas
         ref={canvasRef}
         className="mapa-projetos-canvas"

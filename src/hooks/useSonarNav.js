@@ -5,9 +5,10 @@ import { useEffect, useState } from 'react';
  * (com histerese) ou pelo botão, fecha com Esc, e acompanha qual seção está
  * ativa via IntersectionObserver para destacar o item correspondente.
  */
-export function useSonarNav(navItems) {
+export function useSonarNav(navItems, route = '/') {
+  const activeRouteHref = navItems.find((item) => item.href === route.slice(1))?.href;
   const [open, setOpen] = useState(false);
-  const [activeHref, setActiveHref] = useState(navItems[0]?.href ?? null);
+  const [activeHref, setActiveHref] = useState(activeRouteHref ?? navItems[0]?.href ?? null);
   /* Quem abriu o menu decide se o botão de fechar ainda é necessário: aberto
      pela aproximação do mouse, afastar o mouse já fecha e o X vira ruído no
      meio do sonar; aberto pelo botão (toque, clique ou teclado), não existe
@@ -25,7 +26,13 @@ export function useSonarNav(navItems) {
   }
 
   useEffect(() => {
+    const mobileMedia = matchMedia('(max-width: 760px)');
     if (matchMedia('(pointer: coarse)').matches) return undefined;
+    function handleMobileMode() {
+      if (mobileMedia.matches) setAbertoPorProximidade(false);
+    }
+    handleMobileMode();
+    mobileMedia.addEventListener?.('change', handleMobileMode);
     /* mousemove nativo pode disparar centenas de vezes/s (mouses de alta
        taxa de polling) — acumula a última posição e só calcula a distância
        uma vez por frame, via rAF. */
@@ -33,6 +40,7 @@ export function useSonarNav(navItems) {
     let pendingY = 0;
     let rafId = null;
     function handlePointerMove(e) {
+      if (mobileMedia.matches) return;
       pendingX = e.clientX;
       pendingY = e.clientY;
       if (rafId !== null) return;
@@ -54,6 +62,7 @@ export function useSonarNav(navItems) {
     window.addEventListener('pointermove', handlePointerMove, { passive: true });
     return () => {
       window.removeEventListener('pointermove', handlePointerMove);
+      mobileMedia.removeEventListener?.('change', handleMobileMode);
       if (rafId !== null) cancelAnimationFrame(rafId);
     };
   }, []);
@@ -68,6 +77,8 @@ export function useSonarNav(navItems) {
   }, [open]);
 
   useEffect(() => {
+    setActiveHref(activeRouteHref ?? navItems[0]?.href ?? null);
+
     /* Observa exatamente as seções que a navegação referencia, resolvidas pelo
        href de cada item. Antes isto era `querySelectorAll('section')`, que
        varria o documento inteiro: qualquer <section> alheia à navegação (ou de
@@ -90,7 +101,7 @@ export function useSonarNav(navItems) {
     );
     alvos.forEach((alvo) => io.observe(alvo.el));
     return () => io.disconnect();
-  }, [navItems]);
+  }, [activeRouteHref, navItems, route]);
 
   return { open, activeHref, abertoPorProximidade, alternarPeloBotao, fechar };
 }

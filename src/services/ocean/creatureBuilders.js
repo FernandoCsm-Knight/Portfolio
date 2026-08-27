@@ -93,7 +93,7 @@ export function construirCoralOrganico(cfg, escala) {
   const crown = cfg.crown || 4;
   const n = branches * segments * crown;
   const pos = new Float32Array(n * 3), col = new Float32Array(n * 3);
-  const baseC = new THREE.Color(cfg.base || '#2f6f62');
+  const baseC = new THREE.Color(cfg.base || '#466984');
   const tipC = new THREE.Color(cfg.tip || '#7fe3d0');
   const shadeC = baseC.clone().lerp(new THREE.Color('#061018'), 0.45);
   const height = cfg.height || 6;

@@ -2,6 +2,7 @@ const MENSAGENS = {
   '/': 'PREPARANDO O MERGULHO',
   '/projetos': 'TRAÇANDO CARTA DE EXPEDIÇÕES',
   '/sobre': 'ABRINDO O CADERNO DE BORDO',
+  '/contato': 'SINTONIZANDO CANAIS DE CONTATO',
 };
 
 export default function LoadingScreen({ visible, route }) {

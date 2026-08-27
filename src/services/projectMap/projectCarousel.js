@@ -124,9 +124,9 @@ export function makeProjectCarousel(projects, centerZ, reducedMotion = false) {
   group.visible = false;
   group.renderOrder = 7;
 
-  /* Com a câmera e a profundidade frontal atuais, 33.5 unidades equivalem a
-     aproximadamente 75% da altura útil da viewport. */
-  const cardGeometry = new THREE.PlaneGeometry(23.7, 33.5);
+  /* Proporção vertical preservada, mas cerca de 18% menor que a versão
+     anterior para manter água visível ao redor do card frontal. */
+  const cardGeometry = new THREE.PlaneGeometry(19.4, 27.5);
   const cards = projects.map((project) => {
     const material = new THREE.MeshBasicMaterial({
       map: makeCardTexture(project),
@@ -159,11 +159,27 @@ export function makeProjectCarousel(projects, centerZ, reducedMotion = false) {
   let reveal = 0;
   let unlocked = false;
   let hoveredProject = null;
+  let viewportScale = 1;
+
+  function resize(width, height) {
+    if (width > 760) {
+      viewportScale = 1;
+      return;
+    }
+    /* O card frontal ocupa cerca de 43,4% da altura em largura. Esta razão
+       transforma o limite de 82vw em uma escala de mundo, usando as duas
+       dimensões da viewport para celulares baixos e altos. */
+    viewportScale = THREE.MathUtils.clamp(
+      (width * 0.82) / Math.max(1, height * 0.434),
+      0.58,
+      0.96,
+    );
+  }
 
   function navigate(direction, time = performance.now() / 1000, userInitiated = true) {
     if (!unlocked || transitioning) return false;
     transitionFrom = angleOffset;
-    transitionTarget = angleOffset + Math.sign(direction || 1) * ((Math.PI * 2) / cards.length);
+    transitionTarget = angleOffset - Math.sign(direction || 1) * ((Math.PI * 2) / cards.length);
     transitionStart = time;
     transitioning = true;
     if (userInitiated) automaticEnabled = false;
@@ -197,8 +213,8 @@ export function makeProjectCarousel(projects, centerZ, reducedMotion = false) {
     return moved;
   }
 
-  function update(time, dt, formationProgress, consolidated, pointer, camera, scene) {
-    if (!unlocked && consolidated && formationProgress >= LETTER_READY_PROGRESS) {
+  function update(time, dt, formationProgress, activated, pointer, camera, scene) {
+    if (!unlocked && activated && formationProgress >= LETTER_READY_PROGRESS) {
       unlocked = true;
       lastAutomaticStep = time;
     }
@@ -246,6 +262,7 @@ export function makeProjectCarousel(projects, centerZ, reducedMotion = false) {
       );
       const scale = reveal
         * THREE.MathUtils.lerp(0.72, 1.06, depth)
+        * viewportScale
         * (1 + hoverAmount * 0.085);
       card.scale.setScalar(scale);
       card.material.opacity = reveal * THREE.MathUtils.lerp(0.38, 1, depth);
@@ -278,5 +295,5 @@ export function makeProjectCarousel(projects, centerZ, reducedMotion = false) {
     return unlocked && reveal >= 0.72;
   }
 
-  return { group, update, pick, navigate, beginDrag, dragBy, endDrag, isVisible };
+  return { group, resize, update, pick, navigate, beginDrag, dragBy, endDrag, isVisible };
 }

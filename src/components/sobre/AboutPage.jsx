@@ -2,7 +2,6 @@ import { CREDENCIAIS, TRAJETORIA } from '../../data/sobre';
 import { SKILLS } from '../../data/skills';
 import { CV_LINKS, SOCIAL_LINKS } from '../../data/socialLinks';
 import { useAboutScene } from '../../hooks/useAboutScene';
-import VoltarAoMergulho from '../VoltarAoMergulho';
 import CarrosselPublicacoes from './CarrosselPublicacoes';
 
 export default function AboutPage({ onReady }) {
@@ -14,8 +13,6 @@ export default function AboutPage({ onReady }) {
       {!cenaIndisponivel && <canvas id="mar" ref={canvasRef} />}
       <div id="vinheta" />
       <div className="sobre-overlay" aria-hidden="true" />
-
-      <VoltarAoMergulho ancora="#sobre" />
 
       <main className="caderno">
         <header className="ficha">

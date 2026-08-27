@@ -4,12 +4,12 @@ import { GiAnchor, GiPeriscope, GiRadarSweep, GiSubmarine, GiTreasureMap } from 
 import { NAV_ITEMS } from '../data/navItems';
 import { useSonarNav } from '../hooks/useSonarNav';
 
-const CX = 240, CY = 240, R_ITEM = 150, R_BLIP = 196;
+const CX = 240, CY = 240, R_ITEM = 140, R_ITEM_MOBILE = 196;
 const ICONES = {
   '#inicio': GiSubmarine,
-  '#sobre': GiPeriscope,
+  'sobre': GiPeriscope,
   'projetos': GiTreasureMap,
-  '#contato': GiAnchor,
+  'contato': GiAnchor,
 };
 
 const TICKS = Array.from({ length: 60 }, (_, i) => {
@@ -27,18 +27,11 @@ const TICKS = Array.from({ length: 60 }, (_, i) => {
     strokeOpacity: maior ? 0.7 : meio ? 0.42 : 0.22,
   };
 });
-const BLIPS = NAV_ITEMS.map((item) => {
-  const angulo = (item.ang * Math.PI) / 180;
-  return {
-    href: item.href,
-    rot: item.rot,
-    cx: CX + Math.cos(angulo) * R_BLIP,
-    cy: CY + Math.sin(angulo) * R_BLIP,
-  };
-});
-
-function SonarNav() {
-  const { open, activeHref, abertoPorProximidade, alternarPeloBotao, fechar } = useSonarNav(NAV_ITEMS);
+function SonarNav({ route }) {
+  const { open, activeHref, abertoPorProximidade, alternarPeloBotao, fechar } = useSonarNav(
+    NAV_ITEMS,
+    route,
+  );
 
   /* Com o menu aberto pela aproximação do mouse, afastá-lo já fecha: o X fica
      no centro do sonar sem função. Some nesse caso — mas continua presente
@@ -53,8 +46,6 @@ function SonarNav() {
     clearTimeout(timerFechar.current);
     timerFechar.current = setTimeout(fechar, 350);
   }
-
-  const activeBlip = BLIPS.find((blip) => blip.href === activeHref) ?? BLIPS[0];
 
   return (
     <>
@@ -73,15 +64,15 @@ function SonarNav() {
               <stop offset="100%" stopColor="#03101c" />
             </radialGradient>
             <linearGradient id="feixe" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stopColor="rgba(127,227,208,0)" />
-              <stop offset="100%" stopColor="rgba(127,227,208,.55)" />
+              <stop offset="0%" stopColor="rgba(140,200,234,0)" />
+              <stop offset="100%" stopColor="rgba(140,200,234,.55)" />
             </linearGradient>
           </defs>
           <circle cx="240" cy="240" r="196" fill="url(#marFundo)" />
           <circle cx="240" cy="240" r="196" fill="none" stroke="#c69749" strokeWidth="1.6" strokeOpacity=".6" />
           <circle cx="240" cy="240" r="214" fill="none" stroke="#c69749" strokeWidth=".6" strokeOpacity=".22" strokeDasharray="2 9" />
-          <circle cx="240" cy="240" r="132" fill="none" stroke="#7fe3d0" strokeWidth=".6" strokeOpacity=".2" strokeDasharray="3 8" />
-          <circle cx="240" cy="240" r="66" fill="none" stroke="#7fe3d0" strokeWidth=".5" strokeOpacity=".16" />
+          <circle cx="240" cy="240" r="132" fill="none" stroke="#8cc8ea" strokeWidth=".6" strokeOpacity=".2" strokeDasharray="3 8" />
+          <circle cx="240" cy="240" r="66" fill="none" stroke="#8cc8ea" strokeWidth=".5" strokeOpacity=".16" />
           <g>
             {TICKS.map((tk) => (
               <line
@@ -93,45 +84,25 @@ function SonarNav() {
           </g>
           <g className="varredura">
             <path d="M240 240 L436 240 A196 196 0 0 0 407 138 Z" fill="url(#feixe)" opacity=".16" />
-            <line x1="240" y1="240" x2="436" y2="240" stroke="#7fe3d0" strokeWidth="1" strokeOpacity=".5" />
+            <line x1="240" y1="240" x2="436" y2="240" stroke="#8cc8ea" strokeWidth="1" strokeOpacity=".5" />
           </g>
-          <g>
-            {BLIPS.map((b) => {
-              const ativa = activeHref === b.href;
-              return (
-                <g key={b.href} className={ativa ? 'blip detectado' : 'blip'}>
-                  <circle cx={b.cx} cy={b.cy} r={ativa ? 6 : 3.4} fill={ativa ? '#e7d3a8' : '#7fe3d0'} />
-                  {ativa && (
-                    <>
-                      <circle cx={b.cx} cy={b.cy} r="15" fill="none" stroke="#e7d3a8" strokeWidth="1" />
-                      <circle cx={b.cx} cy={b.cy} r="25" fill="none" stroke="#7fe3d0" strokeWidth=".7" strokeOpacity=".45" />
-                    </>
-                  )}
-                </g>
-              );
-            })}
-          </g>
-          {activeBlip && (
-            <g className="alvo-detectado">
-              <line x1="240" y1="240" x2={activeBlip.cx} y2={activeBlip.cy} stroke="#e7d3a8" strokeWidth=".8" strokeOpacity=".58" strokeDasharray="4 8" />
-              <text x="240" y="217" textAnchor="middle">ALVO IDENTIFICADO</text>
-              <text x="240" y="263" textAnchor="middle" className="alvo-nome">{activeBlip.rot}</text>
-            </g>
-          )}
           <circle cx="240" cy="240" r="4" fill="#e7d3a8" />
         </svg>
         {NAV_ITEMS.map((it, i) => {
           const a = (it.ang * Math.PI) / 180;
+          const mobileAngle = ((200 + (140 * i) / Math.max(1, NAV_ITEMS.length - 1)) * Math.PI) / 180;
           const ativa = activeHref === it.href;
           const Icone = ICONES[it.href] ?? GiRadarSweep;
           return (
             <a
               key={it.href}
               className={`item${ativa ? ' ativa' : ''}`}
-              href={it.href}
+              href={`${import.meta.env.BASE_URL}${it.href}`}
               style={{
                 left: `${(CX + Math.cos(a) * R_ITEM) / 4.8}%`,
                 top: `${(CY + Math.sin(a) * R_ITEM) / 4.8}%`,
+                '--mobile-left': `${(CX + Math.cos(mobileAngle) * R_ITEM_MOBILE) / 4.8}%`,
+                '--mobile-top': `${(CY + Math.sin(mobileAngle) * R_ITEM_MOBILE) / 4.8}%`,
                 '--atraso': `${i * 0.05}s`,
               }}
               onClick={fecharAposNavegar}

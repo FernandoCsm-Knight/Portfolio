@@ -1,8 +1,8 @@
 import { memo } from 'react';
 import { useCustomCursor } from '../hooks/useCustomCursor';
 
-function CustomCursor() {
-  const { ringRef, labelRef } = useCustomCursor();
+function CustomCursor({ clickEffectsEnabled = true }) {
+  const { ringRef, labelRef } = useCustomCursor({ clickEffectsEnabled });
   return (
     <>
       <div id="c-sub" ref={ringRef} aria-hidden="true">

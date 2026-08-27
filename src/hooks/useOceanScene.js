@@ -86,10 +86,18 @@ export function useOceanScene(onReady) {
       const observadorAltura = new ResizeObserver(medirScrollMax);
       observadorAltura.observe(document.documentElement);
 
-      function handlePointerMove(e) {
-        api.setPointerNDC((e.clientX / window.innerWidth) * 2 - 1, -(e.clientY / window.innerHeight) * 2 + 1);
+      function handleSubmarineMove(event) {
+        const posicao = event.detail;
+        if (!posicao?.active) {
+          api.clearPointer();
+          return;
+        }
+        api.setPointerNDC(
+          (posicao.clientX / window.innerWidth) * 2 - 1,
+          -(posicao.clientY / window.innerHeight) * 2 + 1,
+        );
       }
-      window.addEventListener('pointermove', handlePointerMove, { passive: true });
+      window.addEventListener('ocean-submarine-move', handleSubmarineMove);
       const handlePointerLeave = () => api.clearPointer?.();
       document.documentElement.addEventListener('pointerleave', handlePointerLeave);
 
@@ -122,6 +130,7 @@ export function useOceanScene(onReady) {
       let framesAquecidos = 0;
       let last = { depthMeters: -1, zoneLabel: '', atmValue: -1, tempValue: 999 };
       let ultimoHudUpdate = 0;
+      let ultimoHoverPeixe = false;
       /* evita reescrever o gradiente de tela cheia (#fundo) quando o valor não
          mudou de fato — atribuir o mesmo background ainda pode custar um recálculo
          de estilo em alguns navegadores. */
@@ -131,6 +140,13 @@ export function useOceanScene(onReady) {
         if (document.hidden || now - lastFrameTime < frameInterval) return;
         lastFrameTime = now - ((now - lastFrameTime) % frameInterval);
         const frame = api.update();
+        const hoverPeixe = Boolean(frame.fishHovered);
+        if (hoverPeixe !== ultimoHoverPeixe) {
+          ultimoHoverPeixe = hoverPeixe;
+          window.dispatchEvent(new CustomEvent('ocean-fish-hover', {
+            detail: { active: hoverPeixe },
+          }));
+        }
 
         /* Alguns quadros reais aquecem os caminhos de atualização de buffers
            e o JIT do navegador antes de revelar a página. */
@@ -183,8 +199,9 @@ export function useOceanScene(onReady) {
         if (scrollRaf !== null) cancelAnimationFrame(scrollRaf);
         observadorAltura.disconnect();
         window.removeEventListener('resize', handleResize);
-        window.removeEventListener('pointermove', handlePointerMove);
+        window.removeEventListener('ocean-submarine-move', handleSubmarineMove);
         document.documentElement.removeEventListener('pointerleave', handlePointerLeave);
+        window.dispatchEvent(new CustomEvent('ocean-fish-hover', { detail: { active: false } }));
         window.removeEventListener('ocean-torpedo-step', handleTorpedoStep);
         window.removeEventListener('scroll', handleScroll);
         api.dispose();

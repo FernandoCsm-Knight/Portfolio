@@ -213,6 +213,8 @@ export function createOceanScene(canvas, { reducedMotion = false } = {}) {
       hoverLocalY: 0,
       hoverOffset: new Float32Array(PARTICULAS_POR_PEIXE * 2),
       hoverVelocidade: new Float32Array(PARTICULAS_POR_PEIXE * 2),
+      cursorSobre: false,
+      hoverPulso: 0,
       zonaAtual: 0,
       zonaCor: 0,
       transicao: null,
@@ -358,8 +360,8 @@ export function createOceanScene(canvas, { reducedMotion = false } = {}) {
     const ctx = c.getContext('2d');
     const g = ctx.createLinearGradient(0, 0, 0, 256);
     g.addColorStop(0, 'rgba(231,211,168,.42)');
-    g.addColorStop(0.28, 'rgba(127,227,208,.16)');
-    g.addColorStop(1, 'rgba(127,227,208,0)');
+    g.addColorStop(0.28, 'rgba(140,200,234,.16)');
+    g.addColorStop(1, 'rgba(140,200,234,0)');
     ctx.fillStyle = g;
     ctx.beginPath();
     ctx.moveTo(38, 0);
@@ -377,8 +379,8 @@ export function createOceanScene(canvas, { reducedMotion = false } = {}) {
     const ctxFonte = cFonte.getContext('2d');
     const brilho = ctxFonte.createRadialGradient(80, 18, 0, 80, 18, 78);
     brilho.addColorStop(0, 'rgba(255,246,218,.35)');
-    brilho.addColorStop(0.34, 'rgba(127,227,208,.18)');
-    brilho.addColorStop(1, 'rgba(127,227,208,0)');
+    brilho.addColorStop(0.34, 'rgba(140,200,234,.18)');
+    brilho.addColorStop(1, 'rgba(140,200,234,0)');
     ctxFonte.fillStyle = brilho;
     ctxFonte.fillRect(0, 0, 160, 48);
     const texFonte = new THREE.CanvasTexture(cFonte);
@@ -706,8 +708,8 @@ export function createOceanScene(canvas, { reducedMotion = false } = {}) {
       const corCss2 = '#' + corProf(Math.min(1, prof + 0.1)).getHexString();
       const corCss3 = '#' + corProf(Math.min(1, prof + 0.26)).getHexString();
       backgroundCssCache =
-        `radial-gradient(110% 52% at 48% -14%, rgba(231,211,168,${0.24 * (1 - prof)}) 0%, rgba(127,227,208,${0.16 * (1 - prof)}) 34%, transparent 76%),` +
-        `radial-gradient(80% 58% at ${66 + Math.sin(t * 0.08) * 5}% ${12 + Math.cos(t * 0.07) * 3}%, rgba(127,227,208,${0.11 * (1 - prof * 0.82)}) 0%, transparent 66%),` +
+        `radial-gradient(110% 52% at 48% -14%, rgba(231,211,168,${0.24 * (1 - prof)}) 0%, rgba(140,200,234,${0.16 * (1 - prof)}) 34%, transparent 76%),` +
+        `radial-gradient(80% 58% at ${66 + Math.sin(t * 0.08) * 5}% ${12 + Math.cos(t * 0.07) * 3}%, rgba(140,200,234,${0.11 * (1 - prof * 0.82)}) 0%, transparent 66%),` +
         `radial-gradient(72% 62% at ${18 + Math.cos(t * 0.06) * 4}% ${76 + Math.sin(t * 0.05) * 5}%, rgba(198,151,73,${0.07 * (1 - prof * 0.55)}) 0%, transparent 70%),` +
         `linear-gradient(178deg, rgba(255,246,218,${0.045 * (1 - prof)}) 0%, transparent 22%, rgba(1,7,15,${0.22 * prof}) 100%),` +
         `linear-gradient(164deg, ${corCss} 0%, ${corCss2} 48%, ${corCss3} 100%)`;
@@ -840,6 +842,7 @@ export function createOceanScene(canvas, { reducedMotion = false } = {}) {
 
     /* criaturas — são sempre os mesmos 13 objetos e as mesmas 1.248
        partículas; somente seus destinos e cores mudam com a profundidade. */
+    let cursorSobreAlgumPeixe = false;
     criaturas.forEach((cr, ci) => {
       const o = cr.obj;
       if (cr.transicao) {
@@ -932,7 +935,10 @@ export function createOceanScene(canvas, { reducedMotion = false } = {}) {
         const cursorY = cam.position.y + mouseMundoDir.y * distanciaRaio;
         const comprimentoA = cfgA.def.organico.len * cfgA.px;
         const comprimentoB = cfgB.def.organico.len * cfgB.px;
-        const raioHover = Math.max(3.2, lerp(comprimentoA, comprimentoB, misturaZona) * 0.68);
+        const unidadesPorPixel = (metadeAlturaVisivel * 2) / Math.max(1, alturaViewport);
+        const raioSubmarino = unidadesPorPixel * 25;
+        const raioHover = Math.max(3.8, lerp(comprimentoA, comprimentoB, misturaZona) * 0.72)
+          + raioSubmarino;
         cursorSobrePeixe = Math.hypot(cursorX - o.position.x, cursorY - o.position.y) <= raioHover;
         if (cursorSobrePeixe) {
           const dxCursor = cursorX - o.position.x;
@@ -943,6 +949,11 @@ export function createOceanScene(canvas, { reducedMotion = false } = {}) {
           cr.hoverLocalY = (-dxCursor * senoRumo + dyCursor * cossenoRumo) / o.scale.y;
         }
       }
+      const entrouNoHover = cursorSobrePeixe && !cr.cursorSobre;
+      cr.cursorSobre = cursorSobrePeixe;
+      if (cursorSobrePeixe) cursorSobreAlgumPeixe = true;
+      cr.hoverPulso = entrouNoHover ? 1 : Math.max(0, cr.hoverPulso - dt * 2.4);
+      o.material.size *= 1 + cr.hoverPulso * 0.2;
       if (cursorSobrePeixe) cr.hoverEmMovimento = true;
 
       /* Um salto grande de rolagem pode levar o peixe inteiro para além da
@@ -1047,7 +1058,7 @@ export function createOceanScene(canvas, { reducedMotion = false } = {}) {
           const dxHover = fp[j] + offX - cr.hoverLocalX;
           const dyHover = fp[j + 1] + offY - cr.hoverLocalY;
           const distanciaQuadrada = dxHover * dxHover + dyHover * dyHover;
-          const raioQuadrado = 25;
+          const raioQuadrado = 36;
           if (cursorSobrePeixe && distanciaQuadrada < raioQuadrado) {
             const distancia = Math.sqrt(Math.max(0.12, distanciaQuadrada));
             const forca = -raioQuadrado / Math.max(0.35, distanciaQuadrada);
@@ -1056,8 +1067,9 @@ export function createOceanScene(canvas, { reducedMotion = false } = {}) {
             const sinAngulo = distanciaQuadrada > 0.12 ? -dyHover / distancia : Math.sin(anguloCentro);
             /* O sinal da força já é negativo como no exemplo; inverter a
                direção acima mantém o resultado radial para fora. */
-            velX += forca * cosAngulo * 0.018 * passoHover;
-            velY += forca * sinAngulo * 0.018 * passoHover;
+            const intensidade = entrouNoHover ? 0.038 : 0.024;
+            velX += forca * cosAngulo * intensidade * passoHover;
+            velY += forca * sinAngulo * intensidade * passoHover;
           }
 
           velX *= atritoHover;
@@ -1179,6 +1191,7 @@ export function createOceanScene(canvas, { reducedMotion = false } = {}) {
       bgDepth,
       bgSurface,
       backgroundCss,
+      fishHovered: cursorSobreAlgumPeixe,
     };
   }
 

@@ -18,7 +18,7 @@ const SPECIES = [
   { model: M_MACHADO, tint: '#b29ae8', count: 19, scale: [0.16, 0.23], speed: [0.82, 1.28] },
 ];
 
-const LOGO_AQUA = new THREE.Color('#7fe3d0');
+const LOGO_AQUA = new THREE.Color('#8cc8ea');
 const LOGO_GOLD = new THREE.Color('#c69749');
 const LOGO_PALE_GOLD = new THREE.Color('#e7d3a8');
 const FISHES_TO_CONSOLIDATE = 10;
@@ -81,6 +81,7 @@ function makeLetterTargets(particleCount, centerZ) {
   const centerX = (minX + maxX) * 0.5;
   const centerY = (minY + maxY) * 0.5;
   const candidateCount = candidates.length / 2;
+  const bounds = { minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity };
 
   for (let particle = 0; particle < particleCount; particle++) {
     const offset = particle * 3;
@@ -95,13 +96,17 @@ function makeLetterTargets(particleCount, centerZ) {
     targets[offset + 1] = -(pixelY - centerY) * scale
       + (deterministicUnit(particle, 6) - 0.5) * scale * 2.4;
     targets[offset + 2] = centerZ + (depth - 0.5) * 0.9;
+    bounds.minX = Math.min(bounds.minX, targets[offset]);
+    bounds.maxX = Math.max(bounds.maxX, targets[offset]);
+    bounds.minY = Math.min(bounds.minY, targets[offset + 1]);
+    bounds.maxY = Math.max(bounds.maxY, targets[offset + 1]);
     const targetColor = logoColorAt(verticalProgress, depth);
     targetColors[offset] = targetColor.r;
     targetColors[offset + 1] = targetColor.g;
     targetColors[offset + 2] = targetColor.b;
   }
 
-  return { targets, colors: targetColors };
+  return { targets, colors: targetColors, bounds };
 }
 
 export function makeFishOcean(surfaceHeightAt, reducedMotion = false) {
@@ -207,7 +212,7 @@ export function makeFishOcean(surfaceHeightAt, reducedMotion = false) {
   for (let index = 0; index < snowCount; index++) {
     const offset = index * 3;
     const warmth = deterministicUnit(index, 19);
-    const snowColor = new THREE.Color('#bfe8e5').lerp(new THREE.Color('#e7d3a8'), warmth * 0.48);
+    const snowColor = new THREE.Color('#c5dff0').lerp(new THREE.Color('#e7d3a8'), warmth * 0.48);
     snowColors[offset] = snowColor.r;
     snowColors[offset + 1] = snowColor.g;
     snowColors[offset + 2] = snowColor.b;
@@ -216,10 +221,44 @@ export function makeFishOcean(surfaceHeightAt, reducedMotion = false) {
   }
   const motionScale = reducedMotion ? 0.28 : 1;
   const effectScale = reducedMotion ? 0.55 : 1;
-  let capturedFishCount = 0;
-  let consolidated = false;
+  let capturedFishCount = FISHES_TO_CONSOLIDATE;
+  let consolidated = true;
   let exploding = false;
   let explosionStart = 0;
+  const explosionProjectionMatrix = new THREE.Matrix4();
+  const explosionScreenPosition = new THREE.Vector3();
+
+  /* A página começa no estado final da formação: o monograma já está pronto
+     e aguarda uma ação explícita do visitante para explodir. */
+  fish.forEach((item) => {
+    item.captured = true;
+    item.captureStart = -10;
+  });
+
+  function hasExplosionParticleOnScreen(camera) {
+    if (!camera) return true;
+
+    /* Verifica a posicao projetada em vez de encerrar o efeito por tempo. A
+       pequena margem inclui o tamanho visual dos pontos junto as bordas. */
+    camera.updateMatrixWorld();
+    points.updateWorldMatrix(true, false);
+    explosionProjectionMatrix
+      .multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse)
+      .multiply(points.matrixWorld);
+
+    for (let offset = 0; offset < positions.length; offset += 3) {
+      explosionScreenPosition
+        .set(positions[offset], positions[offset + 1], positions[offset + 2])
+        .applyMatrix4(explosionProjectionMatrix);
+      if (
+        explosionScreenPosition.z >= -1
+        && explosionScreenPosition.z <= 1
+        && Math.abs(explosionScreenPosition.x) <= 1.02
+        && Math.abs(explosionScreenPosition.y) <= 1.02
+      ) return true;
+    }
+    return false;
+  }
 
   function consolidateLetter(time) {
     consolidated = true;
@@ -254,25 +293,26 @@ export function makeFishOcean(surfaceHeightAt, reducedMotion = false) {
     if (capturedFishCount >= FISHES_TO_CONSOLIDATE) consolidateLetter(time);
   }
 
-  function explodeLetter(time) {
+  function explodeLetter(time, originX = 0, originY = 0) {
+    if (exploding) return false;
     exploding = true;
     explosionStart = time;
     for (let offset = 0; offset < positions.length; offset += 3) {
       const particle = offset / 3;
-      const dx = positions[offset];
-      const dy = positions[offset + 1];
+      const dx = positions[offset] - originX;
+      const dy = positions[offset + 1] - originY;
       const dz = positions[offset + 2] - cloudCenterZ;
       const distance = Math.hypot(dx, dy, dz) || 1;
+      const planarDistance = Math.hypot(dx, dy);
       const fallback = particle * 2.399963;
-      const directionX = distance > 0.08 ? dx / distance : Math.cos(fallback);
-      const directionY = distance > 0.08 ? dy / distance : Math.sin(fallback);
+      const directionX = planarDistance > 0.08 ? dx / planarDistance : Math.cos(fallback);
+      const directionY = planarDistance > 0.08 ? dy / planarDistance : Math.sin(fallback);
       const directionZ = distance > 0.08 ? dz / distance : Math.sin(fallback * 0.73) * 0.35;
       const impulse = (0.3 + deterministicUnit(particle, 11) * 0.38)
         * (reducedMotion ? 0.55 : 1);
-      velocities[offset] = directionX * impulse
-        + (deterministicUnit(particle, 12) - 0.5) * 0.28;
-      velocities[offset + 1] = directionY * impulse
-        + (deterministicUnit(particle, 13) - 0.5) * 0.28;
+      const lateralImpulse = (deterministicUnit(particle, 12) - 0.5) * 0.28;
+      velocities[offset] = directionX * impulse - directionY * lateralImpulse;
+      velocities[offset + 1] = directionY * impulse + directionX * lateralImpulse;
       velocities[offset + 2] = directionZ * impulse
         + (deterministicUnit(particle, 14) - 0.5) * 0.34;
     }
@@ -287,15 +327,30 @@ export function makeFishOcean(surfaceHeightAt, reducedMotion = false) {
     }
     marineSnow.visible = false;
     snowGeometry.attributes.position.needsUpdate = true;
+    return true;
   }
 
-  function update(time, dt, pointer) {
+  function containsPointer(pointer) {
+    if (exploding || !pointer?.active) return false;
+    const padding = 1.4;
+    return pointer.worldX >= letter.bounds.minX - padding
+      && pointer.worldX <= letter.bounds.maxX + padding
+      && pointer.worldY >= letter.bounds.minY - padding
+      && pointer.worldY <= letter.bounds.maxY + padding;
+  }
+
+  function triggerExplosion(pointer, time = performance.now() / 1000) {
+    if (!consolidated) return false;
+    return explodeLetter(time, pointer?.worldX ?? 0, pointer?.worldY ?? 0);
+  }
+
+  function update(time, dt, pointer, camera) {
     const step = Math.min(3, dt * 60);
     const initialized = dt === 0;
 
     if (exploding) {
       const age = time - explosionStart;
-      const friction = Math.pow(0.995, step);
+      const friction = Math.pow(0.998, step);
       for (let offset = 0; offset < positions.length; offset += 3) {
         velocities[offset] *= friction;
         velocities[offset + 1] *= friction;
@@ -304,9 +359,8 @@ export function makeFishOcean(surfaceHeightAt, reducedMotion = false) {
         positions[offset + 1] += velocities[offset + 1] * step;
         positions[offset + 2] += velocities[offset + 2] * step;
       }
-      const explosionDuration = reducedMotion ? 1.15 : 3.15;
       points.material.opacity = 0.92;
-      points.visible = age < explosionDuration;
+      points.visible = points.visible && hasExplosionParticleOnScreen(camera);
 
       const snowStart = reducedMotion ? 1.05 : 2.85;
       const snowAge = age - snowStart;
@@ -431,7 +485,6 @@ export function makeFishOcean(surfaceHeightAt, reducedMotion = false) {
     points.renderOrder = consolidated ? 10 : 4;
     points.material.depthTest = !consolidated;
     const formationProgress = formedParticleCount / particleCount;
-    if (consolidated && formationProgress >= 0.995) explodeLetter(time);
     return {
       formationProgress,
       consolidated,
@@ -441,5 +494,5 @@ export function makeFishOcean(surfaceHeightAt, reducedMotion = false) {
   }
 
   update(0, 0);
-  return { group, update };
+  return { group, update, containsPointer, triggerExplosion };
 }

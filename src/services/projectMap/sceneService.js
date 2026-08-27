@@ -63,6 +63,7 @@ export function createProjectMapScene(canvas, projects, { reducedMotion = false 
     renderer.setSize(width, height);
     camera.aspect = width / height;
     camera.updateProjectionMatrix();
+    carousel.resize(width, height);
   }
 
   function updatePointer(clientX, clientY) {
@@ -95,7 +96,15 @@ export function createProjectMapScene(canvas, projects, { reducedMotion = false 
     pointer.worldY = pointerWorld.y;
   }
 
-  function handleClick() {
+  function handleClick(clientX, clientY) {
+    if (Number.isFinite(clientX) && Number.isFinite(clientY)) {
+      updatePointer(clientX, clientY);
+      updatePointerWorld();
+    }
+    if (fishOcean.containsPointer(pointer)) {
+      fishOcean.triggerExplosion(pointer);
+      return null;
+    }
     return hoveredProject;
   }
 
@@ -123,7 +132,7 @@ export function createProjectMapScene(canvas, projects, { reducedMotion = false 
     scene.rotation.x += (targetRotX - scene.rotation.x) * ease;
     scene.rotation.y += (targetRotY - scene.rotation.y) * ease;
     if (pointer.active) updatePointerWorld();
-    const fishState = fishOcean.update(now / 1000, dt, pointer);
+    const fishState = fishOcean.update(now / 1000, dt, pointer, camera);
     if (fishState.exploded && !nativeCursorAnnounced) {
       nativeCursorAnnounced = true;
       window.dispatchEvent(new CustomEvent('ocean-native-cursor', { detail: { active: true } }));
@@ -140,14 +149,18 @@ export function createProjectMapScene(canvas, projects, { reducedMotion = false 
       now / 1000,
       dt,
       fishState.formationProgress,
-      fishState.consolidated,
+      fishState.exploded,
       pointer,
       camera,
       scene,
     );
     hoveredProject = carousel.pick(pointer, camera, scene);
     renderer.render(scene, camera);
-    return { hoveredProject, carouselVisible: carousel.isVisible() };
+    return {
+      hoveredProject,
+      letterHovered: fishOcean.containsPointer(pointer),
+      carouselVisible: carousel.isVisible(),
+    };
   }
 
   function prepare() {
