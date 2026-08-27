@@ -7,10 +7,10 @@ import { useI18n } from '../i18n/context';
 
 const CX = 240, CY = 240, R_ITEM = 140, R_ITEM_MOBILE = 196;
 const ICONES = {
-  '#inicio': GiSubmarine,
-  'sobre': GiPeriscope,
-  'projetos': GiTreasureMap,
-  'contato': GiAnchor,
+  '#home': GiSubmarine,
+  'about': GiPeriscope,
+  'projects': GiTreasureMap,
+  'contact': GiAnchor,
 };
 
 const TICKS = Array.from({ length: 60 }, (_, i) => {
@@ -95,7 +95,7 @@ function SonarNav({ route }) {
           const mobileAngle = ((200 + (140 * i) / Math.max(1, NAV_ITEMS.length - 1)) * Math.PI) / 180;
           const ativa = activeHref === it.href;
           const Icone = ICONES[it.href] ?? GiRadarSweep;
-          const labelKey = { '#inicio': 'home', sobre: 'about', projetos: 'projects', contato: 'contact' }[it.href];
+          const labelKey = { '#home': 'home', about: 'about', projects: 'projects', contact: 'contact' }[it.href];
           const label = t(`nav.${labelKey}`);
           return (
             <a

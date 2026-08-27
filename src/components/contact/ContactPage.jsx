@@ -1,5 +1,7 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { FaEnvelope, FaGithub, FaLinkedinIn, FaPaperPlane, FaWhatsapp } from 'react-icons/fa';
+import AvailabilityStatus from '../AvailabilityStatus';
+import PricingLink from '../PricingLink';
 import { contactConfigured } from '../../services/contact';
 import { useI18n } from '../../i18n/context';
 import { EXTERNAL_LINK_PROPS } from '../../utils/links';
@@ -192,16 +194,22 @@ export default function ContactPage({ onReady }) {
             })}
           </div>
 
-          <button
-            className="contato-chamada"
-            type="button"
-            onClick={() => setFormAberto(true)}
-            disabled={!contactConfigured}
-            title={contactConfigured ? undefined : t('contact.configuration')}
-          >
-            <FaPaperPlane aria-hidden="true" />
-            <span>{t('contact.action')}</span>
-          </button>
+          <div className="contato-acao">
+            <div className="status-linha">
+              <PricingLink />
+              <AvailabilityStatus />
+            </div>
+            <button
+              className="contato-chamada"
+              type="button"
+              onClick={() => setFormAberto(true)}
+              disabled={!contactConfigured}
+              title={contactConfigured ? undefined : t('contact.configuration')}
+            >
+              <FaPaperPlane aria-hidden="true" />
+              <span>{t('contact.action')}</span>
+            </button>
+          </div>
         </div>
       </main>
 

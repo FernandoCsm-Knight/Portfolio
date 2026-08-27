@@ -5,7 +5,7 @@ import { medirViewport } from '../services/scene/viewportSync';
 import { useSceneMount } from './useSceneMount';
 
 /**
- * Monta a cena do mapa de expedições (/projetos): busca os projetos no
+ * Monta a cena do mapa de expedições (/projects): busca os projetos no
  * Supabase, cria a cena e liga o conjunto bem maior de eventos do carrossel
  * (arraste, roda do mouse, teclado) — por isso não reaproveita
  * `attachViewportSync` como useOceanScene/useAboutScene, só o resize.

@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { rnd } from './utils';
 import { optimizeParticleGeometry } from './particleBudget';
 import { PROF, LARG, DEPTH_STOPS } from './constants';
-import { disposeSceneResources, getWebGLPixelRatio, precompileRenderer } from './webglUtils';
+import { aquecerUploads, disposeSceneResources, getWebGLPixelRatio, precompileRenderer } from './webglUtils';
 import {
   construirPeixeOrganico,
   construirCoralOrganico,
@@ -690,8 +690,56 @@ export function createOceanScene(canvas, { reducedMotion = false } = {}) {
     alvoY = -progress * PROF;
   }
 
-  function prepare() {
-    return precompileRenderer(renderer, scene, cam);
+  /* Paradas da câmera na coluna d'água durante o aquecimento. O frustum cobre
+     ~56 unidades de altura, então 6 passos (25 unidades cada) deixam as faixas
+     se sobreporem — nenhuma profundidade estreia durante a rolagem. */
+  const PASSOS_AQUECIMENTO = 6;
+  /* Teto de tempo do aquecimento. Num aparelho lento, entrar com parte da cena
+     fria é melhor do que segurar a tela de carregamento indefinidamente. */
+  const ORCAMENTO_AQUECIMENTO_MS = 900;
+
+  function proximoQuadro() {
+    return new Promise((resolve) => requestAnimationFrame(resolve));
+  }
+
+  /**
+   * Trabalho que a tela de carregamento absorve para a rolagem não pagar depois:
+   * linkar os shaders, subir geometrias e texturas para a GPU e desenhar uma vez
+   * cada faixa de profundidade.
+   */
+  async function prepare() {
+    await precompileRenderer(renderer, scene, cam);
+
+    try {
+      /* A textura das bolhas é a única que nenhum objeto da cena referencia
+         ainda: o primeiro sprite só nasce alguns segundos depois do início. */
+      renderer.initTexture(texBolhaP);
+      aquecerUploads(renderer, scene, cam);
+
+      /* Com tudo já na GPU, desce a câmera pela coluna para exercitar também o
+         caminho de desenho normal de cada faixa — a montagem da lista de
+         renderização e o preenchimento do abismo, onde muitos pontos aditivos se
+         sobrepõem. Um `requestAnimationFrame` entre as passadas devolve a thread
+         para a animação da tela de carregamento seguir fluida. */
+      const limite = performance.now() + ORCAMENTO_AQUECIMENTO_MS;
+      const yOriginal = cam.position.y;
+      for (let passo = 1; passo <= PASSOS_AQUECIMENTO; passo++) {
+        await proximoQuadro();
+        cam.position.y = -(passo / PASSOS_AQUECIMENTO) * PROF;
+        renderer.render(scene, cam);
+        if (performance.now() > limite) break;
+      }
+      cam.position.y = yOriginal;
+    } catch (erro) {
+      /* Aquecer é otimização: falhar aqui não pode derrubar a cena para o
+         fallback de "cena indisponível". */
+      console.warn('Aquecimento da cena incompleto; seguindo com o renderer normal.', erro);
+    }
+
+    /* O relógio do laço começa agora, e não na construção da cena: sem isto o
+       primeiro `update` veria todo o tempo de carregamento como um único `dt`. */
+    ultimoInstante = performance.now();
+    ultimoAjusteResolucao = ultimoInstante;
   }
 
   function update() {
@@ -1249,6 +1297,10 @@ export function createOceanScene(canvas, { reducedMotion = false } = {}) {
 
   function dispose() {
     disposeSceneResources(scene);
+    /* `disposeSceneResources` só alcança texturas de materiais que estejam na
+       cena. A das bolhas é compartilhada por sprites efêmeros: se nenhuma bolha
+       estiver viva no momento da desmontagem, ela vazaria a cada troca de rota. */
+    texBolhaP.dispose();
     renderer.dispose();
   }
 

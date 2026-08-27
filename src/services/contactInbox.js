@@ -2,7 +2,7 @@ import { requireSupabase, unwrap } from './supabase';
 
 /* Só o /admin importa este módulo. Manter separado de contact.js é o que
    impede as consultas de moderação de entrarem no bundle de quem apenas
-   visita /contato — mesma divisão que comments.js / commentModeration.js. */
+   visita /contact — mesma divisão que comments.js / commentModeration.js. */
 
 const CAMPOS = 'id,name,email,company,subject,message,status,created_at,read_at';
 

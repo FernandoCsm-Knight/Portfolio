@@ -10,11 +10,12 @@ import LoadingScreen from './components/LoadingScreen';
 import SonarNav from './components/SonarNav';
 import { useI18n } from './i18n/context';
 
-/* cena 3D separada e pesada (Three.js) usada só em /projetos — não deve
+/* cena 3D separada e pesada (Three.js) usada só em /projects — não deve
    entrar no bundle/execução inicial de quem visita a home. */
 const ProjectMapPage = lazy(() => import('./components/projects/ProjectMapPage'));
 const AboutPage = lazy(() => import('./components/sobre/AboutPage'));
 const ContactPage = lazy(() => import('./components/contact/ContactPage'));
+const PricingPage = lazy(() => import('./components/pricing/PricingPage'));
 const AdminPage = lazy(() => import('./components/admin/AdminPage'));
 
 function normalizePathname(pathname) {
@@ -25,7 +26,7 @@ function normalizePathname(pathname) {
    para um arquivo estático (os PDFs do currículo em /docs, por exemplo) seria
    engolido pelo roteador: viraria um pushState e renderizaria a home no lugar
    de o navegador abrir o arquivo. */
-const ROTAS = ['/', '/projetos', '/sobre', '/contato', '/admin'];
+const ROTAS = ['/', '/projects', '/about', '/pricing', '/contact', '/admin'];
 
 function App() {
   const { t } = useI18n();
@@ -65,7 +66,7 @@ function App() {
     document.getElementById('root')?.removeAttribute('aria-busy');
   }, []);
 
-  /* Os links entre home e /projetos eram <a> comuns: cada clique recarregava a
+  /* Os links entre home e /projects eram <a> comuns: cada clique recarregava a
      página inteira, o que descartava a cena WebGL já montada e tornava o
      lazy() acima inútil. Aqui a navegação interna passa a usar pushState — o
      que também é o que faz o listener de popstate acima ter alguma função. */
@@ -78,7 +79,7 @@ function App() {
 
     const destino = new URL(link.href, window.location.href);
     if (destino.origin !== window.location.origin) return;
-    /* âncora dentro da mesma página (#sobre): rolagem nativa, não é rota */
+    /* âncora dentro da mesma página (#about): rolagem nativa, não é rota */
     if (destino.pathname === window.location.pathname) return;
 
     const rotaDestino = normalizePathname(destino.pathname);
@@ -102,9 +103,10 @@ function App() {
     return () => document.removeEventListener('click', handleNavClick);
   }, [handleNavClick]);
 
-  const isProjectMap = route === '/projetos';
-  const isSobre = route === '/sobre';
-  const isContato = route === '/contato';
+  const isProjectMap = route === '/projects';
+  const isSobre = route === '/about';
+  const isPrecos = route === '/pricing';
+  const isContato = route === '/contact';
   const isAdmin = route === '/admin';
   const handlePageReady = useCallback(() => setCarregando(false), []);
 
@@ -129,6 +131,11 @@ function App() {
             <AboutPage onReady={handlePageReady} />
           </Suspense>
         )}
+        {isPrecos && (
+          <Suspense fallback={null}>
+            <PricingPage onReady={handlePageReady} />
+          </Suspense>
+        )}
         {isContato && (
           <Suspense fallback={null}>
             <ContactPage onReady={handlePageReady} />
@@ -139,7 +146,7 @@ function App() {
             <AdminPage onReady={handlePageReady} />
           </Suspense>
         )}
-        {!isProjectMap && !isSobre && !isContato && !isAdmin && <HomePage onReady={handlePageReady} />}
+        {!isProjectMap && !isSobre && !isPrecos && !isContato && !isAdmin && <HomePage onReady={handlePageReady} />}
       </ErrorBoundary>
     </>
   );

@@ -11,10 +11,12 @@ import { countNewContactRequests, subscribeToContactRequests } from '../../servi
 import { supabaseConfigured } from '../../services/supabase';
 import CommentsPanel from './CommentsPanel';
 import InboxPanel from './InboxPanel';
+import PricingPanel from './PricingPanel';
 import ProjectsPanel from './ProjectsPanel';
 
 const ABAS = [
   { value: 'projetos', label: 'Projetos' },
+  { value: 'valores', label: 'Valores' },
   { value: 'avaliacoes', label: 'Avaliações' },
   { value: 'mensagens', label: 'Mensagens' },
 ];
@@ -222,6 +224,7 @@ function AdminPage({ onReady }) {
           </nav>
 
           {aba === 'projetos' && <ProjectsPanel />}
+          {aba === 'valores' && <PricingPanel />}
           {aba === 'avaliacoes' && <CommentsPanel />}
           {aba === 'mensagens' && (
             <InboxPanel

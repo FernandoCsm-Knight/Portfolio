@@ -1,4 +1,4 @@
-/* Conteúdo da página /sobre, tirado do currículo em public/docs.
+/* Conteúdo da página /about, tirado do currículo em public/docs.
 
    A trajetória fica em ordem cronológica crescente de propósito: na metáfora
    do site, descer é avançar no tempo, então a formação mais antiga aparece na

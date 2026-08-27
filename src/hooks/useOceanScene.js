@@ -20,7 +20,7 @@ export function useOceanScene(onReady) {
 
   /* Three.js representa quase todo o bundle da aplicação. A cena é carregada
      depois do primeiro paint e apenas quando este canvas realmente existe;
-     assim a rota /projetos não baixa nem inicializa a cena da home. */
+     assim a rota /projects não baixa nem inicializa a cena da home. */
   const mount = useCallback(async (canvas, { isCurrent }) => {
     const [{ createOceanScene }] = await Promise.all([
       import('../services/ocean/sceneService'),

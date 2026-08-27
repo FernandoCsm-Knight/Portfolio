@@ -1,4 +1,4 @@
--- Caixa de entrada das demandas enviadas pelo formulário de /contato.
+-- Caixa de entrada das demandas enviadas pelo formulário de /contact.
 --
 -- Depende de public.comment_admins, criada em supabase/comments.sql: é a mesma
 -- lista de quem pode entrar em /admin. Rode comments.sql antes deste arquivo.
@@ -11,12 +11,36 @@
 create extension if not exists pgcrypto;
 
 do $$
+declare
+  tem_tabela boolean;
+  tem_funcao boolean;
 begin
-  if to_regclass('public.comment_admins') is null
-     or to_regprocedure('public.is_portfolio_admin()') is null then
-    raise exception
-      'public.comment_admins/is_portfolio_admin() não existem — rode supabase/comments.sql antes deste arquivo.';
+  tem_tabela := to_regclass('public.comment_admins') is not null;
+
+  /* Procurada pelo nome em pg_proc, e não por `to_regprocedure`: aquela função
+     casa pela assinatura exata, então uma is_portfolio_admin que um dia ganhe um
+     parâmetro passa a "não existir" — um diagnóstico errado sobre um banco que
+     está certo. Aqui o que importa é se a função está lá, em qualquer forma. */
+  tem_funcao := exists (
+    select 1
+    from pg_proc p
+    join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public' and p.proname = 'is_portfolio_admin'
+  );
+
+  if tem_tabela and tem_funcao then
+    return;
   end if;
+
+  /* Nomear só o que falta. A mensagem antiga citava os dois objetos para uma
+     condição em que qualquer um dos dois dispara, e mandava conferir o que já
+     estava no lugar. */
+  raise exception
+    'Falta em public: %. Rode supabase/comments.sql antes deste arquivo (é idempotente).',
+    concat_ws(' e ',
+      case when not tem_tabela then 'a tabela comment_admins' end,
+      case when not tem_funcao then 'a função is_portfolio_admin()' end
+    );
 end
 $$;
 

@@ -1,9 +1,47 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "redirects": [
+    {
+      "source": "/projetos",
+      "destination": "/projects",
+      "permanent": true
+    },
+    {
+      "source": "/sobre",
+      "destination": "/about",
+      "permanent": true
+    },
+    {
+      "source": "/precos",
+      "destination": "/pricing",
+      "permanent": true
+    },
+    {
+      "source": "/contato",
+      "destination": "/contact",
+      "permanent": true
+    }
+  ],
   "rewrites": [
-    { "source": "/projetos", "destination": "/index.html" },
-    { "source": "/sobre", "destination": "/index.html" },
-    { "source": "/contato", "destination": "/index.html" },
-    { "source": "/admin", "destination": "/index.html" }
+    {
+      "source": "/projects",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/about",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/pricing",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/contact",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/admin",
+      "destination": "/index.html"
+    }
   ]
 }

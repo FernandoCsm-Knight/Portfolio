@@ -6,6 +6,11 @@
   --aqua:#38bde3;
   --aqua-forte:#087fae;
   --coral:#cf5b3b;
+  /* Dourado de verdade — e o único do arquivo. Cuidado com os nomes acima:
+     --gold, --gold-claro e --brass-escuro são cinzas de aço, herdados de uma
+     paleta anterior. Quem procurar "ouro" por lá vai achar cinza. */
+  --dourado:#e8b75d;
+  --dourado-claro:#f6d391;
   --texto:#e8f2f2;
   --texto-2:#9db8c4;
   --painel:rgba(4,16,26,.55);
@@ -1348,6 +1353,183 @@ footer{
   color:var(--texto-2);letter-spacing:var(--track-wide);
 }
 
+/* Selo de disponibilidade — home e /contato. Reaproveita o material dos
+   controles (--controle-*) de propósito: é uma superfície de conteúdo, não um
+   quarto vocabulário entre "ação" (cinza) e "navegação" (aqua). O raio é de
+   caixa, e não de pílula, porque são duas linhas. */
+.selo-disponibilidade{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+  /* `min-height`, e não `height`: o conteúdo cabe com folga, e se um dia não
+     couber é melhor o card crescer do que vazar por fora da borda. */
+  min-height:var(--altura-status,auto);
+  padding:13px 24px;
+  border:1px solid var(--controle-borda);border-radius:18px;
+  background:var(--controle-fundo);
+  box-shadow:var(--controle-sombra);
+  -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
+  font-family:var(--f-mono);text-align:center;
+}
+.selo-disponibilidade p{margin:0;max-width:none}
+.disponibilidade-status{
+  display:flex;align-items:center;gap:10px;
+  font-size:var(--fs-sm);font-weight:600;letter-spacing:var(--track-label);
+  line-height:1.25;white-space:nowrap;
+  color:var(--gold-claro);
+}
+.disponibilidade-detalhe{
+  font-size:var(--fs-2xs);font-weight:500;letter-spacing:var(--track-tight);
+  line-height:1.5;white-space:nowrap;color:var(--texto-2);
+}
+/* O verde é o mesmo da bioluminescência dos peixes-lanterna da cena (#5ae8b8):
+   o farol lê como parte do fundo do oceano, não como um widget colado por cima. */
+.disponibilidade-farol{
+  position:relative;flex:none;
+  width:9px;height:9px;border-radius:50%;
+  background:#5ae8b8;
+  box-shadow:0 0 9px rgba(90,232,184,.75);
+}
+.disponibilidade-farol::after{
+  content:'';position:absolute;inset:0;border-radius:50%;
+  border:1px solid rgba(90,232,184,.55);
+  /* A onda anda em transform/opacity, que rodam no compositor. Animar
+     `box-shadow` repintaria o selo — e, com ele, o desfoque de vidro
+     atrás — a cada quadro. */
+  animation:pulsa-farol 2.6s ease-out infinite;
+}
+@keyframes pulsa-farol{
+  0%{transform:scale(1);opacity:.7}
+  100%{transform:scale(3.4);opacity:0}
+}
+/* Pelo mesmo motivo dos ícones do hero: desfoque de fundo sai no celular. */
+@media(max-width:760px){
+  .selo-disponibilidade{-webkit-backdrop-filter:none;backdrop-filter:none}
+}
+/* A chamada e o selo formam um par: agrupá-los mantém `.contato-conteudo` com
+   dois filhos, para o `gap` grande dele não abrir uma terceira vala. */
+.contato-acao{display:flex;flex-direction:column;align-items:center;gap:18px}
+
+/* ===== ACESSO A /precos ===== */
+/* Altura do par botão + selo, num único lugar.
+   A primeira tentativa foi deixar o botão esticar junto com o selo e tirar a
+   largura da altura com `aspect-ratio` — e não funciona: num item flex o motor
+   resolve a largura antes de conhecer a altura do stretch, então a razão não
+   tem de onde sair e o botão fica retangular. Aqui a altura é a medida
+   declarada, e os dois lados a leem: o quadrado é quadrado por construção.
+
+   64px é o conteúdo do selo arredondado para cima — 13px de padding em cima e
+   embaixo, 13px × 1.25 do status, 6px de gap e 10px × 1.5 do relógio dão
+   63,25px. Por isso as duas linhas têm `line-height` explícito e `nowrap`
+   logo abaixo: sem isso a conta muda de navegador para navegador. */
+.status-linha{
+  --altura-status:64px;
+  display:flex;align-items:center;justify-content:center;gap:12px;
+}
+.hero-status{margin-bottom:clamp(26px,4vh,40px)}
+.botao-valores{
+  display:grid;place-items:center;flex:none;
+  width:var(--altura-status,52px);height:var(--altura-status,52px);
+  border:1px solid var(--controle-borda);border-radius:18px;
+  background:var(--controle-fundo);
+  box-shadow:var(--controle-sombra);
+  -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
+  /* O cifrão é o único ponto quente do par: o selo ao lado é aço e o farol é
+     verde, então o dourado é o que separa a ação do status. */
+  color:var(--dourado);text-decoration:none;
+  transition:var(--controle-transicao);
+}
+.botao-valores svg{
+  width:24px;height:24px;
+  /* Mesmo trato dos ícones do hero: um halo curto faz o dourado ler como
+     aceso, e não como um glifo chapado sobre o vidro. */
+  filter:drop-shadow(0 1px 6px rgba(232,183,93,.45));
+}
+.botao-valores:hover,
+.botao-valores:focus-visible{
+  /* Clareia dentro do próprio dourado. O --controle-texto-ativo dos outros
+     controles é quase branco e apagaria justamente a cor que se quer aqui. */
+  border-color:var(--dourado);color:var(--dourado-claro);
+  box-shadow:var(--controle-sombra-ativa);
+}
+/* Mesmo motivo dos ícones do hero e do selo: desfoque de fundo sai no celular. */
+@media(max-width:760px){
+  .botao-valores{-webkit-backdrop-filter:none;backdrop-filter:none}
+}
+
+/* ===== PÁGINA DE VALORES ===== */
+.precos-page{
+  position:relative;z-index:10;
+  display:flex;flex-direction:column;align-items:center;
+  gap:clamp(30px,5vh,48px);
+  width:100%;min-height:100svh;
+  padding:clamp(96px,12vh,150px) clamp(24px,7vw,100px) clamp(60px,9vh,110px);
+}
+.precos-cabecalho{width:min(100%,720px);text-align:center}
+.precos-cabecalho h1{font-size:clamp(38px,6vw,72px)}
+.precos-intro{max-width:52ch;margin:18px auto 0;color:var(--texto-2);line-height:1.65}
+.precos-mercado{
+  display:inline-flex;align-items:center;gap:9px;
+  margin-top:20px;padding:8px 16px;border-radius:99px;
+  border:1px solid rgba(56,189,227,.28);background:rgba(4,16,26,.42);
+  font-family:var(--f-mono);font-size:var(--fs-2xs);font-weight:600;
+  letter-spacing:var(--track-label);color:var(--aqua);
+}
+.precos-mercado svg{width:13px;height:13px}
+.precos-aviso{margin:0;color:var(--texto-2);text-align:center;font-size:15px}
+.precos-lista{
+  display:grid;gap:clamp(14px,2vw,20px);
+  grid-template-columns:repeat(auto-fit,minmax(min(100%,258px),1fr));
+  width:min(100%,940px);list-style:none;
+}
+.preco-card{display:flex;flex-direction:column;gap:12px;padding:clamp(22px,3vw,30px)}
+/* O h2 global é título de seção (até 48px); aqui é rótulo de card. */
+.preco-card h2{
+  font-family:var(--f-mono);font-size:var(--fs-sm);font-weight:600;
+  letter-spacing:var(--track-label);color:var(--texto-2);
+  margin-bottom:0;text-transform:uppercase;
+}
+.preco-card.destaque{border-color:rgba(90,232,184,.42)}
+.preco-card.destaque h2{color:#5ae8b8}
+.preco-valor{display:flex;align-items:baseline;flex-wrap:wrap;gap:8px;margin:0;max-width:none}
+.preco-valor strong{
+  font-family:var(--f-serif);font-size:clamp(34px,4.4vw,46px);font-weight:700;
+  line-height:1;color:var(--texto);
+}
+.preco-valor span{
+  font-family:var(--f-mono);font-size:var(--fs-xs);
+  letter-spacing:var(--track-tight);color:var(--texto-2);
+}
+.preco-descricao{margin:0;max-width:none;font-size:14px;line-height:1.6;color:var(--texto-2)}
+.precos-rodape{display:flex;flex-direction:column;align-items:center;gap:18px}
+.precos-nota{
+  margin:0;max-width:46ch;text-align:center;
+  font-family:var(--f-mono);font-size:var(--fs-2xs);line-height:1.6;
+  letter-spacing:var(--track-tight);color:var(--texto-2);
+}
+
+/* ===== PAINEL DE VALORES (/admin) ===== */
+.admin-preco-linha{display:grid;grid-template-columns:120px minmax(0,1fr);gap:14px}
+.admin-preco-campo{display:grid;gap:6px;min-width:0}
+.admin-preco-opcoes{display:grid;gap:10px;margin-top:6px}
+.admin-preco-opcoes label{display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer}
+.admin-preco-opcoes input{width:auto;margin:0}
+.admin-preco-cifra{
+  display:grid;gap:2px;place-content:center;flex-shrink:0;
+  min-width:118px;padding:12px 16px;border-radius:16px;
+  border:1px solid rgba(56,189,227,.22);background:rgba(4,16,26,.4);text-align:center;
+}
+.admin-preco-cifra strong{font-family:var(--f-serif);font-size:22px;color:var(--texto)}
+.admin-preco-cifra span{
+  font-family:var(--f-mono);font-size:var(--fs-2xs);
+  letter-spacing:var(--track-tight);color:var(--texto-2);
+}
+.admin-preco-ativo{font-size:var(--fs-xs);color:#5ae8b8}
+.admin-preco-rascunho{font-size:var(--fs-xs);color:var(--gold)}
+/* O botão de publicar carrega texto; os vizinhos são ícones de 38px fixos. */
+.admin-projeto-acoes button.admin-preco-publicar{width:auto;padding:0 16px}
+@media(max-width:760px){
+  .admin-preco-cifra{min-width:0;width:100%}
+}
+
 @media(prefers-reduced-motion:reduce){
   .tela-carregamento{transition:none}
   .sonar-varredura,.sonar-blip::after,.carregamento-linha i{animation:none}
@@ -1356,6 +1538,7 @@ footer{
   #btn-sonar::after{animation:none}
   .rosa-anel-graus{animation:none}
   .nome-palavra,.competencia-icone,.nome-superficie::after,.bolhas-nome i{animation:none}
+  .disponibilidade-farol::after{animation:none}
   .carrossel-trilha{transition:none}
   .admin-alerta{animation:none}
   html{scroll-behavior:auto}
@@ -1381,11 +1564,13 @@ footer{
   position:relative;width:min(72vw,56vh,560px);aspect-ratio:1;
   isolation:isolate;
 }
+/* Veste o <button> da chamada de /contato e a âncora de volta para /contato no
+   rodapé de /precos — mesma ação visual, elementos diferentes. */
 .contato-chamada{
   display:flex;align-items:center;gap:11px;
   padding:15px 26px;border:1px solid var(--controle-borda);border-radius:99px;
   font:600 var(--fs-sm) var(--f-mono);letter-spacing:var(--track-label);
-  color:var(--gold-claro);
+  color:var(--gold-claro);text-decoration:none;
   background:var(--controle-fundo);
   box-shadow:var(--controle-sombra);
   -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);

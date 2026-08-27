@@ -2,7 +2,7 @@ import { useI18n } from '../i18n/context';
 
 export default function LoadingScreen({ visible, route }) {
   const { t } = useI18n();
-  const routeKey = { '/': 'home', '/projetos': 'projects', '/sobre': 'about', '/contato': 'contact' }[route] ?? 'home';
+  const routeKey = { '/': 'home', '/projects': 'projects', '/about': 'about', '/pricing': 'pricing', '/contact': 'contact' }[route] ?? 'home';
   return (
     <div
       className={`tela-carregamento${visible ? ' visivel' : ''}`}

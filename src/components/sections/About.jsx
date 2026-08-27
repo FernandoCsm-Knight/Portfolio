@@ -249,7 +249,7 @@ function About() {
   }, []);
 
   return (
-    <section id="sobre" className="secao-grafo-habilidades" aria-label={t('hero.skillsGraph')}>
+    <section id="about" className="secao-grafo-habilidades" aria-label={t('hero.skillsGraph')}>
       <div ref={grafoRef} className="grafo-habilidades">
         <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
           {CONEXOES.map(([origem, destino], index) => (

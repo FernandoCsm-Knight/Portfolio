@@ -3,9 +3,11 @@ export const TRANSLATIONS = {
     localeTag: 'pt-BR',
     language: { label: 'Idioma', pt: 'Português', es: 'Español', en: 'English' },
     nav: { label: 'Navegação', open: 'Abrir navegação', close: 'Fechar navegação', home: 'INÍCIO', about: 'SOBRE', projects: 'PROJETOS', contact: 'CONTATO' },
-    loading: { aria: 'Carregando página', system: 'SISTEMAS DE NAVEGAÇÃO', home: 'PREPARANDO O MERGULHO', projects: 'TRAÇANDO CARTA DE EXPEDIÇÕES', about: 'ABRINDO O CADERNO DE BORDO', contact: 'SINTONIZANDO CANAIS DE CONTATO' },
+    loading: { aria: 'Carregando página', system: 'SISTEMAS DE NAVEGAÇÃO', home: 'PREPARANDO O MERGULHO', projects: 'TRAÇANDO CARTA DE EXPEDIÇÕES', about: 'ABRINDO O CADERNO DE BORDO', pricing: 'CONSULTANDO A TABELA DE BORDO', contact: 'SINTONIZANDO CANAIS DE CONTATO' },
     common: { close: 'Fechar', loading: 'Carregando', unavailable: 'Indisponível no momento', back: 'VOLTAR AO MERGULHO' },
     hero: { areas: 'Áreas de atuação', graphics: 'Computação gráfica', ai: 'Inteligência artificial', performance: 'Alto desempenho', skillsGraph: 'Grafo de habilidades' },
+    availability: { status: 'Online', clock: '{time} em Belo Horizonte' },
+    pricing: { title: 'Valores por hora', intro: 'Cada modalidade tem um valor por hora de trabalho, ajustado ao mercado de cada região.', action: 'Ver valores por hora', perHour: 'por hora', marketLocal: 'Valores para {country}', marketDefault: 'Tabela internacional', loading: 'Consultando a tabela…', empty: 'Tabela em revisão no momento. Me escreva para um orçamento.', failed: 'Não foi possível carregar a tabela agora. Me escreva para um orçamento.', unavailable: 'Tabela indisponível no momento.', note: 'Escopo, prazo e forma de pagamento são combinados antes do início.' },
     skills: ['C++', 'CUDA', 'PYTHON', 'PYTORCH', 'TYPESCRIPT', 'REACT', 'RUST', 'APRENDIZADO PROFUNDO', 'COMPUTAÇÃO PARALELA'],
     comments: {
       placeholders: [
@@ -35,9 +37,11 @@ export const TRANSLATIONS = {
     localeTag: 'en-US',
     language: { label: 'Language', pt: 'Português', es: 'Español', en: 'English' },
     nav: { label: 'Navigation', open: 'Open navigation', close: 'Close navigation', home: 'HOME', about: 'ABOUT', projects: 'PROJECTS', contact: 'CONTACT' },
-    loading: { aria: 'Loading page', system: 'NAVIGATION SYSTEMS', home: 'PREPARING THE DIVE', projects: 'CHARTING THE EXPEDITION', about: 'OPENING THE LOGBOOK', contact: 'TUNING CONTACT CHANNELS' },
+    loading: { aria: 'Loading page', system: 'NAVIGATION SYSTEMS', home: 'PREPARING THE DIVE', projects: 'CHARTING THE EXPEDITION', about: 'OPENING THE LOGBOOK', pricing: 'CONSULTING THE RATE TABLE', contact: 'TUNING CONTACT CHANNELS' },
     common: { close: 'Close', loading: 'Loading', unavailable: 'Currently unavailable', back: 'BACK TO THE DIVE' },
     hero: { areas: 'Areas of expertise', graphics: 'Computer graphics', ai: 'Artificial intelligence', performance: 'High-performance computing', skillsGraph: 'Skills graph' },
+    availability: { status: 'Online', clock: '{time} in Belo Horizonte' },
+    pricing: { title: 'Hourly rates', intro: 'Each type of work has an hourly rate, adjusted to the market of each region.', action: 'See hourly rates', perHour: 'per hour', marketLocal: 'Rates for {country}', marketDefault: 'International rates', loading: 'Loading the rate table…', empty: 'The rate table is under review. Write to me for a quote.', failed: 'The rate table could not be loaded right now. Write to me for a quote.', unavailable: 'Rate table currently unavailable.', note: 'Scope, timeline, and payment terms are agreed before the work starts.' },
     skills: ['C++', 'CUDA', 'PYTHON', 'PYTORCH', 'TYPESCRIPT', 'REACT', 'RUST', 'DEEP LEARNING', 'PARALLEL COMPUTING'],
     comments: { placeholders: [{ name: 'Visitor', message: 'Your review will appear here.', rating: 5 }, { name: 'New message', message: 'Share your thoughts about this portfolio.', rating: 4 }, { name: 'Open channel', message: 'Leave a message to start a conversation.', rating: 5 }], rating: '{rating} out of 5 bubbles', wait: 'Wait {seconds}s before submitting again.', sent: 'Review submitted for moderation.', failed: 'The review could not be submitted.', add: 'Add review', loading: 'Loading…', carousel: 'Reviews carousel; drag to navigate', controls: 'Review controls', previous: 'Previous reviews', next: 'Next reviews', title: 'Leave your review.', name: 'Name', comment: 'Comment', evaluation: 'Rating', max: 'max. 500', send: 'Submit review', sending: 'Submitting review', close: 'Close review', unavailable: 'Reviews are currently unavailable', stars: '{rating} out of 5' },
     about: {
@@ -52,9 +56,11 @@ export const TRANSLATIONS = {
     localeTag: 'es-ES',
     language: { label: 'Idioma', pt: 'Português', es: 'Español', en: 'English' },
     nav: { label: 'Navegación', open: 'Abrir navegación', close: 'Cerrar navegación', home: 'INICIO', about: 'SOBRE MÍ', projects: 'PROYECTOS', contact: 'CONTACTO' },
-    loading: { aria: 'Cargando página', system: 'SISTEMAS DE NAVEGACIÓN', home: 'PREPARANDO LA INMERSIÓN', projects: 'TRAZANDO LA EXPEDICIÓN', about: 'ABRIENDO EL CUADERNO DE BITÁCORA', contact: 'SINTONIZANDO CANALES DE CONTACTO' },
+    loading: { aria: 'Cargando página', system: 'SISTEMAS DE NAVEGACIÓN', home: 'PREPARANDO LA INMERSIÓN', projects: 'TRAZANDO LA EXPEDICIÓN', pricing: 'CONSULTANDO LA TABLA DE TARIFAS', about: 'ABRIENDO EL CUADERNO DE BITÁCORA', contact: 'SINTONIZANDO CANALES DE CONTACTO' },
     common: { close: 'Cerrar', loading: 'Cargando', unavailable: 'No disponible por el momento', back: 'VOLVER A LA INMERSIÓN' },
     hero: { areas: 'Áreas de especialización', graphics: 'Computación gráfica', ai: 'Inteligencia artificial', performance: 'Computación de alto rendimiento', skillsGraph: 'Grafo de habilidades' },
+    availability: { status: 'Online', clock: '{time} en Belo Horizonte' },
+    pricing: { title: 'Tarifas por hora', intro: 'Cada modalidad tiene una tarifa por hora de trabajo, ajustada al mercado de cada región.', action: 'Ver tarifas por hora', perHour: 'por hora', marketLocal: 'Tarifas para {country}', marketDefault: 'Tarifas internacionales', loading: 'Consultando la tabla…', empty: 'La tabla está en revisión. Escríbeme para un presupuesto.', failed: 'No se pudo cargar la tabla ahora. Escríbeme para un presupuesto.', unavailable: 'Tabla no disponible por ahora.', note: 'El alcance, el plazo y la forma de pago se acuerdan antes de empezar.' },
     skills: ['C++', 'CUDA', 'PYTHON', 'PYTORCH', 'TYPESCRIPT', 'REACT', 'RUST', 'APRENDIZAJE PROFUNDO', 'COMPUTACIÓN PARALELA'],
     comments: { placeholders: [{ name: 'Visitante', message: 'Tu reseña aparecerá aquí.', rating: 5 }, { name: 'Nuevo mensaje', message: 'Comparte tu impresión sobre el portafolio.', rating: 4 }, { name: 'Canal abierto', message: 'Deja un mensaje para iniciar la conversación.', rating: 5 }], rating: '{rating} de 5 burbujas', wait: 'Espera {seconds}s antes de enviar nuevamente.', sent: 'Reseña enviada para moderación.', failed: 'No fue posible enviar la reseña.', add: 'Añadir reseña', loading: 'Cargando…', carousel: 'Carrusel de reseñas; arrastra para navegar', controls: 'Controles de las reseñas', previous: 'Reseñas anteriores', next: 'Siguientes reseñas', title: 'Deja tu reseña.', name: 'Nombre', comment: 'Comentario', evaluation: 'Valoración', max: 'máx. 500', send: 'Enviar reseña', sending: 'Enviando reseña', close: 'Cerrar reseña', unavailable: 'Las reseñas no están disponibles', stars: '{rating} de 5' },
     about: {

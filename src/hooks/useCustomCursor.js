@@ -235,7 +235,7 @@ export function useCustomCursor({ clickEffectsEnabled = true } = {}) {
       torpedo.rafId = requestAnimationFrame((tempo) => animarTorpedo(torpedo, tempo));
     }
 
-    /* Usado pelo mapa de expedições (/projetos): sua cena dispara este mesmo
+    /* Usado pelo mapa de expedições (/projects): sua cena dispara este mesmo
        evento ao passar sobre um marcador de projeto. A home não usa mais
        criaturas clicáveis, então aqui só o mapa aciona isto. */
     function handleFishHover(e) {

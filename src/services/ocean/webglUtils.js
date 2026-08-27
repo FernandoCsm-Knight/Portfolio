@@ -31,6 +31,35 @@ export async function precompileRenderer(renderer, scene, camera) {
   }
 }
 
+/**
+ * Sobe para a GPU tudo que a cena vai precisar, antes do primeiro quadro
+ * visível.
+ *
+ * `precompileRenderer` só linka os programas de shader. Um buffer de geometria
+ * ou uma textura só sobem no primeiro desenho que os usa — e o descarte por
+ * frustum impede esse desenho enquanto o objeto está fora da tela. O resultado
+ * é que cada objeto que entra em cena durante a rolagem paga o próprio upload
+ * ali, no meio do gesto: um engasgo por objeto.
+ *
+ * Uma passada com o descarte desligado submete a cena inteira de uma vez. O que
+ * está fora da tela é recortado antes de virar fragmento, então o que sobra é
+ * praticamente só o custo do upload — exatamente o que se quer pagar aqui.
+ */
+export function aquecerUploads(renderer, scene, camera) {
+  const restaurar = [];
+  scene.traverse((objeto) => {
+    if (!objeto.frustumCulled) return;
+    if (!(objeto.isMesh || objeto.isPoints || objeto.isLine || objeto.isSprite)) return;
+    objeto.frustumCulled = false;
+    restaurar.push(objeto);
+  });
+  try {
+    renderer.render(scene, camera);
+  } finally {
+    restaurar.forEach((objeto) => { objeto.frustumCulled = true; });
+  }
+}
+
 /** Libera recursos compartilhados de uma árvore Three.js uma única vez. */
 export function disposeSceneResources(scene) {
   const geometries = new Set();
