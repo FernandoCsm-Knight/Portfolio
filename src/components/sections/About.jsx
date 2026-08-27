@@ -1,4 +1,4 @@
-import { memo, useEffect, useRef } from 'react';
+import { memo, useLayoutEffect, useRef } from 'react';
 import { FaBrain, FaNetworkWired } from 'react-icons/fa6';
 import {
   SiCplusplus,
@@ -74,25 +74,44 @@ function About() {
   if (!configuracaoRef.current) configuracaoRef.current = criarConfiguracaoAleatoria(SKILLS.length);
   const configuracao = configuracaoRef.current;
 
-  useEffect(() => {
+  /* useLayoutEffect e não useEffect: os nós não têm mais `left`/`top` no JSX,
+     então é este primeiro renderizar() que os tira do canto superior esquerdo
+     — e ele precisa acontecer antes da primeira pintura. */
+  useLayoutEffect(() => {
     const grafo = grafoRef.current;
     const nos = configuracaoRef.current;
     if (!grafo || !nos) return undefined;
     let arrastado = null;
     let rafId = null;
+    let visivel = true;
     let ultimoInstante = performance.now();
     const reduzMovimento = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    /* As porcentagens do simulador viram pixels aqui porque a posição sai por
+       `transform`: escrever `left`/`top` a 60fps obrigava o navegador a
+       refazer o layout dos 9 nós a cada quadro — era, sozinho, metade de todo
+       o recálculo de estilo da página durante a rolagem. */
+    let caixa = { largura: grafo.clientWidth, altura: grafo.clientHeight };
+    function medirCaixa() {
+      caixa = { largura: grafo.clientWidth, altura: grafo.clientHeight };
+    }
+    const observadorCaixa = new ResizeObserver(() => {
+      medirCaixa();
+      renderizar();
+    });
+    observadorCaixa.observe(grafo);
 
     function renderizar() {
       nos.forEach((no, index) => {
         const elemento = nosRef.current[index];
         if (!elemento) return;
-        elemento.style.left = `${no.x}%`;
-        elemento.style.top = `${no.y}%`;
-        elemento.style.setProperty(
-          '--rotulo-x',
-          no.x < 30 ? '-15%' : no.x > 70 ? '-85%' : '-50%',
-        );
+        elemento.style.transform = `translate(-50%,-50%) translate(${
+          (no.x / 100) * caixa.largura}px,${(no.y / 100) * caixa.altura}px)`;
+        const rotulo = no.x < 30 ? '-15%' : no.x > 70 ? '-85%' : '-50%';
+        if (no.rotulo !== rotulo) {
+          no.rotulo = rotulo;
+          elemento.style.setProperty('--rotulo-x', rotulo);
+        }
       });
       CONEXOES.forEach(([origem, destino], index) => {
         const aresta = arestasRef.current[index];
@@ -139,16 +158,44 @@ function About() {
         forcas[destino].x -= fx; forcas[destino].y -= fy;
       });
 
+      let emMovimento = false;
       nos.forEach((no, index) => {
-        if (no.arrastando) return;
+        if (no.arrastando) {
+          emMovimento = true;
+          return;
+        }
         no.vx = (no.vx + forcas[index].x * passo) * Math.pow(0.9, passo);
         no.vy = (no.vy + forcas[index].y * passo) * Math.pow(0.9, passo);
         no.x = Math.min(92, Math.max(8, no.x + no.vx * passo));
         no.y = Math.min(91, Math.max(9, no.y + no.vy * passo));
+        if (Math.abs(no.vx) > 0.004 || Math.abs(no.vy) > 0.004) emMovimento = true;
       });
       renderizar();
+      /* O grafo converge para um equilíbrio e depois só treme abaixo de um
+         décimo de pixel: continuar pedindo quadros a partir daí é custo puro
+         numa aba que o visitante provavelmente já rolou para longe. */
+      rafId = emMovimento ? requestAnimationFrame(simular) : null;
+    }
+
+    function pedirQuadro() {
+      if (rafId !== null || !visivel || reduzMovimento) return;
+      ultimoInstante = performance.now();
       rafId = requestAnimationFrame(simular);
     }
+
+    function pararQuadros() {
+      if (rafId !== null) cancelAnimationFrame(rafId);
+      rafId = null;
+    }
+
+    /* Fora da tela a simulação não tem espectador — e a home tem três telas de
+       rolagem, então ela passa a maior parte do tempo fora de vista. */
+    const observadorVisibilidade = new IntersectionObserver(([entrada]) => {
+      visivel = entrada.isIntersecting;
+      if (visivel) pedirQuadro();
+      else pararQuadros();
+    }, { rootMargin: '150px' });
+    observadorVisibilidade.observe(grafo);
 
     function posicionarArrastado(event) {
       if (arrastado === null) return;
@@ -171,6 +218,8 @@ function About() {
       nos[arrastado].arrastando = true;
       elemento.classList.add('arrastando');
       posicionarArrastado(event);
+      /* o laço pode ter parado por convergência: arrastar precisa acordá-lo */
+      pedirQuadro();
     }
 
     function encerrarArraste() {
@@ -178,6 +227,7 @@ function About() {
       nos[arrastado].arrastando = false;
       nosRef.current[arrastado]?.classList.remove('arrastando');
       arrastado = null;
+      pedirQuadro();
     }
 
     grafo.addEventListener('pointerdown', iniciarArraste);
@@ -185,10 +235,12 @@ function About() {
     window.addEventListener('pointerup', encerrarArraste);
     window.addEventListener('pointercancel', encerrarArraste);
     renderizar();
-    if (!reduzMovimento) rafId = requestAnimationFrame(simular);
+    pedirQuadro();
 
     return () => {
-      if (rafId !== null) cancelAnimationFrame(rafId);
+      pararQuadros();
+      observadorCaixa.disconnect();
+      observadorVisibilidade.disconnect();
       grafo.removeEventListener('pointerdown', iniciarArraste);
       window.removeEventListener('pointermove', posicionarArrastado);
       window.removeEventListener('pointerup', encerrarArraste);
@@ -217,7 +269,7 @@ function About() {
             (() => {
               const Icone = ICONES[index];
               const [cor, brilho, borda] = CORES[index];
-              const { x, y } = configuracao[index];
+              const { x } = configuracao[index];
               const rotuloX = x < 30 ? '-15%' : x > 70 ? '-85%' : '-50%';
               return (
                 <li
@@ -230,8 +282,8 @@ function About() {
                   ref={(elemento) => { nosRef.current[index] = elemento; }}
                   tabIndex="0"
                   style={{
-                    left: `${x}%`,
-                    top: `${y}%`,
+                    /* a posição vem por `transform`, escrita pelo laço da
+                       simulação — ver renderizar() */
                     '--cor-no': cor,
                     '--brilho-no': brilho,
                     '--borda-no': borda,

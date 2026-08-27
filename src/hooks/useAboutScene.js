@@ -1,5 +1,5 @@
 import { useCallback, useRef } from 'react';
-import { attachViewportSync } from '../services/scene/viewportSync';
+import { attachViewportSync, medirViewport } from '../services/scene/viewportSync';
 import { useSceneMount } from './useSceneMount';
 
 /**
@@ -23,7 +23,8 @@ export function useAboutScene(onReady) {
 
     const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
     const api = createAboutScene(canvas, { reducedMotion });
-    api.resize(window.innerWidth, window.innerHeight);
+    const { largura, altura } = medirViewport();
+    api.resize(largura, altura);
     await api.prepare?.();
     if (!isCurrent()) {
       api.dispose();
@@ -33,9 +34,10 @@ export function useAboutScene(onReady) {
     const detachViewport = attachViewportSync(api);
 
     function handlePointerMove(e) {
+      const viewport = medirViewport();
       api.setPointerNDC(
-        (e.clientX / window.innerWidth) * 2 - 1,
-        -(e.clientY / window.innerHeight) * 2 + 1,
+        (e.clientX / viewport.largura) * 2 - 1,
+        -(e.clientY / viewport.altura) * 2 + 1,
       );
     }
     window.addEventListener('pointermove', handlePointerMove, { passive: true });

@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState } from 'react';
 import { PROFUNDIDADE_MAX_M } from '../services/ocean/constants';
-import { attachViewportSync } from '../services/scene/viewportSync';
+import { attachViewportSync, medirViewport } from '../services/scene/viewportSync';
 import { useSceneMount } from './useSceneMount';
 
 const HUD_INICIAL = {
@@ -36,7 +36,8 @@ export function useOceanScene(onReady) {
     const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
     const api = createOceanScene(canvas, { reducedMotion });
 
-    api.resize(window.innerWidth, window.innerHeight);
+    const { largura, altura } = medirViewport();
+    api.resize(largura, altura);
     await api.prepare?.();
     if (!isCurrent()) {
       api.dispose();
@@ -51,9 +52,10 @@ export function useOceanScene(onReady) {
         api.clearPointer();
         return;
       }
+      const viewport = medirViewport();
       api.setPointerNDC(
-        (posicao.clientX / window.innerWidth) * 2 - 1,
-        -(posicao.clientY / window.innerHeight) * 2 + 1,
+        (posicao.clientX / viewport.largura) * 2 - 1,
+        -(posicao.clientY / viewport.altura) * 2 + 1,
       );
     }
     window.addEventListener('ocean-submarine-move', handleSubmarineMove);
@@ -69,8 +71,12 @@ export function useOceanScene(onReady) {
 
     let rafId;
     /* 45fps não divide 120Hz nem 60Hz: o cap fazia frames caírem de forma
-       irregular (judder visível). 60 divide as duas taxas comuns. */
-    const frameInterval = reducedMotion ? 1000 / 30 : 1000 / 60;
+       irregular (judder visível). 60 divide as duas taxas comuns — e 30
+       também, que é o teto no celular: este laço era metade de todo o trabalho
+       de JS da thread principal durante a rolagem, e a cena é uma ambientação
+       de fundo lenta, onde 30fps não se distingue de 60. */
+    const telaTatil = matchMedia('(pointer: coarse)').matches;
+    const frameInterval = reducedMotion || telaTatil ? 1000 / 30 : 1000 / 60;
     let lastFrameTime = 0;
     let framesAquecidos = 0;
     let last = { depthMeters: -1 };

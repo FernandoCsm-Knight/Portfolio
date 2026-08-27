@@ -587,7 +587,12 @@ export function createOceanScene(canvas, { reducedMotion = false } = {}) {
      precisam do mesmo throttle — do contrário o corpo do gradiente já era
      limitado, mas essas duas variáveis continuavam disparando repaint a
      cada frame durante qualquer movimento de câmera. */
-  const BG_UPDATE_INTERVAL = 8;
+  /* Cada troca da string reescreve o `background` de #fundo, que ocupa a tela
+     inteira — ou seja, um repaint de viewport cheio. A 8 quadros isso
+     acontecia ~7 vezes por segundo, o tempo todo, porque o gradiente também
+     acompanha o relógio da cena. A 20 o desenho anda 0,3px por passo: nada
+     perceptível, um terço dos repaints. */
+  const BG_UPDATE_INTERVAL = 20;
   let bgFrameCounter = 0;
   let backgroundCssCache = '';
   let bgDepthCache = '';

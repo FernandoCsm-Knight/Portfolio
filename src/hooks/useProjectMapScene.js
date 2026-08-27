@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createProjectMapScene } from '../services/projectMap/sceneService';
 import { listProjects, localizeProject, projectsConfigured } from '../services/projects';
+import { medirViewport } from '../services/scene/viewportSync';
 import { useSceneMount } from './useSceneMount';
 
 /**
@@ -58,7 +59,8 @@ export function useProjectMapScene(onReady, { labels, locale }) {
 
     const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
     const api = createProjectMapScene(canvas, projetosLocalizados, { reducedMotion, labels });
-    api.resize(window.innerWidth, window.innerHeight);
+    const viewportInicial = medirViewport();
+    api.resize(viewportInicial.largura, viewportInicial.altura);
     await api.prepare?.();
     if (!isCurrent()) {
       api.dispose();
@@ -71,7 +73,8 @@ export function useProjectMapScene(onReady, { labels, locale }) {
       if (resizeRaf !== null) return;
       resizeRaf = requestAnimationFrame(() => {
         resizeRaf = null;
-        api.resize(window.innerWidth, window.innerHeight);
+        const { largura, altura } = medirViewport();
+        api.resize(largura, altura);
       });
     }
     window.addEventListener('resize', handleResize);
@@ -82,7 +85,7 @@ export function useProjectMapScene(onReady, { labels, locale }) {
 
     function handlePointerMove(e) {
       pendingPointer = { x: e.clientX, y: e.clientY };
-      if (dragStartX !== null) api.dragCarousel(e.clientX - dragStartX, window.innerWidth);
+      if (dragStartX !== null) api.dragCarousel(e.clientX - dragStartX, medirViewport().largura);
     }
     function handlePointerLeave() {
       pendingPointer = null;

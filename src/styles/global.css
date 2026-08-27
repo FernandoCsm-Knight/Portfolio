@@ -48,12 +48,22 @@
 *{margin:0;padding:0;box-sizing:border-box}
 html{scroll-behavior:smooth}
 html.rolagem-cursor{scroll-behavior:auto}
+/* Rede de segurança contra estouro horizontal. `overflow-x` só no body é
+   propagado para o viewport e deixa o próprio body sem recortar nada — no
+   celular o navegador ainda alarga o viewport de layout para caber o que
+   sobra, e aí `window.innerWidth` cresce e as camadas fixas de fundo passam
+   da largura da tela. Declarar no html faz a propagação vir dele e o body
+   recortar de fato; `clip` (e não `hidden`) para o body não virar um
+   contêiner de rolagem próprio. A linha `hidden` antes é o fallback para
+   navegadores sem `overflow:clip`. */
+html{overflow-x:clip}
 body{
   font-family:var(--f-mono);
   font-size:16px;
   color:var(--texto);
   background:#0b3350;
   overflow-x:hidden;
+  overflow-x:clip;
 }
 /* a classe é adicionada por useCustomCursor apenas quando o cursor customizado
    está de fato ativo (ponteiro fino + efeito montado). */
@@ -617,7 +627,9 @@ h1 em{font-style:normal;color:var(--gold-claro)}
 }
 .grafo-habilidades ul{list-style:none}
 .grafo-habilidades li{
-  position:absolute;z-index:1;
+  /* a origem fica no canto do grafo; o deslocamento de cada nó vem por
+     `transform`, escrito pela simulação em About.jsx */
+  position:absolute;z-index:1;left:0;top:0;
   display:grid;place-items:center;
   transform:translate(-50%,-50%);
   width:clamp(68px,9vw,104px);height:clamp(68px,9vw,104px);
@@ -682,6 +694,18 @@ h1 em{font-style:normal;color:var(--gold-claro)}
     inset 0 1px 0 rgba(238,255,255,.2),
     inset 0 0 18px var(--brilho-no),
     0 12px 32px rgba(1,6,14,.16);
+}
+/* Um `backdrop-filter` num elemento que se move obriga o navegador a refazer
+   o desfoque do que está atrás dele a cada quadro. Nos ícones do hero (que
+   flutuam por animação CSS) e nos nós do grafo (que a simulação reposiciona)
+   são 12 desfoques por quadro — caro demais num aparelho móvel para o que
+   acrescentam por cima do gradiente, que já carrega a aparência de vidro. */
+@media(max-width:760px){
+  .competencia-icone,
+  .grafo-habilidades li,
+  .grafo-habilidades li::after{
+    -webkit-backdrop-filter:none;backdrop-filter:none;
+  }
 }
 h2{
   font-family:var(--f-serif);font-weight:600;
@@ -981,12 +1005,20 @@ p strong{color:var(--texto);font-weight:600}
 @keyframes comentarios-modal-entrada{from{opacity:0}to{opacity:1}}
 @media(max-width:900px){
   .comentarios-section{gap:54px}
+  /* O clipe da trilha não é cosmético: os cartões vizinhos são empurrados
+     para os lados por --passo-carrossel e, sem `overflow:hidden`, eles somam
+     ~230px de estouro de cada lado. No celular isso alarga o viewport de
+     layout inteiro — o que dá rolagem horizontal e faz todas as camadas
+     `position:fixed` (canvas do oceano, vinheta, sonar) serem desenhadas mais
+     largas que a tela. */
   .comentarios-feed ol{
     --passo-carrossel:clamp(230px,68vw,430px);
-    height:380px;overflow:visible;perspective:none;transform-style:flat;
+    height:380px;overflow:hidden;perspective:none;transform-style:flat;
   }
   .comentarios-feed li{
-    width:min(88vw,460px);min-height:230px;padding:24px 26px;
+    /* medido contra a trilha, e não contra a janela: 88vw ignora o padding da
+       seção e deixa o cartão ativo mais largo que o próprio carrossel. */
+    width:min(100%,460px);min-height:230px;padding:24px 26px;
     -webkit-backdrop-filter:blur(30px) saturate(1.08);
     backdrop-filter:blur(30px) saturate(1.08);
     transform:

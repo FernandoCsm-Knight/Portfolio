@@ -8,10 +8,22 @@
  * Usado por useOceanScene e useAboutScene, as duas cenas cuja câmera/HUD
  * dependem da profundidade de rolagem. Devolve a função de limpeza.
  */
+/**
+ * Largura/altura do viewport de layout — exatamente a caixa que um
+ * `position:fixed;inset:0` ocupa. `window.innerWidth` não serve: ele inclui a
+ * barra de rolagem clássica no desktop e, no celular, cresce junto com o
+ * viewport de layout quando algum elemento estoura na horizontal. Medir por
+ * aqui mantém o canvas do tamanho da tela mesmo quando isso acontece.
+ */
+export function medirViewport() {
+  const raiz = document.documentElement;
+  return { largura: raiz.clientWidth, altura: raiz.clientHeight };
+}
+
 export function attachViewportSync(api) {
-  let scrollMax = document.documentElement.scrollHeight - window.innerHeight;
+  let scrollMax = document.documentElement.scrollHeight - document.documentElement.clientHeight;
   function medirScrollMax() {
-    scrollMax = document.documentElement.scrollHeight - window.innerHeight;
+    scrollMax = document.documentElement.scrollHeight - document.documentElement.clientHeight;
   }
 
   let resizeRaf = null;
@@ -19,7 +31,8 @@ export function attachViewportSync(api) {
     if (resizeRaf !== null) return;
     resizeRaf = requestAnimationFrame(() => {
       resizeRaf = null;
-      api.resize(window.innerWidth, window.innerHeight);
+      const { largura, altura } = medirViewport();
+      api.resize(largura, altura);
       medirScrollMax();
     });
   }
