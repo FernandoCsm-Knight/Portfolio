@@ -21,25 +21,45 @@ export function medirViewport() {
 }
 
 export function attachViewportSync(api) {
-  let scrollMax = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+  const raiz = document.documentElement;
+  let scrollMax = raiz.scrollHeight - raiz.clientHeight;
+  let ultimaLargura = 0;
+  let ultimaAltura = 0;
+
   function medirScrollMax() {
-    scrollMax = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+    scrollMax = raiz.scrollHeight - raiz.clientHeight;
+  }
+
+  /* Redimensionar a cena realoca o buffer de desenho do WebGL, então só vale
+     a pena quando a caixa mudou de fato — o observador abaixo também dispara
+     por mudanças de altura do documento, que não mexem no viewport. */
+  function sincronizarTamanho() {
+    const { largura, altura } = medirViewport();
+    if (largura === ultimaLargura && altura === ultimaAltura) return;
+    ultimaLargura = largura;
+    ultimaAltura = altura;
+    api.resize(largura, altura);
   }
 
   let resizeRaf = null;
-  function handleResize() {
+  function agendarSincronia() {
     if (resizeRaf !== null) return;
     resizeRaf = requestAnimationFrame(() => {
       resizeRaf = null;
-      const { largura, altura } = medirViewport();
-      api.resize(largura, altura);
+      sincronizarTamanho();
       medirScrollMax();
     });
   }
-  window.addEventListener('resize', handleResize);
+  window.addEventListener('resize', agendarSincronia);
 
-  const observadorAltura = new ResizeObserver(medirScrollMax);
-  observadorAltura.observe(document.documentElement);
+  /* Observa a raiz, e não só a janela, porque o surgimento da barra de
+     rolagem clássica encolhe o viewport de layout sem disparar evento nenhum
+     de resize. A cena é medida enquanto a tela de carregamento ainda segura o
+     `overflow:hidden`, isto é, sem barra: sem este observador o canvas ficava
+     preso naquela largura — alguns pixels mais largo que a tela — até o
+     visitante redimensionar a janela. */
+  const observadorRaiz = new ResizeObserver(agendarSincronia);
+  observadorRaiz.observe(raiz);
 
   function aplicarProgresso() {
     api.setScrollProgress(scrollMax > 0 ? window.scrollY / scrollMax : 0);
@@ -58,8 +78,8 @@ export function attachViewportSync(api) {
   return () => {
     if (resizeRaf !== null) cancelAnimationFrame(resizeRaf);
     if (scrollRaf !== null) cancelAnimationFrame(scrollRaf);
-    window.removeEventListener('resize', handleResize);
+    window.removeEventListener('resize', agendarSincronia);
     window.removeEventListener('scroll', handleScroll);
-    observadorAltura.disconnect();
+    observadorRaiz.disconnect();
   };
 }

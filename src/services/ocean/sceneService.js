@@ -8,6 +8,7 @@ import {
   construirCoralOrganico,
   construirCaranguejoOrganico,
   texBrilho,
+  texPonto,
 } from './creatureBuilders';
 import {
   M_CARPA,
@@ -54,6 +55,8 @@ export function createOceanScene(canvas, { reducedMotion = false } = {}) {
   let escalaResolucao = 1;
   renderer.setPixelRatio(getWebGLPixelRatio(larguraViewport));
   const scene = new THREE.Scene();
+  /* máscara redonda compartilhada por todos os materiais de partícula */
+  const mapaPonto = texPonto();
 
   const cam = new THREE.PerspectiveCamera(50, canvas.clientWidth / canvas.clientHeight || 1, 0.1, 320);
   cam.position.set(0, 0, 58);
@@ -200,6 +203,7 @@ export function createOceanScene(canvas, { reducedMotion = false } = {}) {
     geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
     geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
     const mat = new THREE.PointsMaterial({
+      map: mapaPonto,
       size: formas[0].config.tam, vertexColors: true, transparent: true,
       opacity: formas[0].config.op, depthWrite: false, sizeAttenuation: true,
       blending: THREE.AdditiveBlending,
@@ -269,6 +273,7 @@ export function createOceanScene(canvas, { reducedMotion = false } = {}) {
     g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
     g.setAttribute('color', new THREE.BufferAttribute(col, 3));
     const p = new THREE.Points(g, new THREE.PointsMaterial({
+      map: mapaPonto,
       size: 0.34, vertexColors: true, transparent: true, opacity: 0.78, depthWrite: false,
       blending: THREE.AdditiveBlending, sizeAttenuation: true,
     }));
@@ -292,6 +297,7 @@ export function createOceanScene(canvas, { reducedMotion = false } = {}) {
     g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
     g.setAttribute('color', new THREE.BufferAttribute(col, 3));
     scene.add(new THREE.Points(g, new THREE.PointsMaterial({
+      map: mapaPonto,
       size: 0.55, vertexColors: true, transparent: true, opacity: 0.85, depthWrite: false,
     })));
     const paletas = [
@@ -320,6 +326,7 @@ export function createOceanScene(canvas, { reducedMotion = false } = {}) {
         { density: 44, minParticles: 38, importance: 1.05 },
       );
       const p = new THREE.Points(optimized.geometry, new THREE.PointsMaterial({
+        map: mapaPonto,
         size: rnd(0.34, 0.52), vertexColors: true, transparent: true,
         opacity: Math.min(0.96, 0.78 * optimized.brightness),
         depthWrite: false, blending: THREE.AdditiveBlending,
@@ -355,6 +362,7 @@ export function createOceanScene(canvas, { reducedMotion = false } = {}) {
         importance: 1.18,
       });
       const p = new THREE.Points(optimized.geometry, new THREE.PointsMaterial({
+        map: mapaPonto,
         size: rnd(0.34, 0.42), vertexColors: true, transparent: true,
         opacity: Math.min(0.96, 0.82 * optimized.brightness),
         depthWrite: false, blending: THREE.AdditiveBlending, sizeAttenuation: true,
@@ -478,6 +486,7 @@ export function createOceanScene(canvas, { reducedMotion = false } = {}) {
     g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
     g.setAttribute('color', new THREE.BufferAttribute(col, 3));
     const m = new THREE.PointsMaterial({
+      map: mapaPonto,
       size: 0.32, vertexColors: true, transparent: true, opacity: 0.48,
       depthWrite: false, blending: THREE.AdditiveBlending, sizeAttenuation: true,
     });
@@ -502,7 +511,7 @@ export function createOceanScene(canvas, { reducedMotion = false } = {}) {
     }
     const g = new THREE.BufferGeometry();
     g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-    const m = new THREE.PointsMaterial({ color: 0x7fe3d0, size: 0.22, transparent: true, opacity: 0.3, blending: THREE.AdditiveBlending, depthWrite: false });
+    const m = new THREE.PointsMaterial({ map: mapaPonto, color: 0x7fe3d0, size: 0.22, transparent: true, opacity: 0.3, blending: THREE.AdditiveBlending, depthWrite: false });
     scene.add(new THREE.Points(g, m));
     return { g, base, m, N };
   })();
@@ -515,7 +524,7 @@ export function createOceanScene(canvas, { reducedMotion = false } = {}) {
     }
     const g = new THREE.BufferGeometry();
     g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-    const m = new THREE.PointsMaterial({ color: 0xbfd8e8, size: 0.4, transparent: true, opacity: 0, depthWrite: false });
+    const m = new THREE.PointsMaterial({ map: mapaPonto, color: 0xbfd8e8, size: 0.4, transparent: true, opacity: 0, depthWrite: false });
     const p = new THREE.Points(g, m); scene.add(p);
     return { p, g, m, N };
   })();
@@ -560,6 +569,7 @@ export function createOceanScene(canvas, { reducedMotion = false } = {}) {
     geometria.setAttribute('position', new THREE.BufferAttribute(posicoes, 3));
     geometria.setAttribute('color', new THREE.BufferAttribute(cores, 3));
     const material = new THREE.PointsMaterial({
+      map: mapaPonto,
       size: 0.72, vertexColors: true, transparent: true, opacity: 1,
       depthWrite: false, blending: THREE.AdditiveBlending, sizeAttenuation: true,
     });

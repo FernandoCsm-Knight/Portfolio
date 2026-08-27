@@ -252,3 +252,29 @@ export function texBrilho(cor) {
   ctx.fillRect(0, 0, 64, 64);
   return new THREE.CanvasTexture(c);
 }
+
+/**
+ * Máscara redonda para as partículas. `PointsMaterial` sem `map` desenha cada
+ * ponto como um quadrado — imperceptível num ponto de 2px, evidente nos peixes
+ * do abismo, e mais ainda no celular: o FOV vertical é fixo em 50°, então uma
+ * tela estreita enquadra uma fatia bem menor do mundo e cada criatura aparece
+ * várias vezes maior do que no desktop.
+ *
+ * O núcleo fica cheio até 62% do raio e só a borda esvanece: um disco inscrito
+ * já perde π/4 da área do quadrado, e um degradê até o centro apagaria o brilho
+ * aditivo que dá a bioluminescência. Uma textura por cena (e não um módulo
+ * memoizado) porque `disposeSceneResources` descarta as texturas dos materiais
+ * ao desmontar.
+ */
+export function texPonto() {
+  const c = document.createElement('canvas');
+  c.width = c.height = 64;
+  const ctx = c.getContext('2d');
+  const g = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+  g.addColorStop(0, 'rgba(255,255,255,1)');
+  g.addColorStop(0.62, 'rgba(255,255,255,1)');
+  g.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, 64, 64);
+  return new THREE.CanvasTexture(c);
+}
