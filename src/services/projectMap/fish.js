@@ -18,9 +18,9 @@ const SPECIES = [
   { model: M_MACHADO, tint: '#b29ae8', count: 19, scale: [0.16, 0.23], speed: [0.82, 1.28] },
 ];
 
-const LOGO_AQUA = new THREE.Color('#8cc8ea');
-const LOGO_GOLD = new THREE.Color('#c69749');
-const LOGO_PALE_GOLD = new THREE.Color('#e7d3a8');
+const LOGO_AQUA = new THREE.Color('#38bde3');
+const LOGO_GOLD = new THREE.Color('#858e91');
+const LOGO_PALE_GOLD = new THREE.Color('#aeb5b7');
 const FISHES_TO_CONSOLIDATE = 10;
 
 function randomBetween(min, max) {
@@ -212,7 +212,7 @@ export function makeFishOcean(surfaceHeightAt, reducedMotion = false) {
   for (let index = 0; index < snowCount; index++) {
     const offset = index * 3;
     const warmth = deterministicUnit(index, 19);
-    const snowColor = new THREE.Color('#c5dff0').lerp(new THREE.Color('#e7d3a8'), warmth * 0.48);
+    const snowColor = new THREE.Color('#c5dff0').lerp(new THREE.Color('#aeb5b7'), warmth * 0.48);
     snowColors[offset] = snowColor.r;
     snowColors[offset + 1] = snowColor.g;
     snowColors[offset + 2] = snowColor.b;

@@ -1,17 +1,14 @@
-const MENSAGENS = {
-  '/': 'PREPARANDO O MERGULHO',
-  '/projetos': 'TRAÇANDO CARTA DE EXPEDIÇÕES',
-  '/sobre': 'ABRINDO O CADERNO DE BORDO',
-  '/contato': 'SINTONIZANDO CANAIS DE CONTATO',
-};
+import { useI18n } from '../i18n/context';
 
 export default function LoadingScreen({ visible, route }) {
+  const { t } = useI18n();
+  const routeKey = { '/': 'home', '/projetos': 'projects', '/sobre': 'about', '/contato': 'contact' }[route] ?? 'home';
   return (
     <div
       className={`tela-carregamento${visible ? ' visivel' : ''}`}
       role="status"
       aria-live="polite"
-      aria-label={visible ? 'Carregando página' : undefined}
+      aria-label={visible ? t('loading.aria') : undefined}
       aria-hidden={!visible}
     >
       <div className="carregamento-conteudo">
@@ -22,8 +19,8 @@ export default function LoadingScreen({ visible, route }) {
           <i className="sonar-blip sonar-blip-dois" />
         </div>
 
-        <p className="carregamento-etiqueta">SISTEMAS DE NAVEGAÇÃO</p>
-        <p className="carregamento-mensagem">{MENSAGENS[route] ?? MENSAGENS['/']}</p>
+        <p className="carregamento-etiqueta">{t('loading.system')}</p>
+        <p className="carregamento-mensagem">{t(`loading.${routeKey}`)}</p>
         <span className="carregamento-linha" aria-hidden="true"><i /></span>
       </div>
     </div>

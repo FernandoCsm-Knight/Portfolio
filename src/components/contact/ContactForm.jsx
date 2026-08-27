@@ -7,11 +7,13 @@ import {
 } from '../../services/contact';
 import { remainingCooldown, writeLastSentAt } from '../../services/cooldown';
 import BubbleButton from '../ui/BubbleButton';
+import { useI18n } from '../../i18n/context';
 
 const COOLDOWN_MS = 60000;
 const COOLDOWN_KEY = 'portfolio:last-contact-at';
 
 export default function ContactForm({ onClose }) {
+  const { t } = useI18n();
   const [sending, setSending] = useState(false);
   const [status, setStatus] = useState('');
   const [enviado, setEnviado] = useState(false);
@@ -45,14 +47,14 @@ export default function ContactForm({ onClose }) {
 
     if (name.length < CONTACT_LIMITS.name.min) return;
     if (message.length < CONTACT_LIMITS.message.min) {
-      setStatus(`Descreva a demanda com pelo menos ${CONTACT_LIMITS.message.min} caracteres.`);
+      setStatus(t('contact.min', { min: CONTACT_LIMITS.message.min }));
       return;
     }
 
     const agora = Date.now();
     const espera = remainingCooldown(COOLDOWN_KEY, COOLDOWN_MS, agora);
     if (espera > 0) {
-      setStatus(`Aguarde ${espera}s para enviar outra mensagem.`);
+      setStatus(t('contact.wait', { seconds: espera }));
       return;
     }
 
@@ -64,7 +66,7 @@ export default function ContactForm({ onClose }) {
       form.reset();
       setEnviado(true);
     } catch {
-      setStatus('Não foi possível enviar agora. Tente pelos canais ao lado.');
+      setStatus(t('contact.failed'));
     } finally {
       setSending(false);
     }
@@ -83,7 +85,7 @@ export default function ContactForm({ onClose }) {
           className="contato-modal-fechar"
           type="button"
           onClick={onClose}
-          aria-label="Fechar"
+          aria-label={t('contact.close')}
         >
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <path d="m7 7 10 10M17 7 7 17" />
@@ -92,32 +94,30 @@ export default function ContactForm({ onClose }) {
 
         {enviado ? (
           <div className="contato-recibo" role="status">
-            <h2 id="contato-modal-titulo">Mensagem recebida.</h2>
+            <h2 id="contato-modal-titulo">{t('contact.received')}</h2>
             <p>
-              Sua demanda entrou na fila e eu respondo no e-mail informado.
-              Se for urgente, o WhatsApp e o LinkedIn continuam abertos.
+              {t('contact.receivedBody')}
             </p>
             <button className="contato-recibo-fechar" type="button" onClick={onClose}>
-              Fechar
+              {t('contact.close')}
             </button>
           </div>
         ) : (
           <>
-            <h2 id="contato-modal-titulo">Conte sua demanda.</h2>
+            <h2 id="contato-modal-titulo">{t('contact.formTitle')}</h2>
             <p className="contato-modal-apoio">
-              Descreva o problema que precisa resolver. Quanto mais contexto, melhor
-              a primeira resposta.
+              {t('contact.support')}
             </p>
 
             <form className="contato-form" onSubmit={handleSubmit}>
               <div className="contato-form-linha">
                 <div className="contato-campo">
-                  <label htmlFor="contato-nome">Nome</label>
+                  <label htmlFor="contato-nome">{t('contact.name')}</label>
                   <input
                     id="contato-nome"
                     name="name"
                     type="text"
-                    placeholder="Como devo te chamar"
+                    placeholder={t('contact.namePlaceholder')}
                     minLength={CONTACT_LIMITS.name.min}
                     maxLength={CONTACT_LIMITS.name.max}
                     autoComplete="name"
@@ -126,12 +126,12 @@ export default function ContactForm({ onClose }) {
                   />
                 </div>
                 <div className="contato-campo">
-                  <label htmlFor="contato-email">E-mail</label>
+                  <label htmlFor="contato-email">{t('contact.email')}</label>
                   <input
                     id="contato-email"
                     name="email"
                     type="email"
-                    placeholder="para onde eu respondo"
+                    placeholder={t('contact.emailPlaceholder')}
                     maxLength={CONTACT_LIMITS.email.max}
                     autoComplete="email"
                     required
@@ -142,19 +142,19 @@ export default function ContactForm({ onClose }) {
 
               <div className="contato-form-linha">
                 <div className="contato-campo">
-                  <label htmlFor="contato-empresa">Empresa <span>(opcional)</span></label>
+                  <label htmlFor="contato-empresa">{t('contact.company')} <span>({t('contact.optional')})</span></label>
                   <input
                     id="contato-empresa"
                     name="company"
                     type="text"
-                    placeholder="Organização ou projeto"
+                    placeholder={t('contact.companyPlaceholder')}
                     maxLength={CONTACT_LIMITS.company.max}
                     autoComplete="organization"
                     disabled={!contactConfigured || sending}
                   />
                 </div>
                 <div className="contato-campo">
-                  <label htmlFor="contato-assunto">Assunto</label>
+                  <label htmlFor="contato-assunto">{t('contact.subject')}</label>
                   <select
                     id="contato-assunto"
                     name="subject"
@@ -162,18 +162,18 @@ export default function ContactForm({ onClose }) {
                     disabled={!contactConfigured || sending}
                   >
                     {CONTACT_SUBJECTS.map((item) => (
-                      <option key={item.value} value={item.value}>{item.label}</option>
+                      <option key={item.value} value={item.value}>{t(`contact.subjects.${item.value}`)}</option>
                     ))}
                   </select>
                 </div>
               </div>
 
               <div className="contato-campo">
-                <label htmlFor="contato-mensagem">Demanda</label>
+                <label htmlFor="contato-mensagem">{t('contact.request')}</label>
                 <textarea
                   id="contato-mensagem"
                   name="message"
-                  placeholder="Qual é o problema, qual o prazo e o que já foi tentado"
+                  placeholder={t('contact.requestPlaceholder')}
                   minLength={CONTACT_LIMITS.message.min}
                   maxLength={CONTACT_LIMITS.message.max}
                   rows="6"
@@ -194,16 +194,16 @@ export default function ContactForm({ onClose }) {
               <div className="contato-form-rodape">
                 <span>
                   {contactConfigured
-                    ? `máx. ${CONTACT_LIMITS.message.max} caracteres`
-                    : 'Envio indisponível no momento'}
+                    ? t('contact.max', { max: CONTACT_LIMITS.message.max })
+                    : t('contact.unavailable')}
                 </span>
                 <BubbleButton
                   className="contato-enviar"
                   type="submit"
                   icon="send"
-                  label="Enviar demanda"
+                  label={t('contact.send')}
                   loading={sending}
-                  loadingLabel="Enviando demanda"
+                  loadingLabel={t('contact.sending')}
                   disabled={!contactConfigured || sending}
                 />
               </div>

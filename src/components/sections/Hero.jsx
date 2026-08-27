@@ -1,13 +1,14 @@
 import { memo } from 'react';
 import { FaBrain, FaCube, FaGaugeHigh } from 'react-icons/fa6';
-
-const COMPETENCIAS = [
-  { label: 'Computação gráfica', Icone: FaCube },
-  { label: 'Inteligência artificial', Icone: FaBrain },
-  { label: 'Alto desempenho', Icone: FaGaugeHigh },
-];
+import { useI18n } from '../../i18n/context';
 
 function Hero() {
+  const { t } = useI18n();
+  const competencias = [
+    { label: t('hero.graphics'), Icone: FaCube },
+    { label: t('hero.ai'), Icone: FaBrain },
+    { label: t('hero.performance'), Icone: FaGaugeHigh },
+  ];
   return (
     <section id="inicio" className="hero-superficie">
       <div className="nome-superficie">
@@ -20,8 +21,8 @@ function Hero() {
           <i /><i /><i /><i /><i /><i /><i /><i /><i />
         </span>
       </div>
-      <ul className="competencias-flutuantes" aria-label="Áreas de atuação">
-        {COMPETENCIAS.map(({ label, Icone }) => (
+      <ul className="competencias-flutuantes" aria-label={t('hero.areas')}>
+        {competencias.map(({ label, Icone }) => (
           <li
             key={label}
             className="competencia-icone"

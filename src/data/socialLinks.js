@@ -1,7 +1,7 @@
 export const SOCIAL_LINKS = [
-  { label: 'E-MAIL', href: 'mailto:fernandocsdm@gmail.com', variant: 'solido' },
-  { label: 'GITHUB', href: 'https://github.com/FernandoCsm-Knight', variant: 'linha' },
-  { label: 'LINKEDIN', href: 'https://linkedin.com/in/fernandocsdm', variant: 'linha' },
+  { label: 'E-MAIL', href: import.meta.env.VITE_MAIL_URL?.trim() || '' },
+  { label: 'GITHUB', href: import.meta.env.VITE_GITHUB_URL?.trim() || '' },
+  { label: 'LINKEDIN', href: import.meta.env.VITE_LINKEDIN_URL?.trim() || '' },
 ];
 
 /* Os três PDFs já estavam em public/docs sem nenhum link apontando para eles. */

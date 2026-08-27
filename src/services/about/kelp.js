@@ -19,9 +19,9 @@ const LAMINA_A_CADA = 3;
 const ANCORAGEM = [-106, -92];
 
 const PALETAS = [
-  { base: '#4a3a15', meio: '#b0862c', ponta: '#e7d3a8' },
+  { base: '#34393b', meio: '#737c7f', ponta: '#aeb5b7' },
   { base: '#3d4a1a', meio: '#94a83a', ponta: '#d8e08e' },
-  { base: '#523f18', meio: '#c69749', ponta: '#f0dfa8' },
+  { base: '#3f4648', meio: '#858e91', ponta: '#c4cbcd' },
   { base: '#2f4a2a', meio: '#6f9a45', ponta: '#c3d97e' },
 ];
 

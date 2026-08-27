@@ -1,24 +1,14 @@
-import { memo, useEffect, useId, useRef, useState } from 'react';
+import { memo, useEffect, useId, useMemo, useRef, useState } from 'react';
+import { FaArrowLeft, FaArrowRight } from 'react-icons/fa';
 import { createComment, commentsConfigured, listComments } from '../../services/comments';
 import { remainingCooldown, writeLastSentAt } from '../../services/cooldown';
 import BubbleButton from '../ui/BubbleButton';
+import { useI18n } from '../../i18n/context';
 
 const COMMENT_COOLDOWN_MS = 30000;
 const COMMENT_TIMESTAMP_KEY = 'portfolio:last-comment-at';
-const COMMENT_PLACEHOLDERS = [
-  { name: 'Visitante', message: 'Seu comentário aparecerá aqui.', rating: 5 },
-  { name: 'Nova mensagem', message: 'Compartilhe uma impressão sobre o portfólio.', rating: 4 },
-  { name: 'Canal aberto', message: 'Deixe uma mensagem para iniciar a conversa.', rating: 5 },
-];
-const dateFormatter = new Intl.DateTimeFormat('pt-BR', {
-  day: '2-digit',
-  month: 'short',
-  year: 'numeric',
-  hour: '2-digit',
-  minute: '2-digit',
-});
-
 function RatingBubbles({ rating }) {
+  const { t } = useI18n();
   const gradientId = useId();
   const membraneId = useId();
   const glowId = useId();
@@ -27,14 +17,14 @@ function RatingBubbles({ rating }) {
       className="avaliacao-bolhas"
       viewBox="0 0 112 24"
       role="img"
-      aria-label={`${rating} de 5 bolhas`}
+      aria-label={t('comments.rating', { rating })}
     >
       <defs>
         <radialGradient id={gradientId} cx="30%" cy="24%" r="76%">
           <stop offset="0" stopColor="#ffffff" stopOpacity=".96" />
           <stop offset=".18" stopColor="#dff6ff" stopOpacity=".82" />
-          <stop offset=".48" stopColor="#8cc8ea" stopOpacity=".42" />
-          <stop offset=".78" stopColor="#589ed6" stopOpacity=".2" />
+          <stop offset=".48" stopColor="#38bde3" stopOpacity=".42" />
+          <stop offset=".78" stopColor="#087fae" stopOpacity=".2" />
           <stop offset="1" stopColor="#143a59" stopOpacity=".48" />
         </radialGradient>
         <linearGradient id={membraneId} x1="0" y1="0" x2="1" y2="1">
@@ -78,7 +68,7 @@ function RatingBubbleIcon() {
         <radialGradient id={gradientId} cx="30%" cy="24%" r="76%">
           <stop offset="0" stopColor="#fff" stopOpacity=".96" />
           <stop offset=".2" stopColor="#dff6ff" stopOpacity=".82" />
-          <stop offset=".55" stopColor="#8cc8ea" stopOpacity=".42" />
+          <stop offset=".55" stopColor="#38bde3" stopOpacity=".42" />
           <stop offset="1" stopColor="#143a59" stopOpacity=".48" />
         </radialGradient>
         <linearGradient id={membraneId} x1="0" y1="0" x2="1" y2="1">
@@ -98,6 +88,10 @@ function RatingBubbleIcon() {
 }
 
 function Comments() {
+  const { localeTag, t } = useI18n();
+  const dateFormatter = useMemo(() => new Intl.DateTimeFormat(localeTag, {
+    day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit',
+  }), [localeTag]);
   const dragRef = useRef(null);
   const [comments, setComments] = useState([]);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -151,7 +145,7 @@ function Comments() {
     const now = Date.now();
     const remaining = remainingCooldown(COMMENT_TIMESTAMP_KEY, COMMENT_COOLDOWN_MS, now);
     if (remaining > 0) {
-      setSubmitStatus(`Aguarde ${remaining}s para enviar novamente.`);
+      setSubmitStatus(t('comments.wait', { seconds: remaining }));
       return;
     }
 
@@ -161,9 +155,9 @@ function Comments() {
       await createComment({ name, message, rating });
       writeLastSentAt(COMMENT_TIMESTAMP_KEY, now);
       form.reset();
-      setSubmitStatus('Avaliação enviada para análise.');
+      setSubmitStatus(t('comments.sent'));
     } catch {
-      setSubmitStatus('Não foi possível enviar a avaliação.');
+      setSubmitStatus(t('comments.failed'));
     } finally {
       setSending(false);
     }
@@ -176,7 +170,7 @@ function Comments() {
 
   const carouselItems = comments.length > 0
     ? comments
-    : (!loading ? COMMENT_PLACEHOLDERS.map((comment) => ({ ...comment, placeholder: true })) : []);
+    : (!loading ? t('comments.placeholders').map((comment) => ({ ...comment, placeholder: true })) : []);
 
   function getCircularOffset(index) {
     let offset = index - activeIndex;
@@ -219,19 +213,19 @@ function Comments() {
         <BubbleButton
           className="comentarios-adicionar"
           icon="plus"
-          label="Adicionar avaliação"
+          label={t('comments.add')}
           onClick={() => {
             setSubmitStatus('');
             setModalOpen(true);
           }}
           disabled={!commentsConfigured}
         />
-        {loading && <p className="comentarios-vazio">Carregando…</p>}
+        {loading && <p className="comentarios-vazio">{t('comments.loading')}</p>}
         <ol
           className={dragging ? 'arrastando' : ''}
           style={{ '--arrasto': `${dragOffset}px` }}
           aria-live="polite"
-          aria-label="Carrossel de avaliações; arraste para navegar"
+          aria-label={t('comments.carousel')}
           tabIndex="0"
           onPointerDown={handleCarouselPointerDown}
           onPointerMove={handleCarouselPointerMove}
@@ -274,9 +268,13 @@ function Comments() {
             );
           })}
         </ol>
-        <div className="comentarios-carrossel-controles" aria-label="Controles das avaliações">
-          <button type="button" onClick={() => moveCarousel(-1)} aria-label="Avaliações anteriores">←</button>
-          <button type="button" onClick={() => moveCarousel(1)} aria-label="Próximas avaliações">→</button>
+        <div className="comentarios-carrossel-controles" aria-label={t('comments.controls')}>
+          <button type="button" onClick={() => moveCarousel(-1)} aria-label={t('comments.previous')}>
+            <FaArrowLeft aria-hidden="true" />
+          </button>
+          <button type="button" onClick={() => moveCarousel(1)} aria-label={t('comments.next')}>
+            <FaArrowRight aria-hidden="true" />
+          </button>
         </div>
       </div>
 
@@ -293,31 +291,31 @@ function Comments() {
               className="comentarios-modal-fechar"
               type="button"
               onClick={() => setModalOpen(false)}
-              aria-label="Fechar"
+              aria-label={t('comments.close')}
             >
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <path d="m7 7 10 10M17 7 7 17" />
               </svg>
             </button>
-            <h2 id="comentarios-modal-titulo">Deixe sua avaliação.</h2>
+            <h2 id="comentarios-modal-titulo">{t('comments.title')}</h2>
             <form className="comentarios-form" onSubmit={handleSubmit}>
-          <label htmlFor="comment-name">Nome</label>
+          <label htmlFor="comment-name">{t('comments.name')}</label>
           <input
             id="comment-name"
             name="name"
             type="text"
-            placeholder="Nome"
+            placeholder={t('comments.name')}
             minLength="2"
             maxLength="40"
             autoComplete="name"
             required
             disabled={!commentsConfigured || sending}
           />
-          <label htmlFor="comment-message">Comentário</label>
+          <label htmlFor="comment-message">{t('comments.comment')}</label>
           <textarea
             id="comment-message"
             name="message"
-            placeholder="Comentário"
+            placeholder={t('comments.comment')}
             minLength="2"
             maxLength="500"
             rows="5"
@@ -325,13 +323,13 @@ function Comments() {
             disabled={!commentsConfigured || sending}
           />
           <fieldset className="comentarios-nota" disabled={!commentsConfigured || sending}>
-            <legend>Avaliação</legend>
+            <legend>{t('comments.evaluation')}</legend>
             <div className="comentarios-nota-opcoes">
               {[5, 4, 3, 2, 1].map((rating) => (
-                <label key={rating} title={`${rating} de 5`}>
+                <label key={rating} title={t('comments.stars', { rating })}>
                   <input type="radio" name="rating" value={rating} defaultChecked={rating === 5} />
                   <RatingBubbleIcon />
-                  <span className="sr-only">{rating} de 5</span>
+                  <span className="sr-only">{t('comments.stars', { rating })}</span>
                 </label>
               ))}
             </div>
@@ -345,14 +343,14 @@ function Comments() {
             aria-hidden="true"
           />
           <div className="comentarios-form-rodape">
-            <span>máx. 500</span>
+            <span>{t('comments.max')}</span>
             <BubbleButton
               className="comentarios-enviar"
               type="submit"
               icon="send"
-              label="Enviar avaliação"
+              label={t('comments.send')}
               loading={sending}
-              loadingLabel="Enviando avaliação"
+              loadingLabel={t('comments.sending')}
               disabled={!commentsConfigured || sending}
             />
           </div>

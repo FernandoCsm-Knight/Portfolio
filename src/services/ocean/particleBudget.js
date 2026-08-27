@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 
-export function calculateParticleBudget(base, {
+function calculateParticleBudget(base, {
   density = 48,
   minParticles = 28,
   maxParticles = Infinity,

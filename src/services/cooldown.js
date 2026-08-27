@@ -3,7 +3,7 @@
    é só para evitar o duplo clique e o envio repetido sem querer. O limite real
    contra abuso são os CHECKs e as policies no Postgres. */
 
-export function readLastSentAt(key) {
+function readLastSentAt(key) {
   try {
     return Number(localStorage.getItem(key)) || 0;
   } catch {

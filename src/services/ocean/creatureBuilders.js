@@ -92,32 +92,59 @@ export function construirCoralOrganico(cfg, escala) {
   const segments = cfg.segments || 13;
   const crown = cfg.crown || 4;
   const n = branches * segments * crown;
-  const pos = new Float32Array(n * 3), col = new Float32Array(n * 3);
-  const baseC = new THREE.Color(cfg.base || '#466984');
+  const pos = new Float32Array(n * 3), base = new Float32Array(n * 3), col = new Float32Array(n * 3);
+  const baseC = new THREE.Color(cfg.base || '#1d6b78');
   const tipC = new THREE.Color(cfg.tip || '#7fe3d0');
   const shadeC = baseC.clone().lerp(new THREE.Color('#061018'), 0.45);
   const height = cfg.height || 6;
   const spread = cfg.spread || 4.5;
+  const form = cfg.form || 'fan';
   let k = 0;
 
   for (let b = 0; b < branches; b++) {
-    const side = b / (branches - 1) - 0.5;
+    const ratio = branches === 1 ? 0.5 : b / (branches - 1);
+    const side = ratio - 0.5;
     const phase = rnd(0, Math.PI * 2);
-    const lean = side * spread + rnd(-0.45, 0.45);
-    const length = height * rnd(0.65, 1.08);
+    const radial = phase + ratio * Math.PI * 2;
+    const startT = b === 0 ? 0 : rnd(0, form === 'antler' ? 0.48 : 0.2);
+    const length = height * rnd(form === 'pillar' ? 0.78 : 0.58, 1.08);
+    const arch = rnd(0.08, 0.22);
+    let reachX = side * spread * 2;
+    let reachZ = rnd(-0.3, 0.3);
+    let originX = side * spread * 0.08;
+
+    if (form === 'bush') {
+      reachX = Math.cos(radial) * spread * rnd(0.55, 1.05);
+      reachZ = Math.sin(radial) * spread * rnd(0.28, 0.62);
+      originX = Math.cos(radial) * spread * 0.05;
+    } else if (form === 'pillar') {
+      reachX = side * spread * 0.55 + rnd(-0.3, 0.3);
+      reachZ = Math.sin(radial) * spread * 0.16;
+      originX = side * spread * 0.18;
+    } else if (form === 'antler') {
+      const direction = b % 2 ? 1 : -1;
+      reachX = direction * spread * rnd(0.42, 1.05) + side * spread * 0.35;
+      reachZ = rnd(-0.32, 0.32) * spread;
+      originX = side * spread * 0.12;
+    }
+
     for (let s = 0; s < segments; s++) {
       const t = s / (segments - 1);
-      const bend = Math.sin(t * Math.PI) * lean + Math.sin(t * 4.2 + phase) * 0.35;
-      const centerX = bend;
-      const centerY = t * length;
-      const centerZ = Math.cos(t * 3.4 + phase) * 0.32 + side * 0.5;
-      const radius = Math.max(0.06, (0.42 * (1 - t) + 0.08) * cfg.thick);
-      const cc = shadeC.clone().lerp(tipC, Math.pow(t, 0.85)).lerp(baseC, 0.25 * Math.sin(phase + b));
+      const growth = THREE.MathUtils.smootherstep(t, 0, 1);
+      const localT = startT + t * (1 - startT);
+      const current = Math.sin(t * Math.PI) * Math.sin(t * 2.4 + phase) * 0.3;
+      const centerX = originX * (1 - growth) + reachX * growth + current;
+      const centerY = localT * length + Math.sin(t * Math.PI) * arch;
+      const centerZ = reachZ * growth + Math.cos(t * 3.1 + phase) * (form === 'fan' ? 0.12 : 0.28);
+      const taper = Math.pow(1 - t, 0.72);
+      const radius = Math.max(0.045, (0.08 + 0.46 * taper) * cfg.thick);
+      const cc = shadeC.clone().lerp(baseC, 0.34 + t * 0.22).lerp(tipC, Math.pow(t, 1.35));
       for (let q = 0; q < crown; q++) {
         const a = (q / crown) * Math.PI * 2 + phase + s * 0.7;
-        pos[k * 3] = (centerX + Math.cos(a) * radius * rnd(0.2, 1.1)) * escala;
-        pos[k * 3 + 1] = centerY * escala;
-        pos[k * 3 + 2] = (centerZ + Math.sin(a) * radius * 0.55) * escala;
+        const irregularity = rnd(0.42, 1.12);
+        base[k * 3] = pos[k * 3] = (centerX + Math.cos(a) * radius * irregularity) * escala;
+        base[k * 3 + 1] = pos[k * 3 + 1] = (centerY + rnd(-0.035, 0.035)) * escala;
+        base[k * 3 + 2] = pos[k * 3 + 2] = (centerZ + Math.sin(a) * radius * irregularity) * escala;
         col[k * 3] = cc.r; col[k * 3 + 1] = cc.g; col[k * 3 + 2] = cc.b;
         k++;
       }
@@ -127,7 +154,7 @@ export function construirCoralOrganico(cfg, escala) {
   const geo = new THREE.BufferGeometry();
   geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
   geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
-  return { geo, n };
+  return { geo, base, n };
 }
 
 export function construirCaranguejoOrganico(cfg, escala) {
@@ -135,9 +162,9 @@ export function construirCaranguejoOrganico(cfg, escala) {
   const n = bodyCount + 18 + 2 * (20 + 18 + 4 * 15 + 6);
   const pos = new Float32Array(n * 3), base = new Float32Array(n * 3), col = new Float32Array(n * 3);
   const shellC = new THREE.Color(cfg.shell || '#7a4a3a');
-  const edgeC = new THREE.Color(cfg.edge || '#c69749');
+  const edgeC = new THREE.Color(cfg.edge || '#858e91');
   const darkC = shellC.clone().lerp(new THREE.Color('#02080c'), 0.44);
-  const pearlC = new THREE.Color('#e7d3a8');
+  const pearlC = new THREE.Color('#aeb5b7');
   let k = 0;
 
   function put(x, y, z, c) {

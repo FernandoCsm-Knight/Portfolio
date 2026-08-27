@@ -1,19 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
 import { PROFUNDIDADE_MAX_M } from '../services/ocean/constants';
-import { nomeZona } from '../services/ocean/utils';
 
 const HUD_INICIAL = {
   depthMeters: 0,
-  zoneLabel: 'SUPERFÍCIE · EPIPELÁGICA',
-  atmValue: 1,
-  tempValue: 24,
 };
 
 /**
- * Monta a cena 3D do oceano num <canvas> e mantém o HUD (profundidade, zona,
- * pressão e temperatura) sincronizado via estado React — mas só
- * dispara re-render quando o valor exibido realmente muda, já que a cena em
- * si roda seu próprio loop a 60fps por fora do React.
+ * Monta a cena 3D do oceano num <canvas> e mantém o HUD (profundidade)
+ * sincronizado via estado React — mas só dispara re-render quando o valor
+ * exibido realmente muda, já que a cena em si roda seu próprio loop a 60fps
+ * por fora do React.
  */
 export function useOceanScene(onReady) {
   const canvasRef = useRef(null);
@@ -128,7 +124,7 @@ export function useOceanScene(onReady) {
       const frameInterval = reducedMotion ? 1000 / 30 : 1000 / 60;
       let lastFrameTime = 0;
       let framesAquecidos = 0;
-      let last = { depthMeters: -1, zoneLabel: '', atmValue: -1, tempValue: 999 };
+      let last = { depthMeters: -1 };
       let ultimoHudUpdate = 0;
       let ultimoHoverPeixe = false;
       /* evita reescrever o gradiente de tela cheia (#fundo) quando o valor não
@@ -176,16 +172,8 @@ export function useOceanScene(onReady) {
           ultimoHudUpdate = now;
           const proximoHud = {
             depthMeters: Math.round(frame.prof * PROFUNDIDADE_MAX_M),
-            zoneLabel: nomeZona(frame.prof),
-            atmValue: 1 + Math.round(frame.prof * 100),
-            tempValue: Math.round(24 - frame.prof * 20),
           };
-          if (
-            proximoHud.depthMeters !== last.depthMeters ||
-            proximoHud.zoneLabel !== last.zoneLabel ||
-            proximoHud.atmValue !== last.atmValue ||
-            proximoHud.tempValue !== last.tempValue
-          ) {
+          if (proximoHud.depthMeters !== last.depthMeters) {
             last = proximoHud;
             setHud(proximoHud);
           }

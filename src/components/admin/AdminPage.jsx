@@ -11,8 +11,10 @@ import { countNewContactRequests, subscribeToContactRequests } from '../../servi
 import { supabaseConfigured } from '../../services/supabase';
 import CommentsPanel from './CommentsPanel';
 import InboxPanel from './InboxPanel';
+import ProjectsPanel from './ProjectsPanel';
 
 const ABAS = [
+  { value: 'projetos', label: 'Projetos' },
   { value: 'avaliacoes', label: 'Avaliações' },
   { value: 'mensagens', label: 'Mensagens' },
 ];
@@ -28,7 +30,7 @@ function AdminPage({ onReady }) {
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState('');
 
-  const [aba, setAba] = useState('avaliacoes');
+  const [aba, setAba] = useState('projetos');
   const [novas, setNovas] = useState(0);
   const [sinalNovaMensagem, setSinalNovaMensagem] = useState(0);
   const [alerta, setAlerta] = useState(null);
@@ -219,6 +221,7 @@ function AdminPage({ onReady }) {
             ))}
           </nav>
 
+          {aba === 'projetos' && <ProjectsPanel />}
           {aba === 'avaliacoes' && <CommentsPanel />}
           {aba === 'mensagens' && (
             <InboxPanel

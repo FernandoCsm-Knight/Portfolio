@@ -3,10 +3,10 @@ export const M_CARPA = {
   organico: { koi: true, body: '#f7efe0', spot: '#cf5b3b', tail: '#f5ead5', len: 6.2, thick: 0.92, spotCut: 0.45, pearl: 0.24, shade: 0.3, bodyCount: 130, tailCount: 34, finCount: 22 },
 };
 export const M_DOURADO = {
-  organico: { body: '#d8b46a', spot: '#8b7040', tail: '#e7d3a8', len: 5.8, thick: 0.78, spotCut: 0.9, pearl: 0.14, shade: 0.42, tailFan: 0.68, bodyCount: 112, tailCount: 28, finCount: 18 },
+  organico: { body: '#aeb5b7', spot: '#5f6769', tail: '#d5dadb', len: 5.8, thick: 0.78, spotCut: 0.9, pearl: 0.14, shade: 0.42, tailFan: 0.68, bodyCount: 112, tailCount: 28, finCount: 18 },
 };
 export const M_NEON = {
-  organico: { body: '#34566a', spot: '#589ed6', glow: '#589ed6', tail: '#8fb8c9', len: 4.8, thick: 0.54, depth: 0.34, spotCut: 0.35, pearl: 0.28, shade: 0.5, tailFan: 0.52, finReach: 0.34, bodyCount: 82, tailCount: 22, finCount: 14 },
+  organico: { body: '#34566a', spot: '#087fae', glow: '#087fae', tail: '#8fb8c9', len: 4.8, thick: 0.54, depth: 0.34, spotCut: 0.35, pearl: 0.28, shade: 0.5, tailFan: 0.52, finReach: 0.34, bodyCount: 82, tailCount: 22, finCount: 14 },
 };
 export const M_SALMAO = {
   organico: { body: '#8a9bb0', spot: '#42566a', deep: '#c97a68', tail: '#c97a68', len: 6.6, thick: 0.74, depth: 0.4, spotCut: 0.55, pearl: 0.26, shade: 0.5, tailFan: 0.56, finReach: 0.32, bodyCount: 140, tailCount: 32, finCount: 20 },

@@ -1,13 +1,22 @@
-import { useEffect, useRef, useState } from 'react';
-import { PROJECTS } from '../../data/projects';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { createProjectMapScene } from '../../services/projectMap/sceneService';
+import { listProjects, localizeProject, projectsConfigured } from '../../services/projects';
+import { useI18n } from '../../i18n/context';
 
 export default function ProjectMapPage({ onReady }) {
+  const { t, locale } = useI18n();
+  const labels = useMemo(() => t('projects'), [t]);
   const canvasRef = useRef(null);
   const apiRef = useRef(null);
   const generationRef = useRef(0);
+  /* Cache das linhas cruas do Supabase: uma troca de idioma remonta a cena
+     (como já acontecia antes, já que `t` muda de referência a cada troca),
+     mas não precisa buscar os projetos de novo — só relocaliza. */
+  const rowsRef = useRef(null);
   const [falhou, setFalhou] = useState(false);
+  const [projetosVazios, setProjetosVazios] = useState(false);
   const [carrosselVisivel, setCarrosselVisivel] = useState(false);
+  const [projects, setProjects] = useState([]);
 
   useEffect(() => {
     const generation = ++generationRef.current;
@@ -109,7 +118,7 @@ export default function ProjectMapPage({ onReady }) {
         detail: {
           active: Boolean(projeto),
           title: projeto?.title || '',
-          rotulo: 'PROJETO',
+          rotulo: labels.project,
         },
       }));
     }
@@ -146,16 +155,32 @@ export default function ProjectMapPage({ onReady }) {
     }
 
     async function iniciarMapa() {
-      /* A Norican só é usada para amostrar o glifo no canvas, portanto o
-         navegador não a considera necessariamente ao resolver `fonts.ready`.
-         A carga explícita impede que a formação nasça com a fonte fallback. */
+      if (!projectsConfigured) {
+        setProjetosVazios(true);
+        onReady?.();
+        return;
+      }
+      rowsRef.current ??= await listProjects();
+      if (!isCurrent()) return;
+      if (!rowsRef.current.length) {
+        setProjetosVazios(true);
+        onReady?.();
+        return;
+      }
+      const projetosLocalizados = rowsRef.current.map((row, index) => ({
+        ...localizeProject(row, locale),
+        num: String(index + 1).padStart(2, '0'),
+      }));
+      setProjects(projetosLocalizados);
+
+      /* A Norican só é usada no canvas que amostra o glifo do monograma. */
       if (document.fonts?.load) await document.fonts.load("900px 'Norican'", 'F');
       if (document.fonts?.ready) await document.fonts.ready;
       if (!isCurrent()) return;
       await new Promise((resolve) => requestAnimationFrame(resolve));
       if (!isCurrent()) return;
 
-      const novaApi = createProjectMapScene(canvas, PROJECTS, { reducedMotion });
+      const novaApi = createProjectMapScene(canvas, projetosLocalizados, { reducedMotion, labels });
       novaApi.resize(window.innerWidth, window.innerHeight);
       await novaApi.prepare?.();
       if (!isCurrent()) {
@@ -205,7 +230,7 @@ export default function ProjectMapPage({ onReady }) {
       api?.dispose();
       apiRef.current = null;
     };
-  }, [onReady]);
+  }, [labels, locale, onReady]);
 
   function navegarCarrossel(direction) {
     apiRef.current?.navigateCarousel(direction);
@@ -216,18 +241,19 @@ export default function ProjectMapPage({ onReady }) {
       <canvas
         ref={canvasRef}
         className="mapa-projetos-canvas"
-        aria-label="Mapa interativo de projetos"
-        hidden={falhou}
+        aria-label={labels.map}
+        hidden={falhou || projetosVazios}
       />
+      {projetosVazios && <p className="mapa-projetos-vazio">{labels.empty}</p>}
       <nav
         className={`mapa-carrossel-controles${carrosselVisivel ? ' visivel' : ''}`}
-        aria-label="Navegação dos projetos"
+        aria-label={labels.navigation}
         aria-hidden={!carrosselVisivel}
       >
-        <button type="button" onClick={() => navegarCarrossel(-1)} aria-label="Projeto anterior">
+        <button type="button" onClick={() => navegarCarrossel(-1)} aria-label={labels.previous}>
           <span aria-hidden="true">‹</span>
         </button>
-        <button type="button" onClick={() => navegarCarrossel(1)} aria-label="Próximo projeto">
+        <button type="button" onClick={() => navegarCarrossel(1)} aria-label={labels.next}>
           <span aria-hidden="true">›</span>
         </button>
       </nav>
@@ -235,7 +261,7 @@ export default function ProjectMapPage({ onReady }) {
           a WebGL, então sem isto a rota seria um beco sem saída para teclado e
           leitor de tela. Reaparece quando um link recebe foco. */}
       <ul className="elos elos-mapa">
-        {PROJECTS.map((projeto) => (
+        {projects.map((projeto) => (
           <li key={projeto.num}>
             <a href={projeto.href} target="_blank" rel="noreferrer">
               <span className="elo-rotulo">{projeto.num}</span>

@@ -18,9 +18,9 @@ function texturaRaio() {
   canvas.height = 256;
   const ctx = canvas.getContext('2d');
   const gradiente = ctx.createLinearGradient(0, 0, 0, 256);
-  gradiente.addColorStop(0, 'rgba(231,211,168,.34)');
-  gradiente.addColorStop(0.3, 'rgba(140,200,234,.13)');
-  gradiente.addColorStop(1, 'rgba(140,200,234,0)');
+  gradiente.addColorStop(0, 'rgba(174,181,183,.34)');
+  gradiente.addColorStop(0.3, 'rgba(56,189,227,.13)');
+  gradiente.addColorStop(1, 'rgba(56,189,227,0)');
   ctx.fillStyle = gradiente;
   ctx.beginPath();
   ctx.moveTo(26, 0);

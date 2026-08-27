@@ -65,6 +65,7 @@ export function createOceanScene(canvas, { reducedMotion = false } = {}) {
   /* ============ CRIATURAS ============ */
   const criaturas = [];
   const habitantesFundo = [];
+  const coraisFundo = [];
 
   /* idem para as pernas do caranguejo: quais vértices são "perna" (vs
      carapaça) e a fase de cada uma não mudam depois de criadas. */
@@ -167,7 +168,7 @@ export function createOceanScene(canvas, { reducedMotion = false } = {}) {
     const base = new Float32Array(PARTICULAS_POR_PEIXE * 3);
     const cor = new Float32Array(PARTICULAS_POR_PEIXE * 3);
     const aqua = new THREE.Color('#7fe3d0');
-    const ouro = new THREE.Color('#e7d3a8');
+    const ouro = new THREE.Color('#aeb5b7');
     for (let i = 0; i < PARTICULAS_POR_PEIXE; i++) {
       const j = i * 3;
       const angulo = rnd(0, Math.PI * 2);
@@ -296,13 +297,16 @@ export function createOceanScene(canvas, { reducedMotion = false } = {}) {
     const paletas = [
       { base: '#285c55', tip: '#7fe3d0' },
       { base: '#4d3750', tip: '#d98fb8' },
-      { base: '#53472f', tip: '#e7d3a8' },
+      { base: '#53472f', tip: '#aeb5b7' },
       { base: '#244a65', tip: '#8fb8d0' },
     ];
+    const formas = ['fan', 'bush', 'pillar', 'antler'];
     for (let i = 0; i < 14; i++) {
       const pal = paletas[Math.floor(Math.random() * paletas.length)];
+      const form = formas[i % formas.length];
       const b = construirCoralOrganico({
         base: pal.base, tip: pal.tip,
+        form,
         branches: Math.floor(rnd(4, 9)),
         segments: Math.floor(rnd(9, 15)),
         crown: Math.floor(rnd(3, 5)),
@@ -312,7 +316,7 @@ export function createOceanScene(canvas, { reducedMotion = false } = {}) {
       }, rnd(0.45, 0.85));
       const optimized = optimizeParticleGeometry(
         b.geo,
-        new Float32Array(b.geo.attributes.position.array),
+        b.base,
         { density: 44, minParticles: 38, importance: 1.05 },
       );
       const p = new THREE.Points(optimized.geometry, new THREE.PointsMaterial({
@@ -321,13 +325,28 @@ export function createOceanScene(canvas, { reducedMotion = false } = {}) {
         depthWrite: false, blending: THREE.AdditiveBlending,
       }));
       p.position.set(rnd(-LARG, LARG), -PROF - 1.6, rnd(-11, 4));
-      p.rotation.z = rnd(-0.12, 0.12);
+      const baseRotation = rnd(-0.16, 0.16);
+      p.rotation.z = baseRotation;
       scene.add(p);
+      let maxHeight = 0;
+      for (let j = 1; j < optimized.base.length; j += 3) {
+        maxHeight = Math.max(maxHeight, optimized.base[j]);
+      }
+      coraisFundo.push({
+        p,
+        geo: optimized.geometry,
+        base: optimized.base,
+        maxHeight: Math.max(0.1, maxHeight),
+        phase: rnd(0, Math.PI * 2),
+        speed: rnd(0.28, 0.48),
+        sway: rnd(0.07, 0.18),
+        baseRotation,
+      });
     }
     for (let i = 0; i < 2; i++) {
       const b = construirCaranguejoOrganico({
         shell: i ? '#5f3d34' : '#7a4a3a',
-        edge: i ? '#a8844a' : '#c69749',
+        edge: i ? '#788184' : '#858e91',
         bodyCount: 76,
       }, rnd(1.12, 1.34));
       const optimized = optimizeParticleGeometry(b.geo, b.base, {
@@ -359,9 +378,9 @@ export function createOceanScene(canvas, { reducedMotion = false } = {}) {
     const c = document.createElement('canvas'); c.width = 96; c.height = 256;
     const ctx = c.getContext('2d');
     const g = ctx.createLinearGradient(0, 0, 0, 256);
-    g.addColorStop(0, 'rgba(231,211,168,.42)');
-    g.addColorStop(0.28, 'rgba(140,200,234,.16)');
-    g.addColorStop(1, 'rgba(140,200,234,0)');
+    g.addColorStop(0, 'rgba(174,181,183,.42)');
+    g.addColorStop(0.28, 'rgba(56,189,227,.16)');
+    g.addColorStop(1, 'rgba(56,189,227,0)');
     ctx.fillStyle = g;
     ctx.beginPath();
     ctx.moveTo(38, 0);
@@ -379,8 +398,8 @@ export function createOceanScene(canvas, { reducedMotion = false } = {}) {
     const ctxFonte = cFonte.getContext('2d');
     const brilho = ctxFonte.createRadialGradient(80, 18, 0, 80, 18, 78);
     brilho.addColorStop(0, 'rgba(255,246,218,.35)');
-    brilho.addColorStop(0.34, 'rgba(140,200,234,.18)');
-    brilho.addColorStop(1, 'rgba(140,200,234,0)');
+    brilho.addColorStop(0.34, 'rgba(56,189,227,.18)');
+    brilho.addColorStop(1, 'rgba(56,189,227,0)');
     ctxFonte.fillStyle = brilho;
     ctxFonte.fillRect(0, 0, 160, 48);
     const texFonte = new THREE.CanvasTexture(cFonte);
@@ -425,7 +444,7 @@ export function createOceanScene(canvas, { reducedMotion = false } = {}) {
     const wavePhaseE = new Float32Array(N), waveAmpC = new Float32Array(N);
     const deep = new THREE.Color('#1f6e72');
     const glow = new THREE.Color('#7fe3d0');
-    const gold = new THREE.Color('#e7d3a8');
+    const gold = new THREE.Color('#aeb5b7');
     for (let i = 0; i < N; i++) {
       const lane = Math.floor(Math.random() * 42);
       const depthT = Math.pow(Math.random(), 0.85);
@@ -517,7 +536,7 @@ export function createOceanScene(canvas, { reducedMotion = false } = {}) {
      peixe usa seu próprio campo de velocidades para se desmontar e voltar;
      esta nuvem adicional fornece o clarão de partículas do torpedo. */
   const explosoes = [];
-  const corExplosaoA = new THREE.Color('#fff0c9');
+  const corExplosaoA = new THREE.Color('#eef2f3');
   const corExplosaoB = new THREE.Color('#7fe3d0');
   function criarExplosao(x, y, z) {
     const quantidade = reduz ? 22 : 46;
@@ -708,9 +727,9 @@ export function createOceanScene(canvas, { reducedMotion = false } = {}) {
       const corCss2 = '#' + corProf(Math.min(1, prof + 0.1)).getHexString();
       const corCss3 = '#' + corProf(Math.min(1, prof + 0.26)).getHexString();
       backgroundCssCache =
-        `radial-gradient(110% 52% at 48% -14%, rgba(231,211,168,${0.24 * (1 - prof)}) 0%, rgba(140,200,234,${0.16 * (1 - prof)}) 34%, transparent 76%),` +
-        `radial-gradient(80% 58% at ${66 + Math.sin(t * 0.08) * 5}% ${12 + Math.cos(t * 0.07) * 3}%, rgba(140,200,234,${0.11 * (1 - prof * 0.82)}) 0%, transparent 66%),` +
-        `radial-gradient(72% 62% at ${18 + Math.cos(t * 0.06) * 4}% ${76 + Math.sin(t * 0.05) * 5}%, rgba(198,151,73,${0.07 * (1 - prof * 0.55)}) 0%, transparent 70%),` +
+        `radial-gradient(110% 52% at 48% -14%, rgba(174,181,183,${0.24 * (1 - prof)}) 0%, rgba(56,189,227,${0.16 * (1 - prof)}) 34%, transparent 76%),` +
+        `radial-gradient(80% 58% at ${66 + Math.sin(t * 0.08) * 5}% ${12 + Math.cos(t * 0.07) * 3}%, rgba(56,189,227,${0.11 * (1 - prof * 0.82)}) 0%, transparent 66%),` +
+        `radial-gradient(72% 62% at ${18 + Math.cos(t * 0.06) * 4}% ${76 + Math.sin(t * 0.05) * 5}%, rgba(133,142,145,${0.07 * (1 - prof * 0.55)}) 0%, transparent 70%),` +
         `linear-gradient(178deg, rgba(255,246,218,${0.045 * (1 - prof)}) 0%, transparent 22%, rgba(1,7,15,${0.22 * prof}) 100%),` +
         `linear-gradient(164deg, ${corCss} 0%, ${corCss2} 48%, ${corCss3} 100%)`;
     }
@@ -813,6 +832,24 @@ export function createOceanScene(canvas, { reducedMotion = false } = {}) {
     }
 
     /* habitantes do leito */
+    coraisFundo.forEach((coral) => {
+      const positions = coral.geo.attributes.position.array;
+      const visibility = Math.max(0, Math.min(0.92, (prof - 0.58) * 2.7));
+      coral.p.material.opacity = visibility;
+      coral.p.visible = visibility > 0.005;
+      if (!coral.p.visible) return;
+      coral.p.rotation.z = coral.baseRotation + Math.sin(t * coral.speed + coral.phase) * 0.012 * fMov;
+      for (let j = 0; j < positions.length; j += 3) {
+        const heightRatio = Math.max(0, coral.base[j + 1] / coral.maxHeight);
+        const flex = heightRatio * heightRatio;
+        const current = Math.sin(t * coral.speed + coral.phase + coral.base[j + 1] * 0.12);
+        positions[j] = coral.base[j] + current * coral.sway * flex * fMov;
+        positions[j + 1] = coral.base[j + 1] + Math.cos(t * coral.speed * 0.7 + coral.phase) * 0.018 * flex * fMov;
+        positions[j + 2] = coral.base[j + 2] + Math.cos(t * coral.speed + coral.phase + coral.base[j] * 0.09) * coral.sway * 0.28 * flex * fMov;
+      }
+      coral.geo.attributes.position.needsUpdate = true;
+    });
+
     habitantesFundo.forEach((hb, hi) => {
       if (hb.tipo !== 'caranguejo') return;
       const crawl = Math.sin(t * hb.vel + hb.fase);

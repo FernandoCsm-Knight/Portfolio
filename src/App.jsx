@@ -3,8 +3,10 @@ import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 import CustomCursor from './components/CustomCursor';
 import ErrorBoundary from './components/ErrorBoundary';
 import HomePage from './components/HomePage';
+import LanguageSwitcher from './components/LanguageSwitcher';
 import LoadingScreen from './components/LoadingScreen';
 import SonarNav from './components/SonarNav';
+import { useI18n } from './i18n/context';
 
 /* cena 3D separada e pesada (Three.js) usada só em /projetos — não deve
    entrar no bundle/execução inicial de quem visita a home. */
@@ -13,15 +15,8 @@ const AboutPage = lazy(() => import('./components/sobre/AboutPage'));
 const ContactPage = lazy(() => import('./components/contact/ContactPage'));
 const AdminPage = lazy(() => import('./components/admin/AdminPage'));
 
-/* '/' vira ''; '/portfolio/' vira '/portfolio'. Sem isto o roteador compara a
-   rota crua contra '/projetos' e nunca casa quando o site é servido de um
-   subdiretório (GitHub Pages, por exemplo). */
-const BASE = import.meta.env.BASE_URL.replace(/\/+$/, '');
-
 function normalizePathname(pathname) {
-  let caminho = pathname;
-  if (BASE && caminho.startsWith(BASE)) caminho = caminho.slice(BASE.length) || '/';
-  return caminho.length > 1 ? caminho.replace(/\/+$/, '') : caminho;
+  return pathname.length > 1 ? pathname.replace(/\/+$/, '') : pathname;
 }
 
 /* Só estes caminhos são rotas do app. Sem esta lista, qualquer link interno
@@ -31,6 +26,7 @@ function normalizePathname(pathname) {
 const ROTAS = ['/', '/projetos', '/sobre', '/contato', '/admin'];
 
 function App() {
+  const { t } = useI18n();
   const [route, setRoute] = useState(() => normalizePathname(window.location.pathname));
   const [carregando, setCarregando] = useState(true);
 
@@ -114,9 +110,10 @@ function App() {
     <>
       <LoadingScreen visible={carregando} route={route} />
       <CustomCursor clickEffectsEnabled={route === '/'} />
+      {!isAdmin && <LanguageSwitcher />}
       {!isAdmin && <SonarNav route={route} />}
       <ErrorBoundary
-        fallback={<a className="voltar-oceano" href={import.meta.env.BASE_URL}>VOLTAR AO MERGULHO</a>}
+        fallback={<a className="voltar-oceano" href="/">{t('common.back')}</a>}
       >
         {isProjectMap && (
           <Suspense fallback={null}>

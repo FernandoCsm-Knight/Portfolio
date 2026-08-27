@@ -6,7 +6,7 @@ const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
 
 export const supabaseConfigured = Boolean(SUPABASE_URL && SUPABASE_KEY);
 
-export const supabase = supabaseConfigured
+const supabase = supabaseConfigured
   ? createClient(SUPABASE_URL, SUPABASE_KEY, {
       auth: {
         persistSession: true,

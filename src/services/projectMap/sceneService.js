@@ -2,15 +2,12 @@ import * as THREE from 'three';
 import { disposeSceneResources, getWebGLPixelRatio, precompileRenderer } from '../ocean/webglUtils';
 import { makeFishOcean } from './fish';
 import { makeProjectCarousel } from './projectCarousel';
-import { makeProjectTerrain } from './terrain';
 
 /**
- * Base limpa do mapa de projetos. A cena contém apenas a malha sólida do
- * leito oceânico e suas luzes; criaturas, marcadores, habitats e todas as
- * camadas de partículas ficam de fora para a próxima versão poder nascer sem
- * resíduos da composição anterior.
+ * Cena de projetos sem a antiga malha de terreno. A formação de peixes usa
+ * uma altura plana apenas como referência espacial para desenhar o monograma.
  */
-export function createProjectMapScene(canvas, projects, { reducedMotion = false } = {}) {
+export function createProjectMapScene(canvas, projects, { reducedMotion = false, labels = {} } = {}) {
   const renderer = new THREE.WebGLRenderer({
     canvas,
     antialias: true,
@@ -25,19 +22,14 @@ export function createProjectMapScene(canvas, projects, { reducedMotion = false 
   const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 160);
   camera.position.set(0, 0, 78);
 
-  scene.add(new THREE.HemisphereLight(0x8fa9cb, 0x020716, 0.86));
-  const terrainLight = new THREE.DirectionalLight(0xc4d3df, 1.34);
-  terrainLight.position.set(-38, 20, 18);
-  scene.add(terrainLight);
-
-  const projectTerrain = makeProjectTerrain(projects);
-  scene.add(projectTerrain);
-  const fishOcean = makeFishOcean(projectTerrain.userData.surfaceHeightAt, reducedMotion);
+  const surfaceHeightAt = () => -1.8;
+  const fishOcean = makeFishOcean(surfaceHeightAt, reducedMotion);
   scene.add(fishOcean.group);
   const carousel = makeProjectCarousel(
     projects,
-    projectTerrain.userData.surfaceHeightAt(0, 0) + 4,
+    surfaceHeightAt(0, 0) + 4,
     reducedMotion,
+    labels,
   );
   scene.add(carousel.group);
 
@@ -140,9 +132,6 @@ export function createProjectMapScene(canvas, projects, { reducedMotion = false 
     const oceanTarget = fishState.consolidated ? 0 : 1;
     const oceanEase = reducedMotion ? 1 : Math.min(1, dt * 1.65);
     oceanVisibility += (oceanTarget - oceanVisibility) * oceanEase;
-    projectTerrain.material.transparent = oceanVisibility < 0.999;
-    projectTerrain.material.opacity = oceanVisibility;
-    projectTerrain.visible = oceanVisibility > 0.008;
     currentClearColor.copy(voidColor).lerp(oceanColor, oceanVisibility);
     renderer.setClearColor(currentClearColor, 1);
     carousel.update(

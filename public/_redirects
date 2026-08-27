@@ -1,4 +1,0 @@
-# Netlify: o roteamento é client-side, então qualquer rota conhecida só pelo
-# JS (ex.: /projetos) precisa ser servida pelo index.html. Sem esta linha, um
-# acesso direto ou um F5 em /projetos devolve 404.
-/*  /index.html  200

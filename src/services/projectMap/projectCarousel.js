@@ -41,7 +41,46 @@ function wrapLines(context, text, maxWidth, maxLines) {
   return visible;
 }
 
-function makeCardTexture(project) {
+const MEDIA_RECT = { x: 52, y: 108, width: 596, height: 274, radius: 18 };
+
+/* Desenha a capa do projeto ocupando a área reservada, recortada nas mesmas
+   bordas arredondadas do cartão e com "cover fit" (preenche sem distorcer,
+   cortando o excesso em vez de espremer a imagem). */
+function drawCoverImage(context, image) {
+  const { x, y, width, height, radius } = MEDIA_RECT;
+  const scale = Math.max(width / image.naturalWidth, height / image.naturalHeight);
+  const drawWidth = image.naturalWidth * scale;
+  const drawHeight = image.naturalHeight * scale;
+  context.save();
+  roundedRect(context, x, y, width, height, radius);
+  context.clip();
+  context.drawImage(
+    image,
+    x + (width - drawWidth) / 2,
+    y + (height - drawHeight) / 2,
+    drawWidth,
+    drawHeight,
+  );
+  context.restore();
+}
+
+/* Preenchimento neutro usado enquanto o projeto não tem capa (ou antes dela
+   terminar de carregar) — mantém o aspecto de vidro do cartão. */
+function drawMediaPlaceholder(context, labels) {
+  const { x, y, width, height, radius } = MEDIA_RECT;
+  const media = context.createLinearGradient(x, y, x + width, y + height);
+  media.addColorStop(0, 'rgba(255,255,255,.065)');
+  media.addColorStop(1, 'rgba(255,255,255,.018)');
+  roundedRect(context, x, y, width, height, radius);
+  context.fillStyle = media;
+  context.fill();
+  context.font = "500 16px 'IBM Plex Mono', monospace";
+  context.letterSpacing = '2px';
+  context.fillStyle = 'rgba(210,214,216,.42)';
+  context.fillText(labels.image ?? 'PROJECT IMAGE', x + 24, y + 242);
+}
+
+function makeCardTexture(project, labels) {
   const canvas = document.createElement('canvas');
   canvas.width = 700;
   canvas.height = 990;
@@ -75,20 +114,9 @@ function makeCardTexture(project) {
   context.font = "500 22px 'IBM Plex Mono', monospace";
   context.letterSpacing = '3px';
   context.fillStyle = '#8d9296';
-  context.fillText(`PROJETO  ${project.num}`, 52, 70);
+  context.fillText(`${labels.project ?? 'PROJECT'}  ${project.num}`, 52, 70);
 
-  /* Área reservada para uma futura imagem de capa. O preenchimento neutro
-     preserva o aspecto de vidro enquanto o projeto ainda não possui mídia. */
-  const media = context.createLinearGradient(52, 108, 648, 382);
-  media.addColorStop(0, 'rgba(255,255,255,.065)');
-  media.addColorStop(1, 'rgba(255,255,255,.018)');
-  roundedRect(context, 52, 108, 596, 274, 18);
-  context.fillStyle = media;
-  context.fill();
-  context.font = "500 16px 'IBM Plex Mono', monospace";
-  context.letterSpacing = '2px';
-  context.fillStyle = 'rgba(210,214,216,.42)';
-  context.fillText('IMAGEM DO PROJETO', 76, 350);
+  drawMediaPlaceholder(context, labels);
 
   context.font = "600 52px 'Cormorant Garamond', serif";
   context.letterSpacing = '0px';
@@ -110,16 +138,27 @@ function makeCardTexture(project) {
 
   context.fillStyle = '#d9dad7';
   context.font = "500 20px 'IBM Plex Mono', monospace";
-  context.fillText('ABRIR PROJETO  ↗', 52, 928);
+  context.fillText(`${labels.open ?? 'OPEN PROJECT'}  ↗`, 52, 928);
 
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
   texture.minFilter = THREE.LinearMipmapLinearFilter;
   texture.magFilter = THREE.LinearFilter;
+
+  if (project.imageUrl) {
+    const image = new Image();
+    image.crossOrigin = 'anonymous';
+    image.onload = () => {
+      drawCoverImage(context, image);
+      texture.needsUpdate = true;
+    };
+    image.src = project.imageUrl;
+  }
+
   return texture;
 }
 
-export function makeProjectCarousel(projects, centerZ, reducedMotion = false) {
+export function makeProjectCarousel(projects, centerZ, reducedMotion = false, labels = {}) {
   const group = new THREE.Group();
   group.visible = false;
   group.renderOrder = 7;
@@ -129,7 +168,7 @@ export function makeProjectCarousel(projects, centerZ, reducedMotion = false) {
   const cardGeometry = new THREE.PlaneGeometry(19.4, 27.5);
   const cards = projects.map((project) => {
     const material = new THREE.MeshBasicMaterial({
-      map: makeCardTexture(project),
+      map: makeCardTexture(project, labels),
       transparent: true,
       opacity: 0,
       depthWrite: false,

@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import { PUBLICACOES } from '../../data/sobre';
+import { useI18n } from '../../i18n/context';
 
 export default function CarrosselPublicacoes() {
+  const { t } = useI18n();
   const [indice, setIndice] = useState(0);
   const total = PUBLICACOES.length;
 
@@ -22,7 +24,7 @@ export default function CarrosselPublicacoes() {
       className="carrossel"
       role="group"
       aria-roledescription="carrossel"
-      aria-label="Artigos publicados"
+      aria-label={t('about.published')}
       onKeyDown={handleKeyDown}
     >
       <div className="carrossel-janela">
@@ -34,16 +36,19 @@ export default function CarrosselPublicacoes() {
                  isso o teclado navegaria para links fora da tela */
               <li key={artigo.doi} className="carrossel-slide" inert={oculto} aria-hidden={oculto}>
                 <a className="registro" href={artigo.href} target="_blank" rel="noreferrer">
-                  {/* Sem texto visível, o alt é o único nome acessível do link:
-                      precisa dizer o artigo inteiro, não "miniatura". */}
                   <img
                     src={artigo.miniatura}
-                    alt={`${artigo.titulo} — ${artigo.veiculo}`}
+                    alt={t('about.firstPage', { title: artigo.titulo })}
                     width={artigo.largura}
                     height={artigo.altura}
                     loading="lazy"
                     decoding="async"
                   />
+                  <span className="registro-info">
+                    <span>{artigo.veiculo}</span>
+                    <strong>{artigo.titulo}</strong>
+                    <small>{t('about.doi')} · {artigo.doi}</small>
+                  </span>
                 </a>
               </li>
             );
@@ -52,7 +57,7 @@ export default function CarrosselPublicacoes() {
       </div>
 
       <div className="carrossel-controles">
-        <button type="button" onClick={() => ir(-1)} aria-label="Artigo anterior">
+        <button type="button" onClick={() => ir(-1)} aria-label={t('about.previousPaper')}>
           <FaChevronLeft aria-hidden="true" />
         </button>
         <div className="carrossel-pontos">
@@ -62,12 +67,12 @@ export default function CarrosselPublicacoes() {
               type="button"
               className={i === indice ? 'ativo' : undefined}
               onClick={() => setIndice(i)}
-              aria-label={`Ver o artigo do ${artigo.veiculo}`}
+              aria-label={t('about.viewPaper', { venue: artigo.veiculo })}
               aria-current={i === indice}
             />
           ))}
         </div>
-        <button type="button" onClick={() => ir(1)} aria-label="Próximo artigo">
+        <button type="button" onClick={() => ir(1)} aria-label={t('about.nextPaper')}>
           <FaChevronRight aria-hidden="true" />
         </button>
       </div>

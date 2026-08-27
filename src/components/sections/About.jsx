@@ -10,6 +10,7 @@ import {
   SiTypescript,
 } from 'react-icons/si';
 import { SKILLS } from '../../data/skills';
+import { useI18n } from '../../i18n/context';
 
 const ICONES = [
   SiCplusplus,
@@ -64,6 +65,8 @@ const CONEXOES = [
 ];
 
 function About() {
+  const { t } = useI18n();
+  const skills = t('skills');
   const grafoRef = useRef(null);
   const nosRef = useRef([]);
   const arestasRef = useRef([]);
@@ -194,7 +197,7 @@ function About() {
   }, []);
 
   return (
-    <section id="sobre" className="secao-grafo-habilidades" aria-label="Grafo de habilidades">
+    <section id="sobre" className="secao-grafo-habilidades" aria-label={t('hero.skillsGraph')}>
       <div ref={grafoRef} className="grafo-habilidades">
         <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
           {CONEXOES.map(([origem, destino], index) => (
@@ -210,7 +213,7 @@ function About() {
           ))}
         </svg>
         <ul>
-          {SKILLS.map((skill, index) => (
+          {skills.map((skill, index) => (
             (() => {
               const Icone = ICONES[index];
               const [cor, brilho, borda] = CORES[index];

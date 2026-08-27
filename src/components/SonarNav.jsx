@@ -3,6 +3,7 @@ import { FaTimes } from 'react-icons/fa';
 import { GiAnchor, GiPeriscope, GiRadarSweep, GiSubmarine, GiTreasureMap } from 'react-icons/gi';
 import { NAV_ITEMS } from '../data/navItems';
 import { useSonarNav } from '../hooks/useSonarNav';
+import { useI18n } from '../i18n/context';
 
 const CX = 240, CY = 240, R_ITEM = 140, R_ITEM_MOBILE = 196;
 const ICONES = {
@@ -28,6 +29,7 @@ const TICKS = Array.from({ length: 60 }, (_, i) => {
   };
 });
 function SonarNav({ route }) {
+  const { t } = useI18n();
   const { open, activeHref, abertoPorProximidade, alternarPeloBotao, fechar } = useSonarNav(
     NAV_ITEMS,
     route,
@@ -52,7 +54,7 @@ function SonarNav({ route }) {
       <nav
         id="sonar"
         className={open ? 'aberto' : ''}
-        aria-label="Navegação"
+        aria-label={t('nav.label')}
         aria-hidden={!open}
         inert={!open}
       >
@@ -64,40 +66,42 @@ function SonarNav({ route }) {
               <stop offset="100%" stopColor="#03101c" />
             </radialGradient>
             <linearGradient id="feixe" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stopColor="rgba(140,200,234,0)" />
-              <stop offset="100%" stopColor="rgba(140,200,234,.55)" />
+              <stop offset="0%" stopColor="rgba(56,189,227,0)" />
+              <stop offset="100%" stopColor="rgba(56,189,227,.55)" />
             </linearGradient>
           </defs>
           <circle cx="240" cy="240" r="196" fill="url(#marFundo)" />
-          <circle cx="240" cy="240" r="196" fill="none" stroke="#c69749" strokeWidth="1.6" strokeOpacity=".6" />
-          <circle cx="240" cy="240" r="214" fill="none" stroke="#c69749" strokeWidth=".6" strokeOpacity=".22" strokeDasharray="2 9" />
-          <circle cx="240" cy="240" r="132" fill="none" stroke="#8cc8ea" strokeWidth=".6" strokeOpacity=".2" strokeDasharray="3 8" />
-          <circle cx="240" cy="240" r="66" fill="none" stroke="#8cc8ea" strokeWidth=".5" strokeOpacity=".16" />
+          <circle cx="240" cy="240" r="196" fill="none" stroke="#858e91" strokeWidth="1.6" strokeOpacity=".6" />
+          <circle cx="240" cy="240" r="214" fill="none" stroke="#858e91" strokeWidth=".6" strokeOpacity=".22" strokeDasharray="2 9" />
+          <circle cx="240" cy="240" r="132" fill="none" stroke="#38bde3" strokeWidth=".6" strokeOpacity=".2" strokeDasharray="3 8" />
+          <circle cx="240" cy="240" r="66" fill="none" stroke="#38bde3" strokeWidth=".5" strokeOpacity=".16" />
           <g>
             {TICKS.map((tk) => (
               <line
                 key={tk.key}
                 x1={tk.x1} y1={tk.y1} x2={tk.x2} y2={tk.y2}
-                stroke="#c69749" strokeWidth={tk.strokeWidth} strokeOpacity={tk.strokeOpacity}
+                stroke="#858e91" strokeWidth={tk.strokeWidth} strokeOpacity={tk.strokeOpacity}
               />
             ))}
           </g>
           <g className="varredura">
             <path d="M240 240 L436 240 A196 196 0 0 0 407 138 Z" fill="url(#feixe)" opacity=".16" />
-            <line x1="240" y1="240" x2="436" y2="240" stroke="#8cc8ea" strokeWidth="1" strokeOpacity=".5" />
+            <line x1="240" y1="240" x2="436" y2="240" stroke="#38bde3" strokeWidth="1" strokeOpacity=".5" />
           </g>
-          <circle cx="240" cy="240" r="4" fill="#e7d3a8" />
+          <circle cx="240" cy="240" r="4" fill="#aeb5b7" />
         </svg>
         {NAV_ITEMS.map((it, i) => {
           const a = (it.ang * Math.PI) / 180;
           const mobileAngle = ((200 + (140 * i) / Math.max(1, NAV_ITEMS.length - 1)) * Math.PI) / 180;
           const ativa = activeHref === it.href;
           const Icone = ICONES[it.href] ?? GiRadarSweep;
+          const labelKey = { '#inicio': 'home', sobre: 'about', projetos: 'projects', contato: 'contact' }[it.href];
+          const label = t(`nav.${labelKey}`);
           return (
             <a
               key={it.href}
               className={`item${ativa ? ' ativa' : ''}`}
-              href={`${import.meta.env.BASE_URL}${it.href}`}
+              href={`/${it.href}`}
               style={{
                 left: `${(CX + Math.cos(a) * R_ITEM) / 4.8}%`,
                 top: `${(CY + Math.sin(a) * R_ITEM) / 4.8}%`,
@@ -106,11 +110,11 @@ function SonarNav({ route }) {
                 '--atraso': `${i * 0.05}s`,
               }}
               onClick={fecharAposNavegar}
-              aria-label={it.rot}
-              title={it.rot}
+              aria-label={label}
+              title={label}
             >
               <Icone aria-hidden="true" />
-              <span>{it.rot}</span>
+              <span>{label}</span>
             </a>
           );
         })}
@@ -118,7 +122,7 @@ function SonarNav({ route }) {
       <button
         id="btn-sonar"
         className={ocultarBotao ? 'oculto' : ''}
-        aria-label={open ? 'Fechar navegação' : 'Abrir navegação'}
+        aria-label={open ? t('nav.close') : t('nav.open')}
         aria-controls="sonar"
         aria-expanded={open}
         inert={ocultarBotao}
