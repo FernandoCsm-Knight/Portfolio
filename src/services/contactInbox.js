@@ -1,4 +1,4 @@
-import { requireSupabase } from './supabase';
+import { requireSupabase, unwrap } from './supabase';
 
 /* Só o /admin importa este módulo. Manter separado de contact.js é o que
    impede as consultas de moderação de entrarem no bundle de quem apenas
@@ -13,15 +13,12 @@ export const INBOX_FILTERS = [
 ];
 
 export async function listContactRequests(status = 'new') {
-  const { data, error } = await requireSupabase()
+  return unwrap(requireSupabase()
     .from('contact_requests')
     .select(CAMPOS)
     .eq('status', status)
     .order('created_at', { ascending: false })
-    .limit(100);
-
-  if (error) throw error;
-  return data;
+    .limit(100));
 }
 
 export async function countNewContactRequests() {
@@ -35,15 +32,12 @@ export async function countNewContactRequests() {
 }
 
 export async function setContactRequestStatus(id, status) {
-  const { data, error } = await requireSupabase()
+  return unwrap(requireSupabase()
     .from('contact_requests')
     .update({ status })
     .eq('id', id)
     .select('id,status')
-    .single();
-
-  if (error) throw error;
-  return data;
+    .single());
 }
 
 /**

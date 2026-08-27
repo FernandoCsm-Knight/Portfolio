@@ -1612,8 +1612,21 @@ footer{
 .admin-comment>p{flex:1;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.7;color:var(--texto)}
 .admin-comment footer{display:flex;justify-content:flex-end;gap:10px;margin-top:16px;padding:0;text-align:left}
 .admin-comment footer button{display:flex;align-items:center;gap:7px;padding:10px 13px;border-radius:99px}
-.admin-comment footer .approve:hover{border-color:#91d6bb;color:#baf1dc;background:rgba(80,170,135,.12)}
-.admin-comment footer .reject:hover{border-color:#e29a8a;color:#ffd0c5;background:rgba(207,91,59,.12)}
+/* Tratamento de hover "positivo"/"perigo" dos botões .approve/.reject/.archive
+   do admin — agrupados aqui (mantendo a especificidade de cada seletor
+   original) em vez de repetir a mesma declaração em CommentsPanel,
+   InboxPanel e ProjectsPanel. */
+.admin-comment footer .approve:hover,
+.admin-projeto-header button:hover,
+.admin-projeto-form-acoes button.approve:hover:not(:disabled){
+  border-color:#91d6bb;color:#baf1dc;background:rgba(80,170,135,.12);
+}
+.admin-comment footer .reject:hover,
+.admin-mensagem footer .archive:hover:not(:disabled),
+.admin-projeto-acoes .archive:hover:not(:disabled),
+.admin-projeto-imagem-acoes>button:hover{
+  border-color:#e29a8a;color:#ffd0c5;background:rgba(207,91,59,.12);
+}
 
 /* ----- Caixa de entrada de demandas ----- */
 /* Uma coluna só, ao contrário das avaliações: estas mensagens são longas e o
@@ -1645,7 +1658,6 @@ footer{
 .admin-responder{margin-right:auto;border-color:rgba(174,181,183,.4);color:var(--gold-claro)}
 .admin-responder:hover{border-color:var(--gold-claro);background:rgba(133,142,145,.12)}
 .admin-mensagem footer button:hover:not(:disabled){border-color:var(--aqua);background:rgba(56,189,227,.1)}
-.admin-mensagem footer .archive:hover:not(:disabled){border-color:#e29a8a;color:#ffd0c5;background:rgba(207,91,59,.12)}
 .admin-mensagem footer button:disabled{opacity:.45}
 
 /* ----- Aviso de demanda recém-chegada ----- */
@@ -1683,7 +1695,6 @@ footer{
 /* ===== PAINEL DE PROJETOS (/admin) ===== */
 .admin-projeto-header{display:flex;justify-content:flex-end;margin-bottom:18px}
 .admin-projeto-header button{display:flex;align-items:center;gap:9px;padding:12px 20px;border-radius:99px}
-.admin-projeto-header button:hover{border-color:#91d6bb;color:#baf1dc;background:rgba(80,170,135,.12)}
 .admin-projetos{display:grid;gap:14px}
 .admin-projeto{display:flex;align-items:center;gap:18px;padding:14px 18px}
 .admin-projeto-thumb{
@@ -1703,7 +1714,6 @@ footer{
   display:grid;place-items:center;width:38px;height:38px;padding:0;border-radius:99px;
 }
 .admin-projeto-acoes button:hover:not(:disabled){border-color:var(--aqua);background:rgba(56,189,227,.1)}
-.admin-projeto-acoes .archive:hover:not(:disabled){border-color:#e29a8a;color:#ffd0c5;background:rgba(207,91,59,.12)}
 .admin-projeto-acoes button:disabled{opacity:.35}
 
 .admin-projeto-form{display:grid;gap:8px;width:min(100%,640px);padding:clamp(22px,4vw,32px)}
@@ -1741,11 +1751,9 @@ footer{
   padding:10px 16px;border-radius:99px;font:600 13px var(--f-mono);
   letter-spacing:var(--track-tight);color:var(--texto-2);
 }
-.admin-projeto-imagem-acoes>button:hover{border-color:#e29a8a;color:#ffd0c5}
 .admin-projeto-form-acoes{display:flex;justify-content:flex-end;gap:10px;margin-top:16px}
 .admin-projeto-form-acoes button{padding:13px 22px;border-radius:99px}
 .admin-projeto-form-acoes button:hover:not(:disabled){border-color:var(--gold-claro);color:var(--gold-claro)}
-.admin-projeto-form-acoes button.approve:hover:not(:disabled){border-color:#91d6bb;color:#baf1dc;background:rgba(80,170,135,.12)}
 .admin-projeto-form-acoes button:disabled{opacity:.45}
 
 @media(max-width:720px){

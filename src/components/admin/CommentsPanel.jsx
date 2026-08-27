@@ -1,6 +1,8 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useState } from 'react';
 import { FaCheck, FaTimes } from 'react-icons/fa';
 import { listCommentsForModeration, moderateComment } from '../../services/commentModeration';
+import { useAdminList } from '../../hooks/useAdminList';
+import { formatAdminDate } from '../../utils/adminDate';
 
 const FILTERS = [
   { value: 'pending', label: 'Pendentes' },
@@ -8,32 +10,12 @@ const FILTERS = [
   { value: 'rejected', label: 'Rejeitados' },
 ];
 
-const dateFormatter = new Intl.DateTimeFormat('pt-BR', {
-  dateStyle: 'short',
-  timeStyle: 'short',
-});
-
 export default function CommentsPanel() {
   const [filter, setFilter] = useState('pending');
-  const [comments, setComments] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState(null);
-  const [message, setMessage] = useState('');
-
-  const loadComments = useCallback(async (nextFilter) => {
-    setLoading(true);
-    setMessage('');
-    try {
-      setComments(await listCommentsForModeration(nextFilter));
-    } catch {
-      setComments([]);
-      setMessage('Não foi possível carregar os comentários.');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => { loadComments(filter); }, [filter, loadComments]);
+  const {
+    items: comments, setItems: setComments, loading, message, setMessage,
+  } = useAdminList(listCommentsForModeration, filter, 'Não foi possível carregar os comentários.');
 
   async function handleModeration(id, status) {
     setProcessingId(id);
@@ -77,7 +59,7 @@ export default function CommentsPanel() {
               <div>
                 <strong>{comment.name}</strong>
                 <time dateTime={comment.created_at}>
-                  {dateFormatter.format(new Date(comment.created_at))}
+                  {formatAdminDate(new Date(comment.created_at))}
                 </time>
               </div>
               <span aria-label={`${comment.rating} de 5`}>

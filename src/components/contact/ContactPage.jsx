@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useState } from 'react';
 import { FaEnvelope, FaGithub, FaLinkedinIn, FaPaperPlane, FaWhatsapp } from 'react-icons/fa';
 import { contactConfigured } from '../../services/contact';
 import { useI18n } from '../../i18n/context';
+import { EXTERNAL_LINK_PROPS } from '../../utils/links';
 
 /* O formulário só existe depois do clique: manter fora do chunk da página
    evita carregar o modal inteiro para quem veio só pegar um link de contato. */
@@ -172,7 +173,7 @@ export default function ContactPage({ onReady }) {
                   key={contact.id}
                   className={`contato-no contato-no-${contact.id}`}
                   href={contact.href}
-                  {...(contact.href.startsWith('http') ? { target: '_blank', rel: 'noreferrer' } : {})}
+                  {...(contact.href.startsWith('http') ? EXTERNAL_LINK_PROPS : {})}
                   aria-label={t('contact.via', { channel: contact.label })}
                 >
                   {content}

@@ -1,4 +1,6 @@
 import './styles/global.css';
+import { Analytics } from '@vercel/analytics/react';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 import CustomCursor from './components/CustomCursor';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -108,6 +110,8 @@ function App() {
 
   return (
     <>
+      <Analytics />
+      <SpeedInsights />
       <LoadingScreen visible={carregando} route={route} />
       <CustomCursor clickEffectsEnabled={route === '/'} />
       {!isAdmin && <LanguageSwitcher />}

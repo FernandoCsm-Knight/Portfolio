@@ -5,6 +5,27 @@ create table if not exists public.comment_admins (
   created_at timestamptz not null default now()
 );
 
+/* Checagem de admin compartilhada por comments, contact_requests e projects —
+   sem isto, cada policy repetia o mesmo `exists (select ... from
+   comment_admins ...)`. `stable` (não `security definer`): roda com o
+   privilégio de quem chama, então continua sujeita à RLS de comment_admins
+   (a policy abaixo só deixa cada usuário ler a própria linha, que é
+   exatamente o que essa checagem precisa). */
+create or replace function public.is_portfolio_admin()
+returns boolean
+language sql
+stable
+set search_path = ''
+as $$
+  select exists (
+    select 1 from public.comment_admins
+    where comment_admins.user_id = auth.uid()
+  );
+$$;
+
+revoke all on function public.is_portfolio_admin() from public, anon;
+grant execute on function public.is_portfolio_admin() to authenticated;
+
 create table if not exists public.comments (
   id uuid primary key default gen_random_uuid(),
   name text not null check (char_length(btrim(name)) between 2 and 40),
@@ -123,32 +144,14 @@ create policy "Admins can read all comments"
   on public.comments
   for select
   to authenticated
-  using (
-    exists (
-      select 1
-      from public.comment_admins
-      where comment_admins.user_id = (select auth.uid())
-    )
-  );
+  using (public.is_portfolio_admin());
 
 create policy "Admins can moderate comments"
   on public.comments
   for update
   to authenticated
-  using (
-    exists (
-      select 1
-      from public.comment_admins
-      where comment_admins.user_id = (select auth.uid())
-    )
-  )
-  with check (
-    exists (
-      select 1
-      from public.comment_admins
-      where comment_admins.user_id = (select auth.uid())
-    )
-  );
+  using (public.is_portfolio_admin())
+  with check (public.is_portfolio_admin());
 
 comment on table public.comments is
   'Portfolio reviews. New rows remain pending until an authorized creator approves them.';

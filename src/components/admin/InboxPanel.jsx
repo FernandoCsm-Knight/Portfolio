@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { FaArchive, FaEnvelopeOpenText, FaReply, FaUndo } from 'react-icons/fa';
 import { subjectLabel } from '../../services/contact';
 import {
@@ -6,11 +6,9 @@ import {
   listContactRequests,
   setContactRequestStatus,
 } from '../../services/contactInbox';
-
-const dateFormatter = new Intl.DateTimeFormat('pt-BR', {
-  dateStyle: 'short',
-  timeStyle: 'short',
-});
+import { useAdminList } from '../../hooks/useAdminList';
+import { formatAdminDate } from '../../utils/adminDate';
+import { EXTERNAL_LINK_PROPS } from '../../utils/links';
 
 function respostaHref({ name, email, subject }) {
   const assunto = `Re: ${subjectLabel(subject)} — portfólio`;
@@ -27,31 +25,16 @@ function respostaHref({ name, email, subject }) {
  */
 export default function InboxPanel({ sinalNovaMensagem, onNovasVariou }) {
   const [filter, setFilter] = useState('new');
-  const [requests, setRequests] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState(null);
-  const [message, setMessage] = useState('');
-
-  const load = useCallback(async (nextFilter) => {
-    setLoading(true);
-    setMessage('');
-    try {
-      setRequests(await listContactRequests(nextFilter));
-    } catch {
-      setRequests([]);
-      setMessage('Não foi possível carregar as mensagens.');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => { load(filter); }, [filter, load]);
+  const {
+    items: requests, setItems: setRequests, loading, message, setMessage, reload,
+  } = useAdminList(listContactRequests, filter, 'Não foi possível carregar as mensagens.');
 
   /* Uma demanda que chega enquanto a aba já está aberta precisa aparecer na
      lista, não só no contador do cabeçalho. */
   useEffect(() => {
-    if (sinalNovaMensagem > 0 && filter === 'new') load('new');
-  }, [sinalNovaMensagem, filter, load]);
+    if (sinalNovaMensagem > 0 && filter === 'new') reload();
+  }, [sinalNovaMensagem, filter, reload]);
 
   async function mover(request, status) {
     setProcessingId(request.id);
@@ -101,7 +84,7 @@ export default function InboxPanel({ sinalNovaMensagem, onNovasVariou }) {
               <div className="admin-mensagem-meta">
                 <span className="admin-etiqueta">{subjectLabel(request.subject)}</span>
                 <time dateTime={request.created_at}>
-                  {dateFormatter.format(new Date(request.created_at))}
+                  {formatAdminDate(new Date(request.created_at))}
                 </time>
               </div>
             </header>
@@ -112,8 +95,7 @@ export default function InboxPanel({ sinalNovaMensagem, onNovasVariou }) {
               <a
                 className="admin-responder"
                 href={respostaHref(request)}
-                target="_blank"
-                rel="noreferrer"
+                {...EXTERNAL_LINK_PROPS}
               >
                 <FaReply aria-hidden="true" /> Responder
               </a>

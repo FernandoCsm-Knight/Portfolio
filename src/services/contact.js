@@ -1,4 +1,4 @@
-import { requireSupabase, supabaseConfigured } from './supabase';
+import { requireSupabase, supabaseConfigured, unwrap } from './supabase';
 
 export const contactConfigured = supabaseConfigured;
 
@@ -23,7 +23,7 @@ export const CONTACT_LIMITS = {
 };
 
 export async function createContactRequest({ name, email, company, subject, message }) {
-  const { error } = await requireSupabase()
+  await unwrap(requireSupabase()
     .from('contact_requests')
     .insert({
       name,
@@ -31,7 +31,5 @@ export async function createContactRequest({ name, email, company, subject, mess
       company: company || null,
       subject,
       message,
-    });
-
-  if (error) throw error;
+    }));
 }

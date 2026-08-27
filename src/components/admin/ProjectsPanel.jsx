@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { FaArrowDown, FaArrowUp, FaPen, FaPlus, FaTrash } from 'react-icons/fa';
 import { getProjectImageUrl } from '../../services/projects';
 import {
@@ -10,6 +10,8 @@ import {
   updateProject,
   uploadProjectImage,
 } from '../../services/projectsAdmin';
+import { useAdminList } from '../../hooks/useAdminList';
+import { EXTERNAL_LINK_PROPS } from '../../utils/links';
 
 const IDIOMAS = [
   { value: 'pt', label: 'PT' },
@@ -150,7 +152,7 @@ function ProjectForm({ projeto, onSalvar, onCancelar }) {
             <input type="file" accept="image/*" onChange={escolherImagem} />
           </label>
           {previewUrl && (
-            <button type="button" onClick={removerImagem}>Remover imagem</button>
+            <button type="button" className="archive" onClick={removerImagem}>Remover imagem</button>
           )}
         </div>
       </div>
@@ -218,26 +220,11 @@ function ProjectForm({ projeto, onSalvar, onCancelar }) {
 }
 
 export default function ProjectsPanel() {
-  const [projetos, setProjetos] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [message, setMessage] = useState('');
   const [editando, setEditando] = useState(null);
   const [reordenandoId, setReordenandoId] = useState(null);
-
-  const carregar = useCallback(async () => {
-    setLoading(true);
-    setMessage('');
-    try {
-      setProjetos(await listProjectsForAdmin());
-    } catch {
-      setProjetos([]);
-      setMessage('Não foi possível carregar os projetos.');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => { carregar(); }, [carregar]);
+  const {
+    items: projetos, setItems: setProjetos, loading, message, setMessage, reload: carregar,
+  } = useAdminList(listProjectsForAdmin, undefined, 'Não foi possível carregar os projetos.');
 
   function handleSalvar() {
     setEditando(null);
@@ -307,7 +294,7 @@ export default function ProjectsPanel() {
             <div className="admin-projeto-info">
               <strong>{projeto.title_pt}</strong>
               <span className="admin-projeto-tags">{(projeto.tags ?? []).join(' · ')}</span>
-              <a href={projeto.href} target="_blank" rel="noreferrer">{projeto.href}</a>
+              <a href={projeto.href} {...EXTERNAL_LINK_PROPS}>{projeto.href}</a>
             </div>
             <div className="admin-projeto-acoes">
               <button

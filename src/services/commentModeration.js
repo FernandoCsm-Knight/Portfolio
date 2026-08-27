@@ -1,9 +1,8 @@
-import { requireSupabase } from './supabase';
+import { requireSupabase, unwrap } from './supabase';
 
 export async function signInAdmin(email, password) {
-  const { data, error } = await requireSupabase().auth.signInWithPassword({ email, password });
-  if (error) throw error;
-  return data.session;
+  const { session } = await unwrap(requireSupabase().auth.signInWithPassword({ email, password }));
+  return session;
 }
 
 export async function signOutAdmin() {
@@ -12,42 +11,34 @@ export async function signOutAdmin() {
 }
 
 export async function getAdminSession() {
-  const { data, error } = await requireSupabase().auth.getSession();
-  if (error) throw error;
-  return data.session;
+  const { session } = await unwrap(requireSupabase().auth.getSession());
+  return session;
 }
 
 export async function isCommentAdmin(userId) {
-  const { data, error } = await requireSupabase()
+  const data = await unwrap(requireSupabase()
     .from('comment_admins')
     .select('user_id')
     .eq('user_id', userId)
-    .maybeSingle();
+    .maybeSingle());
 
-  if (error) throw error;
   return Boolean(data);
 }
 
 export async function listCommentsForModeration(status = 'pending') {
-  const { data, error } = await requireSupabase()
+  return unwrap(requireSupabase()
     .from('comments')
     .select('id,name,message,rating,created_at,moderation_status,moderated_at')
     .eq('moderation_status', status)
     .order('created_at', { ascending: false })
-    .limit(100);
-
-  if (error) throw error;
-  return data;
+    .limit(100));
 }
 
 export async function moderateComment(id, moderationStatus) {
-  const { data, error } = await requireSupabase()
+  return unwrap(requireSupabase()
     .from('comments')
     .update({ moderation_status: moderationStatus })
     .eq('id', id)
     .select('id,moderation_status')
-    .single();
-
-  if (error) throw error;
-  return data;
+    .single());
 }

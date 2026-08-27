@@ -1,6 +1,7 @@
 import { CV_LINKS } from '../../data/socialLinks';
 import { useAboutScene } from '../../hooks/useAboutScene';
 import { useI18n } from '../../i18n/context';
+import { EXTERNAL_LINK_PROPS } from '../../utils/links';
 import CarrosselPublicacoes from './CarrosselPublicacoes';
 
 export default function AboutPage({ onReady }) {
@@ -38,7 +39,7 @@ export default function AboutPage({ onReady }) {
             </ul>
             <div className="elos-linha">
               {CV_LINKS.map((cv) => (
-                <a key={cv.label} href={cv.href} title={cv.title} target="_blank" rel="noreferrer">
+                <a key={cv.label} href={cv.href} title={cv.title} {...EXTERNAL_LINK_PROPS}>
                   {t('about.downloadCv')} · {cv.label}
                 </a>
               ))}

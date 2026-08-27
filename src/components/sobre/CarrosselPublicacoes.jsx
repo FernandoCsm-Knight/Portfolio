@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import { PUBLICACOES } from '../../data/sobre';
 import { useI18n } from '../../i18n/context';
+import { EXTERNAL_LINK_PROPS } from '../../utils/links';
 
 export default function CarrosselPublicacoes() {
   const { t } = useI18n();
@@ -35,7 +36,7 @@ export default function CarrosselPublicacoes() {
               /* `inert` tira o slide escondido da ordem de tabulação — sem
                  isso o teclado navegaria para links fora da tela */
               <li key={artigo.doi} className="carrossel-slide" inert={oculto} aria-hidden={oculto}>
-                <a className="registro" href={artigo.href} target="_blank" rel="noreferrer">
+                <a className="registro" href={artigo.href} {...EXTERNAL_LINK_PROPS}>
                   <img
                     src={artigo.miniatura}
                     alt={t('about.firstPage', { title: artigo.titulo })}

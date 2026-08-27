@@ -12,9 +12,10 @@ create extension if not exists pgcrypto;
 
 do $$
 begin
-  if to_regclass('public.comment_admins') is null then
+  if to_regclass('public.comment_admins') is null
+     or to_regprocedure('public.is_portfolio_admin()') is null then
     raise exception
-      'public.comment_admins não existe — rode supabase/comments.sql antes deste arquivo.';
+      'public.comment_admins/is_portfolio_admin() não existem — rode supabase/comments.sql antes deste arquivo.';
   end if;
 end
 $$;
@@ -97,33 +98,15 @@ create policy "Admins can read contact requests"
   on public.contact_requests
   for select
   to authenticated
-  using (
-    exists (
-      select 1
-      from public.comment_admins
-      where comment_admins.user_id = (select auth.uid())
-    )
-  );
+  using (public.is_portfolio_admin());
 
 drop policy if exists "Admins can triage contact requests" on public.contact_requests;
 create policy "Admins can triage contact requests"
   on public.contact_requests
   for update
   to authenticated
-  using (
-    exists (
-      select 1
-      from public.comment_admins
-      where comment_admins.user_id = (select auth.uid())
-    )
-  )
-  with check (
-    exists (
-      select 1
-      from public.comment_admins
-      where comment_admins.user_id = (select auth.uid())
-    )
-  );
+  using (public.is_portfolio_admin())
+  with check (public.is_portfolio_admin());
 
 -- Publica a tabela no Realtime para o /admin avisar de uma demanda nova sem
 -- precisar de F5. O painel funciona sem isto (cai para uma consulta a cada

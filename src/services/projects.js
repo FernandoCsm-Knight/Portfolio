@@ -1,10 +1,12 @@
-import { requireSupabase, supabaseConfigured } from './supabase';
+import { requireSupabase, supabaseConfigured, unwrap } from './supabase';
 
 export const projectsConfigured = supabaseConfigured;
 
 export const PROJECT_COVERS_BUCKET = 'project-covers';
 
-const COLUMNS = 'id,position,title_pt,title_en,title_es,description_pt,description_en,description_es,tags,href,image_path';
+/* Reaproveitada por projectsAdmin.js (com ,updated_at anexado) — evita que as
+   duas listas de colunas divirjam quando um campo for adicionado. */
+export const COLUMNS = 'id,position,title_pt,title_en,title_es,description_pt,description_en,description_es,tags,href,image_path';
 
 export function getProjectImageUrl(imagePath) {
   if (!imagePath) return null;
@@ -34,7 +36,5 @@ export async function listProjects({ signal } = {}) {
 
   if (signal) query = query.abortSignal(signal);
 
-  const { data, error } = await query;
-  if (error) throw error;
-  return data;
+  return unwrap(query);
 }

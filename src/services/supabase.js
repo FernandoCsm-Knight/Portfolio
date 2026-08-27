@@ -20,3 +20,12 @@ export function requireSupabase() {
   if (!supabase) throw new Error('SUPABASE_NOT_CONFIGURED');
   return supabase;
 }
+
+/* `await requireSupabase().from(...)...` sempre volta como `{ data, error }`
+   em vez de rejeitar a Promise — sem isto, todo service repetia o mesmo
+   `if (error) throw error; return data;` depois de cada consulta. */
+export async function unwrap(query) {
+  const { data, error } = await query;
+  if (error) throw error;
+  return data;
+}

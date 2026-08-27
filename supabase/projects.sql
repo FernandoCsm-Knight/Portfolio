@@ -1,8 +1,18 @@
 create extension if not exists pgcrypto;
 
-/* Reaproveita a mesma tabela de administradores usada pelas avaliações
-   (supabase/comments.sql) — é o único "dono" do portfólio, não faz sentido
-   duplicar o conceito de admin por área. */
+/* Reaproveita a mesma tabela de administradores e a função
+   is_portfolio_admin() usadas pelas avaliações (supabase/comments.sql) — é o
+   único "dono" do portfólio, não faz sentido duplicar o conceito de admin
+   por área. */
+do $$
+begin
+  if to_regclass('public.comment_admins') is null
+     or to_regprocedure('public.is_portfolio_admin()') is null then
+    raise exception
+      'public.comment_admins/is_portfolio_admin() não existem — rode supabase/comments.sql antes deste arquivo.';
+  end if;
+end
+$$;
 
 create table if not exists public.projects (
   id uuid primary key default gen_random_uuid(),
@@ -95,40 +105,20 @@ create policy "Admins can create projects"
   on public.projects
   for insert
   to authenticated
-  with check (
-    exists (
-      select 1 from public.comment_admins
-      where comment_admins.user_id = (select auth.uid())
-    )
-  );
+  with check (public.is_portfolio_admin());
 
 create policy "Admins can update projects"
   on public.projects
   for update
   to authenticated
-  using (
-    exists (
-      select 1 from public.comment_admins
-      where comment_admins.user_id = (select auth.uid())
-    )
-  )
-  with check (
-    exists (
-      select 1 from public.comment_admins
-      where comment_admins.user_id = (select auth.uid())
-    )
-  );
+  using (public.is_portfolio_admin())
+  with check (public.is_portfolio_admin());
 
 create policy "Admins can delete projects"
   on public.projects
   for delete
   to authenticated
-  using (
-    exists (
-      select 1 from public.comment_admins
-      where comment_admins.user_id = (select auth.uid())
-    )
-  );
+  using (public.is_portfolio_admin());
 
 comment on table public.projects is
   'Projects shown in the /projetos carousel. Fully managed from the admin panel.';
@@ -154,44 +144,20 @@ create policy "Admins can upload project covers"
   on storage.objects
   for insert
   to authenticated
-  with check (
-    bucket_id = 'project-covers'
-    and exists (
-      select 1 from public.comment_admins
-      where comment_admins.user_id = (select auth.uid())
-    )
-  );
+  with check (bucket_id = 'project-covers' and public.is_portfolio_admin());
 
 create policy "Admins can update project covers"
   on storage.objects
   for update
   to authenticated
-  using (
-    bucket_id = 'project-covers'
-    and exists (
-      select 1 from public.comment_admins
-      where comment_admins.user_id = (select auth.uid())
-    )
-  )
-  with check (
-    bucket_id = 'project-covers'
-    and exists (
-      select 1 from public.comment_admins
-      where comment_admins.user_id = (select auth.uid())
-    )
-  );
+  using (bucket_id = 'project-covers' and public.is_portfolio_admin())
+  with check (bucket_id = 'project-covers' and public.is_portfolio_admin());
 
 create policy "Admins can delete project covers"
   on storage.objects
   for delete
   to authenticated
-  using (
-    bucket_id = 'project-covers'
-    and exists (
-      select 1 from public.comment_admins
-      where comment_admins.user_id = (select auth.uid())
-    )
-  );
+  using (bucket_id = 'project-covers' and public.is_portfolio_admin());
 
 -- ===== SEED: os 4 projetos que hoje estão fixos em src/data/projects.js =====
 -- Roda só na primeira vez (a tabela nasce vazia); depois disso, tudo passa a
