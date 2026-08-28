@@ -18,20 +18,24 @@ const NOTA_MINIMA = Number(process.env.RECAPTCHA_MIN_SCORE ?? 0.5);
 const DEPURAR = /^(1|true)$/i.test(process.env.RECAPTCHA_DEBUG || '');
 
 function lerConfig() {
+  /* Tudo aparado: colar um valor no painel da Vercel arrasta espaço ou quebra
+     de linha com facilidade, e o cliente já fazia `.trim()` na site key — sem
+     isto os dois lados podiam divergir por um caractere invisível. */
+  const ler = (nome) => process.env[nome]?.trim();
   return {
-    projectId: process.env.RECAPTCHA_PROJECT_ID,
-    apiKey: process.env.RECAPTCHA_API_KEY,
+    projectId: ler('RECAPTCHA_PROJECT_ID'),
+    apiKey: ler('RECAPTCHA_API_KEY'),
     /* As `VITE_*` também chegam aqui: a Vercel injeta todas as variáveis no
        runtime da função, com prefixo ou sem. O prefixo decide o outro sentido —
        o que o Vite copia para dentro do bundle —, não o que o Node enxerga.
        Uma fonte só para cada valor: duas que precisam bater é uma que vai
        dessincronizar. */
-    siteKey: process.env.VITE_RECAPTCHA_SITE_KEY,
-    supabaseUrl: process.env.VITE_SUPABASE_URL,
+    siteKey: ler('VITE_RECAPTCHA_SITE_KEY'),
+    supabaseUrl: ler('VITE_SUPABASE_URL'),
     /* Geração nova de chaves do Supabase: `sb_secret_…` no lugar do JWT
        `service_role`. Mesmo poder — ignora a RLS —, mas revogável sozinha, sem
        derrubar a chave publishable junto. */
-    secretKey: process.env.SUPABASE_SECRET_KEY,
+    secretKey: ler('SUPABASE_SECRET_KEY'),
   };
 }
 
@@ -56,7 +60,13 @@ async function avaliarToken({ token, acao, config }) {
   );
 
   if (!resposta.ok) {
-    return { ok: false, motivo: `http_${resposta.status}` };
+    /* A mensagem do Google é o diagnóstico inteiro num 400 ("Missing
+       assessment.event.site_key", "The specified siteKey is invalid"…).
+       Descartá-la e guardar só o status transforma um erro auto-explicativo
+       em advinhação. */
+    const detalhe = await resposta.json().catch(() => null);
+    const mensagem = detalhe?.error?.message?.slice(0, 200) || '(sem corpo)';
+    return { ok: false, motivo: `http_${resposta.status}: ${mensagem}` };
   }
 
   const dados = await resposta.json();
