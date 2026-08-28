@@ -1,6 +1,9 @@
-import { requireSupabase, supabaseConfigured, unwrap } from './supabase';
+import { obterTokenRecaptcha, recaptchaConfigured } from './recaptcha';
+import { supabaseConfigured } from './supabase';
 
-export const contactConfigured = supabaseConfigured;
+/* As duas pontas precisam existir: sem chave de site o navegador não produz
+   token, e sem Supabase a rota em /api não tem onde gravar. */
+export const contactConfigured = supabaseConfigured && recaptchaConfigured;
 
 /* Os mesmos valores estão no CHECK de `subject` em
    supabase/contact_requests.sql: mudar um lado exige mudar o outro. */
@@ -22,14 +25,19 @@ export const CONTACT_LIMITS = {
   message: { min: 10, max: 2000 },
 };
 
+/**
+ * O envio não toca mais o Supabase pelo navegador: vai para /api/contact, que
+ * confere o token no reCAPTCHA e só então grava com a service role. O `insert`
+ * do papel `anon` foi revogado — ver supabase/lock_public_writes.sql.
+ */
 export async function createContactRequest({ name, email, company, subject, message }) {
-  await unwrap(requireSupabase()
-    .from('contact_requests')
-    .insert({
-      name,
-      email,
-      company: company || null,
-      subject,
-      message,
-    }));
+  const token = await obterTokenRecaptcha('contact');
+
+  const resposta = await fetch('/api/contact', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ name, email, company, subject, message, token }),
+  });
+
+  if (!resposta.ok) throw new Error(`CONTACT_${resposta.status}`);
 }

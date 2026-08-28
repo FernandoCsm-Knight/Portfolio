@@ -130,17 +130,32 @@ grant update (
 grant delete on table public.hourly_rates to authenticated;
 
 drop policy if exists "Active rates are public" on public.hourly_rates;
+drop policy if exists "Admins can read draft rates" on public.hourly_rates;
 drop policy if exists "Admins can create rates" on public.hourly_rates;
 drop policy if exists "Admins can update rates" on public.hourly_rates;
 drop policy if exists "Admins can delete rates" on public.hourly_rates;
 
-/* Uma política só para os dois leitores: o visitante enxerga o que está ativo,
-   o dono enxerga também os rascunhos. */
+/* Duas políticas de leitura, e não uma com `active or is_portfolio_admin()`.
+   O motivo é concreto: comments.sql faz
+   `revoke all on function public.is_portfolio_admin() from public, anon`,
+   então uma política que alcance `anon` e chame essa função falha com
+   "permission denied for function is_portfolio_admin" — e derruba a leitura
+   inteira da tabela para todo visitante, nem os valores ativos passam.
+
+   Separando por papel, `anon` nunca chega a invocar a função. As duas políticas
+   são permissivas, então para `authenticated` elas se somam com OR e o dono
+   continua enxergando os rascunhos. */
 create policy "Active rates are public"
   on public.hourly_rates
   for select
   to anon, authenticated
-  using (active or public.is_portfolio_admin());
+  using (active);
+
+create policy "Admins can read draft rates"
+  on public.hourly_rates
+  for select
+  to authenticated
+  using (public.is_portfolio_admin());
 
 create policy "Admins can create rates"
   on public.hourly_rates
