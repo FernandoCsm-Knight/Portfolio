@@ -10,6 +10,13 @@ const RECAPTCHA_API = 'https://recaptchaenterprise.googleapis.com/v1';
    real de notas no console do Google, sem novo deploy de código. */
 const NOTA_MINIMA = Number(process.env.RECAPTCHA_MIN_SCORE ?? 0.5);
 
+/* Com RECAPTCHA_DEBUG=1 a recusa devolve o motivo no corpo da resposta, em vez
+   de só no log da função. É para a fase de ajuste: sem isso, descobrir se um 403
+   foi nota baixa, domínio errado ou ação divergente exige abrir o log da Vercel a
+   cada tentativa. Desligado por padrão — em produção o motivo entregaria a quem
+   está sondando exatamente qual limite contornar. */
+const DEPURAR = /^(1|true)$/i.test(process.env.RECAPTCHA_DEBUG || '');
+
 function lerConfig() {
   return {
     projectId: process.env.RECAPTCHA_PROJECT_ID,
@@ -119,12 +126,16 @@ export async function autorizarEnvio(request, response, acao) {
 
   const avaliacao = await avaliarToken({ token: corpo.token, acao, config });
   if (!avaliacao.ok) {
-    /* O motivo fica no log do servidor. Devolvê-lo ao cliente entregaria a
-       quem está sondando exatamente qual limite ele precisa contornar. */
     console.warn(`[api] ${acao} recusado:`, avaliacao.motivo);
-    response.status(403).json({ error: 'rejected' });
+    response.status(403).json(DEPURAR
+      ? { error: 'rejected', reason: avaliacao.motivo, minScore: NOTA_MINIMA }
+      : { error: 'rejected' });
     return null;
   }
+
+  /* A nota de cada envio aceito no log: é a única forma de ver a distribuição
+     real do site antes de decidir se 0.5 é apertado ou frouxo demais. */
+  console.log(`[api] ${acao} aceito: nota ${avaliacao.nota}`);
 
   return { config, corpo };
 }

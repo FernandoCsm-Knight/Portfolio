@@ -28,5 +28,13 @@ export async function createComment({ name, message, rating }) {
     body: JSON.stringify({ name, message, rating, token }),
   });
 
-  if (!resposta.ok) throw new Error(`COMMENT_${resposta.status}`);
+  if (!resposta.ok) {
+    const detalhe = await resposta.json().catch(() => null);
+    /* O componente troca a exceção por uma mensagem genérica para o visitante,
+       então sem este log o motivo que o servidor devolveu não apareceria em
+       lugar nenhum do navegador. O corpo só traz o que a rota escolheu expor
+       — detalhe de recusa apenas com RECAPTCHA_DEBUG ligado. */
+    console.error('[comment] envio recusado:', resposta.status, detalhe ?? '');
+    throw new Error(`COMMENT_${resposta.status}`);
+  }
 }
