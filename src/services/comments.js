@@ -1,10 +1,12 @@
 import { obterTokenRecaptcha } from './recaptcha';
-import { requireSupabase, supabaseConfigured, unwrap } from './supabase';
+import { requireSupabasePublic, supabaseConfigured, unwrap } from './supabase';
 
 export const commentsConfigured = supabaseConfigured;
 
+/* Cliente público de propósito: o carrossel mostra o que o visitante vê, e não
+   o que a sessão de admin daria a mais. */
 export async function listComments({ signal } = {}) {
-  let query = requireSupabase()
+  let query = requireSupabasePublic()
     .from('comments')
     .select('id,name,message,rating,created_at')
     .order('created_at', { ascending: false })

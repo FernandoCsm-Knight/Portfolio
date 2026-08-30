@@ -447,12 +447,6 @@ section{
   padding:140px clamp(24px,7vw,110px);
   width:100%;max-width:none;
 }
-.rotulo{
-  font-family:var(--f-mono);font-size:var(--fs-sm);font-weight:500;
-  color:var(--gold);letter-spacing:var(--track-wide);
-  margin-bottom:22px;display:flex;align-items:center;gap:12px;
-}
-.rotulo::before{content:'';width:26px;height:1px;background:var(--gold);opacity:.6}
 h1{
   font-family:var(--f-serif);font-weight:700;
   font-size:clamp(44px,7vw,90px);line-height:.96;
@@ -1119,8 +1113,7 @@ body.cursor-personalizado .mapa-projetos-canvas{cursor:none}
 /* ===== CADERNO DE BORDO (/sobre) ===== */
 .caderno{
   position:relative;z-index:10;
-  width:min(100%,1180px);
-  margin:0 auto;
+  width:100%;
   padding:clamp(96px,12vh,150px) clamp(22px,5vw,64px) 140px;
 }
 /* Reaproveita o #fundo da home (mesma posição fixa e as mesmas camadas de
@@ -1142,7 +1135,7 @@ body.cursor-personalizado .mapa-projetos-canvas{cursor:none}
 }
 .ficha{
   position:relative;display:grid;grid-template-columns:minmax(0,1fr) minmax(220px,300px);align-items:center;gap:clamp(32px,5vw,64px);
-  max-width:1080px;margin-bottom:clamp(68px,11vh,118px);
+  margin-bottom:clamp(68px,11vh,118px);
   padding:clamp(28px,5vw,56px) clamp(24px,5vw,58px);
   border:1px solid rgba(56,189,227,.16);border-radius:28px;
   background:
@@ -1157,8 +1150,6 @@ body.cursor-personalizado .mapa-projetos-canvas{cursor:none}
 .ficha h1{font-size:clamp(46px,7vw,82px);line-height:.86;letter-spacing:-.025em;color:#f4f6f6}
 .ficha h1 em{color:#aeb5b7}
 .ficha-conteudo{min-width:0}
-.caderno .rotulo{color:#b9dce8}
-.caderno .rotulo::before{display:none}
 .ficha .sub{color:#b8bec0;line-height:1.75}
 .ficha-resumo{max-width:62ch;margin:20px 0 0;color:#aabac0;font-size:14px;line-height:1.8}
 .ficha-destaques{
@@ -1189,6 +1180,22 @@ body.cursor-personalizado .mapa-projetos-canvas{cursor:none}
   width:100%;height:100%;display:block;object-fit:contain;object-position:center;
   filter:saturate(.82) contrast(1.06);
 }
+/* A foto passeia pela ficha (Draggable do anime.js, ver AboutPage.jsx). A
+   classe só entra com JS e acima de 760px, onde a ficha ainda tem duas colunas
+   — sem JS ela fica exatamente onde o grid a colocou. */
+.ficha-foto.foto-arrastavel{
+  /* Sem isto o navegador lê o arrasto como rolagem e a foto não sai do lugar
+     em tela de toque. */
+  touch-action:none;
+  /* Enquanto passeia ela passa por cima do texto da ficha, e não por baixo. */
+  z-index:2;
+  /* Arrastar não pode virar seleção da legenda no meio do caminho. */
+  user-select:none;-webkit-user-select:none;
+  transition:box-shadow .3s;
+}
+.ficha-foto.foto-arrastavel:hover{
+  box-shadow:0 26px 62px rgba(0,0,0,.36),inset 0 0 0 5px rgba(4,16,26,.3),0 0 0 1px rgba(174,181,183,.42);
+}
 .ficha-foto figcaption{
   position:absolute;left:15px;bottom:13px;z-index:1;
   font-size:var(--fs-2xs);font-weight:600;letter-spacing:var(--track-wide);color:#dce4e6;
@@ -1214,44 +1221,275 @@ body.cursor-personalizado .mapa-projetos-canvas{cursor:none}
   color:#fff;border-color:rgba(56,189,227,.72);background:rgba(56,189,227,.1);
 }
 
-/* Linha do tempo como perfil de mergulho: um cabo vertical descendo, com um
-   losango em cada parada. */
-.trajetoria{list-style:none;margin:0;padding:0;display:grid;gap:14px}
-.trajetoria li{
-  position:relative;padding:18px 20px 22px 38px;
-  border:1px solid rgba(56,189,227,.085);border-radius:14px;
-  background:linear-gradient(105deg,rgba(56,189,227,.035),rgba(255,255,255,.012));
+/* Perfil de mergulho: um palco com o texto de uma etapa por vez, e embaixo a
+   trajetória inteira como gráfico de pistas sobre um eixo de tempo real. As
+   barras não são enfeite — elas mostram as sobreposições que a lista empilhada
+   escondia: de 2023 em diante eram graduação, trabalho autônomo e iniciação
+   científica ao mesmo tempo.
+
+   O gráfico compartilha uma só escala horizontal (calha de largura fixa à
+   esquerda, coluna do gráfico no resto), e é por isso que as linhas de ano do
+   fundo atravessam o bloco e batem com as pontas das barras. */
+.perfil{
+  /* `--calha` e `--vao` reaparecem no `left` da grade: é o que mantém as
+     linhas de ano em cima das pontas das barras. Mudar um sem o outro
+     desalinha o gráfico inteiro, por isso os dois moram aqui. */
+  --calha:clamp(112px,20vw,196px);
+  --vao:clamp(14px,2vw,26px);
+  --altura-eixo:24px;
 }
-.trajetoria li::before{
-  content:'';position:absolute;left:16px;top:26px;bottom:-19px;width:1px;
-  background:linear-gradient(to bottom,rgba(174,181,183,.48),rgba(56,189,227,.28));
+
+/* Palco. Sem JS — ou com movimento reduzido — as caixas ficam empilhadas em
+   fluxo normal, uma debaixo da outra: volta a ser a lista legível de antes. Só o
+   JS acrescenta `empilhado`, e aí elas vão para colunas fixas.
+
+   A coluna de cada etapa vem do empacotamento em Trajetoria.jsx e nunca muda,
+   assim como o número de colunas. É isso que deixa o palco imóvel: entrar e
+   sair de cena é só opacidade, nenhuma caixa empurra ou redimensiona a outra, e
+   a altura é a da caixa mais alta naquela largura — calculada pelo navegador,
+   sem `min-height` chutado. Etapas que nunca coexistem dividem a mesma coluna e
+   se sobrepõem na mesma célula; como a caixa é opaca, a que está em cena cobre
+   as outras. */
+.perfil-palco{
+  list-style:none;margin:0 0 clamp(30px,5vh,52px);padding:0;
+  display:grid;gap:clamp(22px,3vh,34px);
 }
-.trajetoria li:last-child::before{bottom:auto;height:14px}
-.trajetoria li::after{
-  content:'';position:absolute;left:12px;top:22px;
-  width:9px;height:9px;transform:rotate(45deg);background:var(--aqua-forte);
+.perfil-palco.empilhado{
+  grid-template-columns:repeat(var(--colunas),minmax(0,1fr));
+  /* O vão vem do JSX em porcentagem, e é a mesma constante que a timeline usa
+     para calcular o passo de uma coluna. Fonte única: mudar um sem o outro
+     desalinharia o deslize da centralização. */
+  gap:0 var(--vao-caixas);
 }
-.trajetoria li.atual::after{
-  background:#f1f4f4;box-shadow:0 0 14px rgba(241,244,244,.42);
+.perfil-palco.empilhado .palco-cartao{
+  grid-row:1;grid-column:var(--coluna);
+  opacity:0;
+  /* As caixas apagadas continuam ocupando a célula por cima das que estão em
+     cena; sem isto, arrastar para selecionar pegaria o texto invisível da que
+     estiver no topo da pilha. */
+  pointer-events:none;
 }
-.parada-marca{display:flex;align-items:baseline;gap:12px;margin-bottom:8px}
-.parada-marca .marca{
-  font-family:var(--f-mono);font-size:var(--fs-xs);font-weight:700;
-  letter-spacing:var(--track-wide);color:#c5cbcd;
+.palco-cartao{
+  display:flex;flex-direction:column;align-items:flex-start;
+  padding:clamp(16px,1.6vw,24px);
+  border:1px solid rgba(56,189,227,.14);border-radius:16px;
+  /* Fundo opaco de propósito: é ele que faz a caixa em cena cobrir a que
+     divide a mesma célula. */
+  background:
+    radial-gradient(circle at 88% 6%,rgba(56,189,227,.07),transparent 34%),
+    linear-gradient(150deg,rgba(56,189,227,.05),transparent 56%),
+    #071522;
+  box-shadow:0 18px 44px rgba(0,0,0,.24),inset 0 1px rgba(255,255,255,.045);
 }
-.parada-marca .periodo{
-  font-family:var(--f-mono);font-size:var(--fs-xs);
-  letter-spacing:var(--track-label);color:var(--texto-2);opacity:.8;
+.palco-periodo{
+  font-family:var(--f-mono);font-size:var(--fs-2xs);font-weight:700;
+  letter-spacing:var(--track-label);color:var(--dourado-claro);margin-bottom:12px;
 }
-.trajetoria h3{
-  font-family:var(--f-serif);font-weight:600;font-size:25px;
-  letter-spacing:.01em;margin-bottom:4px;
+.palco-cartao h3{
+  font-family:var(--f-serif);font-weight:600;font-size:clamp(20px,1.7vw,30px);
+  line-height:1.14;letter-spacing:.01em;margin-bottom:7px;color:#eef1f2;
 }
-.trajetoria .instituicao{
-  font-family:var(--f-mono);font-size:var(--fs-sm);
-  letter-spacing:var(--track-tight);color:var(--aqua);margin-bottom:10px;
+.palco-cartao .instituicao{
+  font-family:var(--f-mono);font-size:var(--fs-2xs);
+  letter-spacing:var(--track-tight);color:var(--aqua);margin-bottom:13px;
 }
-.trajetoria p{font-size:15px;margin-bottom:0}
+.palco-descricao{font-size:13.5px;line-height:1.72;color:#a9bac1;margin-bottom:0}
+/* O divisor já marca cada pedaço como `inline-block` para aceitar `transform`.
+   O que falta é folga embaixo: como pedaço é caixa, sem ela a cauda de um g ou
+   a cedilha ficariam raspando a linha de baixo durante a descida. */
+.pedaco-letra,.pedaco-palavra{padding-bottom:.06em}
+
+/* Abaixo de 900px não cabem colunas lado a lado: tudo volta para uma célula só
+   e a caixa em cena cobre as demais, que é para o que serve o fundo opaco. */
+@media(max-width:900px){
+  .perfil-palco.empilhado{grid-template-columns:minmax(0,1fr);gap:0}
+  .perfil-palco.empilhado .palco-cartao{
+    grid-column:1;
+    /* `!important` porque a centralização escreve o deslocamento em estilo
+       embutido: numa coluna só não há para onde deslizar, e sem isto a caixa
+       sairia da tela. Declaração com `!important` ganha do estilo embutido. */
+    transform:none!important;
+  }
+  .palco-cartao h3{font-size:clamp(22px,3vw,30px)}
+}
+
+.perfil-tempo{position:relative}
+/* Painel, eixo e pistas dividem a mesma grade — calha à esquerda, coluna do
+   gráfico à direita. É daqui que sai o alinhamento: a régua ocupa exatamente a
+   mesma faixa que as barras, então a virada de ano dela cai em cima da linha de
+   ano do gráfico. Tirar o painel desta grade foi o que desencontrou os dois. */
+.perfil-controles,.perfil-eixo,.pista{
+  display:grid;grid-template-columns:var(--calha) minmax(0,1fr);gap:0 var(--vao);
+  align-items:center;
+}
+.perfil-anos{
+  grid-column:2;position:relative;height:var(--altura-eixo);
+  font-family:var(--f-mono);font-size:var(--fs-2xs);font-weight:600;
+  letter-spacing:var(--track-label);color:var(--texto-2);
+}
+.perfil-ano{position:absolute;top:0;left:var(--x);transform:translateX(-50%)}
+/* O primeiro ano fica na borda do eixo: centrá-lo cortaria metade dele. */
+.perfil-ano:first-child{transform:none}
+.perfil-agora{position:absolute;top:0;right:0;color:var(--dourado-claro)}
+
+/* Grade e playhead cobrem só a coluna do gráfico — daí o `left` pela mesma
+   calha das pistas. `overflow:hidden` porque o playhead tem largura cheia: ao
+   chegar no fim do eixo o corpo dele sai pela direita, e sem o recorte isso
+   viraria rolagem horizontal. */
+/* `overflow:hidden` porque o playhead tem largura cheia: ao chegar no fim do
+   eixo, o corpo dele sai pela direita, e sem o recorte isso viraria rolagem
+   horizontal na página. */
+.perfil-grade{
+  position:absolute;top:0;bottom:0;right:0;left:calc(var(--calha) + var(--vao));
+  overflow:hidden;pointer-events:none;
+}
+.perfil-linha{position:absolute;top:var(--altura-eixo);bottom:0;left:var(--x);width:1px;background:rgba(56,189,227,.11)}
+
+/* Playhead: só indicador, quem se arrasta é o cursor da régua. Largura cheia
+   com a linha desenhada na borda esquerda — transladá-lo por uma porcentagem
+   dele mesmo varre o trilho inteiro sem medir nada, e a posição fica só em
+   `transform`. Animar `left` refaria o layout a cada quadro. Nasce invisível
+   porque sem JS não há varredura nenhuma.
+
+   z-index porque `.perfil-grade` vem antes das pistas na árvore: sem ele as
+   barras (que também são posicionadas) pintariam por cima, e a ponta delas
+   sumiria justamente sob o playhead que deveria estar puxando-a. */
+.perfil-playhead{position:absolute;inset:0;width:100%;opacity:0;z-index:2}
+.perfil-playhead::before{
+  content:'';position:absolute;top:var(--altura-eixo);bottom:0;left:0;width:1px;
+  background:linear-gradient(to bottom,var(--dourado-claro),rgba(246,211,145,.2));
+  box-shadow:0 0 12px rgba(246,211,145,.45);
+}
+/* Cabeça do playhead, no mesmo espírito dos marcadores de uma régua de edição. */
+.perfil-playhead::after{
+  content:'';position:absolute;top:calc(var(--altura-eixo) - 5px);left:-4px;
+  width:0;height:0;
+  border-left:4px solid transparent;border-right:4px solid transparent;
+  border-top:5px solid var(--dourado-claro);
+}
+
+/* Painel de controle: é ele que comanda a varredura agora. Botões e leitura
+   reaproveitam o material dos controles de conteúdo (--controle-*), o mesmo
+   das setas do carrossel logo abaixo na página. */
+.perfil-controles{margin-bottom:18px}
+/* Encostados na borda da calha, como os nomes das pistas logo abaixo. */
+.perfil-acoes{grid-column:1;display:flex;align-items:center;justify-content:flex-end;gap:10px}
+.perfil-botao{
+  display:grid;place-items:center;flex:none;
+  width:38px;height:38px;border-radius:50%;
+  border:1px solid var(--controle-borda);
+  color:#dce1e2;background:var(--controle-fundo);
+  box-shadow:var(--controle-sombra);
+  -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
+  font-size:13px;
+  transition:var(--controle-transicao);
+}
+.perfil-botao:hover,.perfil-botao:focus-visible{
+  transform:scale(1.08);
+  border-color:#eef2f3;color:var(--controle-texto-ativo);
+  box-shadow:var(--controle-sombra-ativa);
+}
+
+/* Régua. Os traços são dois gradientes repetidos, e não ~80 elementos: um
+   ladrilho por mês com a linha no início dele, e outro por ano, mais alto. As
+   duas medidas saem do mesmo vão do eixo (via `--passo-*`, escritos no JSX),
+   então a virada de ano da régua cai no mesmo lugar que a linha de ano do
+   gráfico. */
+.perfil-regua{
+  grid-column:2;position:relative;min-width:0;height:42px;
+  border-radius:12px;
+  background:
+    linear-gradient(90deg,rgba(205,213,215,.62) 0 1px,transparent 1px),
+    linear-gradient(90deg,rgba(205,213,215,.26) 0 1px,transparent 1px),
+    var(--controle-fundo);
+  background-size:var(--passo-ano) 100%,var(--passo-mes) 46%,auto;
+  background-position:0 0,0 100%,0 0;
+  background-repeat:repeat-x,repeat-x,no-repeat;
+  /* A borda é um `inset` e não um `border` de verdade: com borda, a caixa de
+     preenchimento encolhe 2px e os traços passam a ser medidos sobre uma
+     largura menor que a coluna do gráfico — 2px de deriva acumulada até a
+     ponta direita. Sem borda, caixa de borda e de preenchimento coincidem e a
+     virada de ano cai exatamente na linha de ano. */
+  box-shadow:inset 0 0 0 1px var(--controle-borda),var(--controle-sombra);
+  -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
+  /* O recorte segura os traços dentro do raio e impede o cursor de escapar
+     pelas pontas enquanto é arrastado. */
+  overflow:hidden;
+  /* Sem isto o navegador trata o arrasto no celular como rolagem da página. */
+  touch-action:none;
+}
+.perfil-regua:focus-visible{box-shadow:inset 0 0 0 1px #eef2f3,var(--controle-sombra-ativa)}
+/* 3px de caixa: é esta largura que o Draggable desconta do contêiner para
+   achar o curso, então engordá-la viraria um pedaço da régua que o cursor
+   nunca alcança. A área de pega vem do `::after`, que estende o alvo de
+   ponteiro para 26px sem entrar na conta. */
+.regua-cursor{
+  position:absolute;top:0;bottom:0;left:0;width:3px;border-radius:2px;
+  background:var(--dourado-claro);
+  box-shadow:0 0 12px rgba(246,211,145,.6);
+}
+.regua-cursor::after{content:'';position:absolute;top:0;bottom:0;left:-12px;right:-12px}
+
+/* Mostrador do ano, na calha da linha do eixo — que estava vazia. Fica na
+   altura dos rótulos de ano, lendo como leitura da escala, e sai do painel de
+   controle, onde disputava largura com a régua. */
+.perfil-leitura{
+  grid-column:1;align-self:start;
+  font-family:var(--f-mono);font-size:var(--fs-2xs);font-weight:700;
+  letter-spacing:var(--track-label);color:var(--dourado-claro);text-align:right;
+}
+/* Sem JS não há timeline montada para os controles comandarem, e com movimento
+   reduzido a seção já nasce inteira na tela: nos dois casos o painel não tem
+   função. `empilhado` é posto pelo JS no palco, que vem antes dos controles na
+   árvore — daí dar para checar por irmão, sem depender de `:has`. */
+.perfil-palco:not(.empilhado)~.perfil-controles{display:none}
+
+.perfil-pistas{list-style:none;margin:0;padding:0}
+.pista{padding:7px 0}
+.pista-nome{
+  grid-column:1;
+  font-family:var(--f-mono);font-size:var(--fs-2xs);font-weight:600;
+  letter-spacing:var(--track-label);text-transform:uppercase;
+  line-height:1.45;text-align:right;color:#c5cbcd;
+  /* Dois títulos passam de 40 caracteres. Na calha eles são só a etiqueta da
+     pista — o texto inteiro está no cartão do palco —, então o que não couber
+     em duas linhas é cortado. */
+  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;overflow:hidden;
+}
+.pista-trilho{grid-column:2;position:relative;height:13px}
+.pista-barra{
+  position:absolute;top:0;bottom:0;left:var(--x);width:var(--w);min-width:4px;
+  border-radius:3px;
+  background:linear-gradient(90deg,var(--aqua-forte),rgba(56,189,227,.72));
+  /* A barra cresce da própria data de início, no passo do playhead. */
+  transform-origin:0 50%;
+}
+/* Trecho sem data de fim: a barra desbota na ponta em vez de bater numa parede,
+   porque ali não há um fim — só o "hoje" onde o eixo foi cortado. O modificador
+   fica na barra, e não na pista: uma pista com dois trechos pode ter o primeiro
+   encerrado e o segundo ainda correndo. */
+.pista-barra.em-curso{
+  background:linear-gradient(90deg,var(--aqua-forte),rgba(56,189,227,.72) 62%,rgba(56,189,227,.22));
+}
+.pista.atual .pista-barra{
+  background:linear-gradient(90deg,rgba(241,244,244,.92),rgba(246,211,145,.78));
+  box-shadow:0 0 18px rgba(246,211,145,.28);
+}
+
+/* Abaixo de 640px a calha come a coluna do gráfico. O nome sobe para cima da
+   barra, o eixo passa a ocupar a largura toda e a grade acompanha. */
+@media(max-width:640px){
+  .perfil{--calha:0px;--vao:0px}
+  .perfil-controles,.perfil-eixo,.pista{grid-template-columns:minmax(0,1fr)}
+  .perfil-anos,.pista-nome,.pista-trilho,.perfil-acoes,.perfil-regua,.perfil-leitura{grid-column:1}
+  .perfil-acoes{justify-content:flex-start;margin-bottom:12px}
+  .perfil-leitura{text-align:left;margin-bottom:6px}
+  .pista{padding:10px 0}
+  .pista-nome{text-align:left;-webkit-line-clamp:1;line-clamp:1;margin-bottom:7px}
+  /* Os anos ímpares saem: no celular sete rótulos se encavalariam. As linhas
+     da grade continuam todas lá, então o eixo não perde resolução. */
+  .perfil-ano:nth-child(even){display:none}
+}
 
 /* Carrossel de publicações: só a miniatura da primeira página, como a prancha
    de um caderno de registros. A imagem inteira é o link. */
@@ -1340,7 +1578,6 @@ body.cursor-personalizado .mapa-projetos-canvas{cursor:none}
   .ficha-destaques{grid-template-columns:1fr}
   .ficha-destaques li{min-height:0}
   .bloco{padding:26px 20px}
-  .trajetoria li{padding-left:34px}
   .registro{grid-template-columns:1fr}
   .registro img{height:300px;border-right:0;border-bottom:1px solid rgba(205,213,215,.18)}
   .credenciais{grid-template-columns:1fr}
