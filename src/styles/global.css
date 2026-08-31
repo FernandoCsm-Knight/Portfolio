@@ -17,8 +17,8 @@
   --linha:rgba(133,142,145,.28);
 
   /* tipografia: 2 famílias, papéis fixos */
-  --f-serif:'Cormorant Garamond',serif;   /* títulos de destaque */
-  --f-mono:'IBM Plex Mono',monospace;     /* rótulos, chrome de interface e texto corrido */
+  --f-serif:'Playfair Display',serif;   /* títulos de destaque */
+  --f-mono:'Roboto',sans-serif;     /* rótulos, chrome de interface e texto corrido */
 
   /* escala de rastreamento (letter-spacing) — 3 níveis, sem valores soltos */
   --track-tight:.08em;  /* pílulas/tags */
@@ -1200,16 +1200,15 @@ body.cursor-personalizado .mapa-projetos-canvas{cursor:none}
   position:absolute;left:15px;bottom:13px;z-index:1;
   font-size:var(--fs-2xs);font-weight:600;letter-spacing:var(--track-wide);color:#dce4e6;
 }
+/* Sem moldura de propósito: um cartão por seção só espremia o conteúdo entre
+   duas camadas de padding (a dele e a do .caderno) sem ganhar nada em troca —
+   o padding lateral fica só no .caderno, então cada seção usa a largura
+   inteira que a página já reserva. */
 .bloco{
-  position:relative;margin-bottom:clamp(44px,7vh,76px);padding:clamp(26px,4vw,44px);
-  border:1px solid rgba(56,189,227,.12);border-radius:22px;
-  background:
-    radial-gradient(circle at 92% 8%,rgba(56,189,227,.055),transparent 28%),
-    linear-gradient(145deg,rgba(56,189,227,.04),transparent 52%),rgba(3,13,22,.48);
-  box-shadow:0 24px 64px rgba(0,0,0,.18),inset 0 1px rgba(255,255,255,.04);
+  position:relative;margin-bottom:clamp(44px,7vh,76px);padding:clamp(26px,4vw,44px) 0;
 }
 .bloco::before{
-  content:'';position:absolute;left:32px;top:-4px;width:38px;height:7px;border-radius:99px;
+  content:'';position:absolute;left:0;top:-4px;width:38px;height:7px;border-radius:99px;
   background:rgba(56,189,227,.62);box-shadow:0 0 18px rgba(56,189,227,.2);
 }
 .bloco h2{margin-bottom:30px;color:#eef1f2}
@@ -1255,14 +1254,20 @@ body.cursor-personalizado .mapa-projetos-canvas{cursor:none}
   display:grid;gap:clamp(22px,3vh,34px);
 }
 .perfil-palco.empilhado{
-  grid-template-columns:repeat(var(--colunas),minmax(0,1fr));
-  /* O vão vem do JSX em porcentagem, e é a mesma constante que a timeline usa
-     para calcular o passo de uma coluna. Fonte única: mudar um sem o outro
-     desalinharia o deslize da centralização. */
+  /* `--colunas-ativas` é escrita pelo JS a cada quadro, com o número de
+     etapas em cena naquele instante — não o total de raias que a trajetória
+     inteira chega a usar (`--colunas`, só o valor de partida antes do efeito
+     rodar). É isso que deixa os cartões ocuparem a largura toda quando só uma
+     ou duas etapas estão em cena, em vez de ficarem sempre do tamanho do
+     pico de sobreposição. */
+  grid-template-columns:repeat(var(--colunas-ativas,var(--colunas)),minmax(0,1fr));
   gap:0 var(--vao-caixas);
 }
 .perfil-palco.empilhado .palco-cartao{
-  grid-row:1;grid-column:var(--coluna);
+  grid-row:1;
+  /* Também escrita pelo JS a cada quadro: a posição do cartão dentro do
+     grupo em cena, não a raia fixa que ele ocupa no gráfico abaixo. */
+  grid-column:var(--ordem-coluna,var(--coluna));
   opacity:0;
   /* As caixas apagadas continuam ocupando a célula por cima das que estão em
      cena; sem isto, arrastar para selecionar pegaria o texto invisível da que
@@ -1303,13 +1308,7 @@ body.cursor-personalizado .mapa-projetos-canvas{cursor:none}
    e a caixa em cena cobre as demais, que é para o que serve o fundo opaco. */
 @media(max-width:900px){
   .perfil-palco.empilhado{grid-template-columns:minmax(0,1fr);gap:0}
-  .perfil-palco.empilhado .palco-cartao{
-    grid-column:1;
-    /* `!important` porque a centralização escreve o deslocamento em estilo
-       embutido: numa coluna só não há para onde deslizar, e sem isto a caixa
-       sairia da tela. Declaração com `!important` ganha do estilo embutido. */
-    transform:none!important;
-  }
+  .perfil-palco.empilhado .palco-cartao{grid-column:1}
   .palco-cartao h3{font-size:clamp(22px,3vw,30px)}
 }
 
@@ -1479,13 +1478,18 @@ body.cursor-personalizado .mapa-projetos-canvas{cursor:none}
 /* Abaixo de 640px a calha come a coluna do gráfico. O nome sobe para cima da
    barra, o eixo passa a ocupar a largura toda e a grade acompanha. */
 @media(max-width:640px){
-  .perfil{--calha:0px;--vao:0px}
+  .perfil{--calha:0px;--vao:0px;--altura-eixo:28px}
   .perfil-controles,.perfil-eixo,.pista{grid-template-columns:minmax(0,1fr)}
   .perfil-anos,.pista-nome,.pista-trilho,.perfil-acoes,.perfil-regua,.perfil-leitura{grid-column:1}
-  .perfil-acoes{justify-content:flex-start;margin-bottom:12px}
-  .perfil-leitura{text-align:left;margin-bottom:6px}
-  .pista{padding:10px 0}
-  .pista-nome{text-align:left;-webkit-line-clamp:1;line-clamp:1;margin-bottom:7px}
+  .perfil-acoes{justify-content:flex-start;margin-bottom:14px}
+  .perfil-leitura{text-align:left;margin-bottom:8px;font-size:var(--fs-xs)}
+  .perfil-anos{font-size:var(--fs-xs)}
+  .pista{padding:14px 0}
+  .pista-nome{
+    text-align:left;-webkit-line-clamp:1;line-clamp:1;margin-bottom:9px;
+    font-size:var(--fs-xs);line-height:1.5;
+  }
+  .pista-trilho{height:18px}
   /* Os anos ímpares saem: no celular sete rótulos se encavalariam. As linhas
      da grade continuam todas lá, então o eixo não perde resolução. */
   .perfil-ano:nth-child(even){display:none}
@@ -1577,7 +1581,6 @@ body.cursor-personalizado .mapa-projetos-canvas{cursor:none}
   .ficha-foto{grid-row:1;min-height:0;aspect-ratio:1}
   .ficha-destaques{grid-template-columns:1fr}
   .ficha-destaques li{min-height:0}
-  .bloco{padding:26px 20px}
   .registro{grid-template-columns:1fr}
   .registro img{height:300px;border-right:0;border-bottom:1px solid rgba(205,213,215,.18)}
   .credenciais{grid-template-columns:1fr}
@@ -2033,16 +2036,28 @@ footer{
 .admin-login button:hover,.admin-login button:focus-visible{border-color:var(--gold-claro);background:rgba(133,142,145,.12)}
 .admin-login button:disabled,.admin-comment footer button:disabled{opacity:.45}
 .admin-status{margin-top:18px;color:var(--gold-claro);font-size:14px}
-.admin-dashboard{width:min(100%,1040px);align-self:start}
+.admin-dashboard{width:min(100%,1040px);align-self:start;min-width:0}
 .admin-header{display:flex;align-items:center;justify-content:space-between;gap:24px;margin-bottom:18px}
 .admin-header .admin-kicker{margin-top:0}
-.admin-logout{display:flex;align-items:center;gap:9px;padding:11px 15px;border-radius:99px}
+/* O e-mail da sessão é uma palavra só, sem espaço para quebrar — sem isto ele
+   força a linha do cabeçalho a estourar a largura da tela num celular. */
+.admin-header>div{min-width:0}
+.admin-header p:last-child{overflow-wrap:anywhere}
+.admin-logout{display:flex;align-items:center;gap:9px;padding:11px 15px;border-radius:99px;flex-shrink:0}
 .admin-logout:hover{border-color:var(--gold-claro);color:var(--gold-claro)}
+/* Rolagem horizontal e não quebra: quatro abas mais o selo de contagem não
+   cabem lado a lado num celular, e são navegação — como os chips de filtro
+   abaixo, é melhor deslizar do que espremer ou quebrar linha. */
 .admin-abas{
   display:flex;gap:10px;margin-bottom:16px;padding-bottom:16px;
   border-bottom:1px solid rgba(56,189,227,.16);
+  overflow-x:auto;scrollbar-width:none;
 }
-.admin-abas button{display:flex;align-items:center;gap:9px;padding:11px 17px;border-radius:99px}
+.admin-abas::-webkit-scrollbar{display:none}
+.admin-abas button{
+  display:flex;align-items:center;gap:9px;padding:11px 17px;border-radius:99px;
+  flex-shrink:0;white-space:nowrap;
+}
 .admin-abas button.active{border-color:var(--gold);color:var(--gold-claro);background:rgba(133,142,145,.14)}
 /* O selo é o aviso de demanda nova: precisa continuar legível na aba que não
    está ativa, por isso cor própria em vez de herdar a do botão. */

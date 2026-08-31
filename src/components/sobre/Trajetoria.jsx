@@ -25,14 +25,10 @@ const SUSTENTACAO = 5;
 const ENTRADA = 650;
 
 /* Vão entre as colunas do palco, em fração da largura dele. Porcentagem e não
-   pixels de propósito: com o vão proporcional, andar uma coluna vira uma
-   porcentagem fixa da largura do cartão — 110,87% para cinco colunas — a mesma
-   em qualquer tela. É o que deixa recentrar o grupo ser só `translateX` em %,
-   sem medir nada em pixels nem recalcular no resize. */
+   pixels de propósito: o mesmo vão serve em qualquer tela e para qualquer
+   número de colunas em cena, sem medir nada em pixels nem recalcular no
+   resize. */
 const VAO_CAIXAS = 0.02;
-
-/* Tempo que uma caixa leva deslizando quando o grupo se recentra. */
-const TRANSICAO = 500;
 
 /* Escala inteira do `aria-valuenow` da régua. O progresso é um número de 0 a 1
    e o atributo pede algo legível; mil passos dão resolução de sobra. */
@@ -68,14 +64,15 @@ function anoFracionario(data) {
 
    O empacotamento usa o vão inteiro da etapa, e não trecho a trecho: durante os
    catorze meses parados da monitoria a coluna dela segue reservada, senão outra
-   etapa a tomaria e as duas colidiriam quando ela voltasse. */
-/* Quanto vale, em porcentagem da largura de um cartão, andar uma coluna.
-   Largura da coluna = (1 - (N-1)v)/N da largura do palco, e o passo é ela mais
-   um vão — a razão entre os dois não depende da largura da tela. */
-function passoDeColuna(colunas) {
-  return (1 + (VAO_CAIXAS * colunas) / (1 - VAO_CAIXAS * (colunas - 1))) * 100;
-}
+   etapa a tomaria e as duas colidiriam quando ela voltasse.
 
+   Esta raia fixa é só para nunca colidir duas etapas simultâneas — quem decide
+   quantas colunas o grid realmente desenha, e em qual delas cada cartão cai,
+   é a contagem de etapas em cena naquele instante (ver `atualizarPalco`
+   abaixo), não o total de raias que a trajetória inteira chega a usar. Do
+   contrário os cartões ficariam sempre do tamanho do pico de sobreposição
+   (2023–2024, cinco raias) mesmo quando só uma ou duas etapas estão em
+   cena. */
 function distribuirColunas(etapas) {
   const ocupadaAte = [];
   const colunas = [];
@@ -232,12 +229,34 @@ export default function Trajetoria() {
       linha.seek(linha.duration * Math.min(Math.max(progresso, 0), 1));
     }
 
+    /* Quantas etapas estão em cena neste instante, e em qual ordem — é isto
+       que dimensiona o grid do palco a cada quadro (`--colunas-ativas` no
+       contêiner, `--ordem-coluna` em cada cartão), em vez do total fixo de
+       raias que `distribuirColunas` calculou. Com só uma ou duas etapas em
+       cena o cartão ganha a largura toda; nos meses de pico ele volta a
+       dividir espaço com as demais. As etapas fora de cena caem todas na
+       coluna 1 — inofensivo, já que estão com opacidade zero e sem eventos de
+       ponteiro — só para nenhuma sobrar apontando para uma coluna que deixou
+       de existir e alargar o grid além do palco. */
+    function atualizarPalco(tempo) {
+      const emCena = pistas
+        .map((pista, indice) => ({ pista, indice }))
+        .filter(({ pista }) => pista.trechos.some((trecho) => tempo >= trecho.entra && tempo <= trecho.sai))
+        .sort((a, b) => a.pista.coluna - b.pista.coluna);
+      palco.style.setProperty('--colunas-ativas', String(Math.max(emCena.length, 1)));
+      caixas.forEach((caixa) => caixa.style.setProperty('--ordem-coluna', '1'));
+      emCena.forEach(({ indice }, ordem) => {
+        caixas[indice].style.setProperty('--ordem-coluna', String(ordem + 1));
+      });
+    }
+
     const linha = createTimeline({
       defaults: { ease: 'linear' },
       autoplay: false,
       onUpdate: (self) => {
         if (!arrastando && arrastavel) arrastavel.setX(self.progress * curso(), true);
         espelhar(self.progress);
+        atualizarPalco(self.progress * DURACAO);
       },
       onComplete: () => setTocando(false),
     });
@@ -289,50 +308,6 @@ export default function Trajetoria() {
         escalonar(palavras[indice], trecho.entra + entrada * 0.3, entrada, '0.3em');
       });
     });
-
-    /* Centralização. A coluna de cada etapa é fixa, mas o grupo que está em
-       cena não: a cada mudança desse conjunto as caixas ativas são renumeradas
-       da esquerda para a direita e deslizam para ficar centradas no palco.
-       Além de tirar o encosto à esquerda, isso fecha o buraco que sobrava
-       quando duas etapas em cena ocupavam colunas não vizinhas.
-
-       O conjunto é lido no MEIO de cada intervalo, e não na borda: nos
-       instantes de troca uma etapa termina no mesmo milissegundo em que outra
-       começa, e no meio não há essa ambiguidade. */
-    const passo = passoDeColuna(colunas);
-    const momentos = [...new Set([
-      0,
-      DURACAO,
-      ...pistas.flatMap((pista) => pista.trechos.flatMap((tr) => [tr.entra, tr.sai])),
-    ])].sort((a, b) => a - b);
-    const desloc = pistas.map(() => 0);
-    let emCenaAntes = new Set();
-
-    for (let k = 0; k < momentos.length - 1; k++) {
-      const inicio = momentos[k];
-      const meio = (inicio + momentos[k + 1]) / 2;
-      const emCena = pistas
-        .map((pista, indice) => ({ pista, indice }))
-        .filter(({ pista }) => pista.trechos.some((tr) => meio >= tr.entra && meio <= tr.sai))
-        .sort((a, b) => a.pista.coluna - b.pista.coluna);
-
-      emCena.forEach(({ pista, indice }, ordem) => {
-        const alvo = (colunas - emCena.length) / 2 + ordem - pista.coluna;
-        if (alvo === desloc[indice] && emCenaAntes.has(indice)) return;
-        const de = `${desloc[indice] * passo}%`;
-        const para = `${alvo * passo}%`;
-        if (emCenaAntes.has(indice)) {
-          linha.add(caixas[indice], { x: [de, para], duration: TRANSICAO, ease: 'inOutQuad' }, inicio);
-        } else {
-          /* Entrando em cena: salta para o lugar um instante antes de aparecer,
-             senão deslizaria da posição em que parou da última vez. */
-          linha.add(caixas[indice], { x: [de, para], duration: 1 }, Math.max(inicio - 1, 0));
-        }
-        desloc[indice] = alvo;
-      });
-
-      emCenaAntes = new Set(emCena.map(({ indice }) => indice));
-    }
 
     /* As barras são varridas numa lista só, na mesma ordem em que o JSX as
        desenha, porque uma pista pode ter mais de uma. */
@@ -412,6 +387,11 @@ export default function Trajetoria() {
        só passa os olhos lê a seção sem acionar nada, e a animação fica como algo
        a pedir, não como algo que acontece por cima de quem está lendo. */
     linha.seek(linha.duration);
+    /* `seek` já dispara `onUpdate`, mas a chamada direta garante o estado
+       certo mesmo que a versão do anime.js em uso não dispare o callback
+       nesse caso específico — o palco não pode nascer com o grid do quadro
+       anterior (nenhuma etapa em cena). */
+    atualizarPalco(DURACAO);
 
     const observadorCaixa = new ResizeObserver(() => {
       if (!arrastando) arrastavel.setX(linha.progress * curso(), true);
