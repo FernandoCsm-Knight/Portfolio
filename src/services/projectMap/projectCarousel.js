@@ -2,6 +2,16 @@ import * as THREE from 'three';
 
 const LETTER_READY_PROGRESS = 0.72;
 
+/* Tamanho de desenho da textura do card, em pixels lógicos — todo o resto da
+   função de desenho (MEDIA_RECT, posições de texto etc.) usa números fixos
+   nesse espaço. `RESOLUCAO_TEXTURA` amplia só a densidade real de pixels do
+   canvas (via `context.scale`), sem exigir recalcular nenhuma dessas
+   coordenadas: o desenho continua "pensando" em 700×990, só que amostrado em
+   mais pixels — daí o texto e as bordas arredondadas saírem nítidos de perto. */
+const LARGURA_TEXTURA = 700;
+const ALTURA_TEXTURA = 990;
+const RESOLUCAO_TEXTURA = 2;
+
 function roundedRect(context, x, y, width, height, radius) {
   context.beginPath();
   context.moveTo(x + radius, y);
@@ -82,10 +92,13 @@ function drawMediaPlaceholder(context, labels) {
 
 function makeCardTexture(project, labels) {
   const canvas = document.createElement('canvas');
-  canvas.width = 700;
-  canvas.height = 990;
+  canvas.width = LARGURA_TEXTURA * RESOLUCAO_TEXTURA;
+  canvas.height = ALTURA_TEXTURA * RESOLUCAO_TEXTURA;
   const context = canvas.getContext('2d');
-  const background = context.createLinearGradient(0, 0, canvas.width, canvas.height);
+  /* Tudo abaixo desenha em coordenadas de 700×990 — é este `scale` que as
+     converte para os pixels reais, mais densos, do canvas. */
+  context.scale(RESOLUCAO_TEXTURA, RESOLUCAO_TEXTURA);
+  const background = context.createLinearGradient(0, 0, LARGURA_TEXTURA, ALTURA_TEXTURA);
   background.addColorStop(0, 'rgba(32,35,38,.88)');
   background.addColorStop(0.54, 'rgba(12,14,16,.82)');
   background.addColorStop(1, 'rgba(3,4,5,.9)');
@@ -102,10 +115,10 @@ function makeCardTexture(project, labels) {
   sheen.addColorStop(0.45, 'rgba(170,190,196,.035)');
   sheen.addColorStop(1, 'rgba(255,255,255,0)');
   context.fillStyle = sheen;
-  context.fillRect(0, 0, canvas.width, canvas.height);
+  context.fillRect(0, 0, LARGURA_TEXTURA, ALTURA_TEXTURA);
   for (let grain = 0; grain < 420; grain++) {
-    const x = (Math.sin(grain * 91.17) * 0.5 + 0.5) * canvas.width;
-    const y = (Math.sin(grain * 47.63 + 2.1) * 0.5 + 0.5) * canvas.height;
+    const x = (Math.sin(grain * 91.17) * 0.5 + 0.5) * LARGURA_TEXTURA;
+    const y = (Math.sin(grain * 47.63 + 2.1) * 0.5 + 0.5) * ALTURA_TEXTURA;
     context.fillStyle = `rgba(255,255,255,${0.008 + (grain % 5) * 0.002})`;
     context.fillRect(x, y, 1.4, 1.4);
   }
@@ -163,9 +176,10 @@ export function makeProjectCarousel(projects, centerZ, reducedMotion = false, la
   group.visible = false;
   group.renderOrder = 7;
 
-  /* Proporção vertical preservada, mas cerca de 18% menor que a versão
-     anterior para manter água visível ao redor do card frontal. */
-  const cardGeometry = new THREE.PlaneGeometry(19.4, 27.5);
+  /* Proporção vertical preservada. Já foi 18% menor que a versão anterior
+     dela mesma para manter água visível ao redor do card frontal; este
+     aumento de ~8% é bem mais discreto e ainda deixa a margem d'água. */
+  const cardGeometry = new THREE.PlaneGeometry(21, 29.7);
   const cards = projects.map((project) => {
     const material = new THREE.MeshBasicMaterial({
       map: makeCardTexture(project, labels),
@@ -330,9 +344,5 @@ export function makeProjectCarousel(projects, centerZ, reducedMotion = false, la
     return hoveredProject;
   }
 
-  function isVisible() {
-    return unlocked && reveal >= 0.72;
-  }
-
-  return { group, resize, update, pick, navigate, beginDrag, dragBy, endDrag, isVisible };
+  return { group, resize, update, pick, navigate, beginDrag, dragBy, endDrag };
 }

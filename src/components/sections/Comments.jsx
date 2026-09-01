@@ -1,4 +1,4 @@
-import { memo, useEffect, useId, useMemo, useRef, useState } from 'react';
+import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { FaArrowLeft, FaArrowRight } from 'react-icons/fa';
 import { createComment, commentsConfigured, listComments } from '../../services/comments';
 import { remainingCooldown, writeLastSentAt } from '../../services/cooldown';
@@ -7,83 +7,21 @@ import { useI18n } from '../../i18n/context';
 
 const COMMENT_COOLDOWN_MS = 30000;
 const COMMENT_TIMESTAMP_KEY = 'portfolio:last-comment-at';
+
+/* Mesmo material das bolhas de clique (`.cursor-bolha-clique`, ver
+   global.css) — a nota vira uma fileira de cinco delas, acesas até `rating`.
+   Trocou uma composição SVG própria (membrana, refração, reflexo, brilho, um
+   `<filter>` de glow) por esse mesmo par border+gradiente+box-shadow que já
+   se repete pelo cursor e pelo Hero: uma única aparência de "bolha" no site,
+   e não uma terceira variação só para a nota dos comentários. */
 function RatingBubbles({ rating }) {
   const { t } = useI18n();
-  const gradientId = useId();
-  const membraneId = useId();
-  const glowId = useId();
   return (
-    <svg
-      className="avaliacao-bolhas"
-      viewBox="0 0 112 24"
-      role="img"
-      aria-label={t('comments.rating', { rating })}
-    >
-      <defs>
-        <radialGradient id={gradientId} cx="30%" cy="24%" r="76%">
-          <stop offset="0" stopColor="#ffffff" stopOpacity=".96" />
-          <stop offset=".18" stopColor="#dff6ff" stopOpacity=".82" />
-          <stop offset=".48" stopColor="#38bde3" stopOpacity=".42" />
-          <stop offset=".78" stopColor="#087fae" stopOpacity=".2" />
-          <stop offset="1" stopColor="#143a59" stopOpacity=".48" />
-        </radialGradient>
-        <linearGradient id={membraneId} x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#ffffff" stopOpacity=".82" />
-          <stop offset=".42" stopColor="#bdeaff" stopOpacity=".16" />
-          <stop offset="1" stopColor="#62a9d7" stopOpacity=".68" />
-        </linearGradient>
-        <filter id={glowId} x="-70%" y="-70%" width="240%" height="240%">
-          <feGaussianBlur in="SourceGraphic" stdDeviation="1.15" result="blur" />
-          <feMerge>
-            <feMergeNode in="blur" />
-            <feMergeNode in="SourceGraphic" />
-          </feMerge>
-        </filter>
-      </defs>
+    <div className="avaliacao-bolhas" role="img" aria-label={t('comments.rating', { rating })}>
       {[1, 2, 3, 4, 5].map((bubble) => (
-        <g
-          key={bubble}
-          className={bubble <= rating ? 'ativa' : ''}
-          transform={`translate(${12 + (bubble - 1) * 22} 12)`}
-          filter={bubble <= rating ? `url(#${glowId})` : undefined}
-        >
-          <circle className="bolha-corpo" r="8.5" fill={bubble <= rating ? `url(#${gradientId})` : undefined} />
-          <circle className="bolha-membrana" r="7.7" stroke={`url(#${membraneId})`} />
-          <path className="bolha-refracao" d="M-6 1.8C-4.7 5.7.2 7.3 4.1 5.2" />
-          <ellipse className="bolha-reflexo" cx="-3" cy="-3.5" rx="2.5" ry="1.45" transform="rotate(-24)" />
-          <circle className="bolha-luz" cx="2.8" cy="3.1" r=".85" />
-          <circle className="bolha-contorno" r="8.65" />
-        </g>
+        <i key={bubble} className={bubble <= rating ? 'ativa' : ''} aria-hidden="true" />
       ))}
-    </svg>
-  );
-}
-
-function RatingBubbleIcon() {
-  const gradientId = useId();
-  const membraneId = useId();
-  return (
-    <svg className="comentarios-nota-icone" viewBox="0 0 30 30" aria-hidden="true">
-      <defs>
-        <radialGradient id={gradientId} cx="30%" cy="24%" r="76%">
-          <stop offset="0" stopColor="#fff" stopOpacity=".96" />
-          <stop offset=".2" stopColor="#dff6ff" stopOpacity=".82" />
-          <stop offset=".55" stopColor="#38bde3" stopOpacity=".42" />
-          <stop offset="1" stopColor="#143a59" stopOpacity=".48" />
-        </radialGradient>
-        <linearGradient id={membraneId} x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#fff" stopOpacity=".84" />
-          <stop offset=".45" stopColor="#bdeaff" stopOpacity=".14" />
-          <stop offset="1" stopColor="#62a9d7" stopOpacity=".7" />
-        </linearGradient>
-      </defs>
-      <circle cx="15" cy="15" r="12.2" fill={`url(#${gradientId})`} />
-      <circle cx="15" cy="15" r="11.2" fill="none" stroke={`url(#${membraneId})`} strokeWidth=".9" />
-      <path d="M6.4 17.6c1.7 5.5 8.8 7.9 14.3 4.9" fill="none" stroke="rgba(207,242,255,.5)" strokeWidth="1" strokeLinecap="round" />
-      <ellipse cx="10.7" cy="9.8" rx="3.5" ry="2" fill="rgba(255,255,255,.76)" transform="rotate(-24 10.7 9.8)" />
-      <circle cx="19.2" cy="19.5" r="1.1" fill="rgba(255,255,255,.52)" />
-      <circle cx="15" cy="15" r="12.7" fill="none" stroke="rgba(199,238,255,.72)" strokeWidth=".9" />
-    </svg>
+    </div>
   );
 }
 
@@ -328,7 +266,7 @@ function Comments() {
               {[5, 4, 3, 2, 1].map((rating) => (
                 <label key={rating} title={t('comments.stars', { rating })}>
                   <input type="radio" name="rating" value={rating} defaultChecked={rating === 5} />
-                  <RatingBubbleIcon />
+                  <i className="comentarios-nota-icone" aria-hidden="true" />
                   <span className="sr-only">{t('comments.stars', { rating })}</span>
                 </label>
               ))}

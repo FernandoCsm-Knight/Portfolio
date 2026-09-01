@@ -1,8 +1,7 @@
 import { memo } from 'react';
 import { FaBrain, FaCube, FaGaugeHigh } from 'react-icons/fa6';
-import AvailabilityStatus from '../AvailabilityStatus';
-import PricingLink from '../PricingLink';
 import { useI18n } from '../../i18n/context';
+import ScrollHint from './ScrollHint';
 
 function Hero() {
   const { t } = useI18n();
@@ -13,10 +12,6 @@ function Hero() {
   ];
   return (
     <section id="home" className="hero-superficie">
-      <div className="status-linha hero-status">
-        <PricingLink />
-        <AvailabilityStatus />
-      </div>
       <div className="nome-superficie">
         <h1 aria-label="Fernando Dal' Maria">
           <span className="nome-palavra" aria-hidden="true">Fernando</span>
@@ -40,6 +35,7 @@ function Hero() {
           </li>
         ))}
       </ul>
+      <ScrollHint />
     </section>
   );
 }

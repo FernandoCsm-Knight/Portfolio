@@ -8,6 +8,7 @@ import HomePage from './components/HomePage';
 import LanguageSwitcher from './components/LanguageSwitcher';
 import LoadingScreen from './components/LoadingScreen';
 import SonarNav from './components/SonarNav';
+import StatusBadges from './components/StatusBadges';
 import { useI18n } from './i18n/context';
 
 /* cena 3D separada e pesada (Three.js) usada só em /projects — não deve
@@ -117,6 +118,7 @@ function App() {
       <LoadingScreen visible={carregando} route={route} />
       <CustomCursor clickEffectsEnabled={route === '/'} />
       {!isAdmin && <LanguageSwitcher />}
+      {!isAdmin && <StatusBadges />}
       {!isAdmin && <SonarNav route={route} />}
       <ErrorBoundary
         fallback={<a className="voltar-oceano" href="/">{t('common.back')}</a>}

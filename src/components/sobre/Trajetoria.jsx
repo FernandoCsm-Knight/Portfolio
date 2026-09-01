@@ -19,6 +19,16 @@ const FOLGA_ROTULO = 88;
    e sair levam 1/6 da janela cada, em vez do 1/3 que três quadros dariam. */
 const SUSTENTACAO = 5;
 
+/* Fração da janela de cada trecho gasta na rampa de opacidade 0→1 (e, se a
+   etapa já terminou, na rampa simétrica 1→0 no fim) — mesma conta que o
+   `waapi.animate` usa: `SUSTENTACAO` quadros acesos mais o de entrada e o de
+   saída viram `SUSTENTACAO + 1` trechos iguais de duração. É esta fração que
+   `atualizarPalco` (abaixo) usa para reservar coluna no grid só quando a caixa
+   já está de fato visível — do contrário uma etapa recém-começando ou saindo
+   de cena reserva uma coluna inteira do grid ainda transparente, e as caixas
+   em cena não preenchem mais a largura toda do palco. */
+const FRACAO_RAMPA = 1 / (SUSTENTACAO + 1);
+
 /* Tempo nominal da montagem do texto de uma caixa. Nunca passa de metade do
    trecho: a monitoria de 2023 dura pouco mais de um segundo na varredura, e uma
    entrada de tamanho fixo comeria o trecho inteiro. */
@@ -241,7 +251,10 @@ export default function Trajetoria() {
     function atualizarPalco(tempo) {
       const emCena = pistas
         .map((pista, indice) => ({ pista, indice }))
-        .filter(({ pista }) => pista.trechos.some((trecho) => tempo >= trecho.entra && tempo <= trecho.sai))
+        .filter(({ pista }) => pista.trechos.some((trecho) => {
+          const rampa = (trecho.sai - trecho.entra) * FRACAO_RAMPA;
+          return tempo >= trecho.entra + rampa && tempo <= trecho.sai - (trecho.emCurso ? 0 : rampa);
+        }))
         .sort((a, b) => a.pista.coluna - b.pista.coluna);
       palco.style.setProperty('--colunas-ativas', String(Math.max(emCena.length, 1)));
       caixas.forEach((caixa) => caixa.style.setProperty('--ordem-coluna', '1'));

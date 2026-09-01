@@ -455,10 +455,26 @@ h1{
 }
 h1 em{font-style:normal;color:var(--gold-claro)}
 .hero-superficie{
+  position:relative;
   width:100%;max-width:none;
   align-items:center;text-align:center;
   padding-inline:clamp(24px,6vw,96px);
 }
+/* Dica de "role para explorar": some assim que a rolagem começa (ver
+   ScrollHint.jsx), então a transição de saída é rápida — não precisa
+   acompanhar o ritmo calmo do resto da página. */
+.dica-rolagem{
+  position:absolute;left:50%;bottom:clamp(18px,4vh,38px);
+  transform:translateX(-50%);
+  display:flex;flex-direction:column;align-items:center;gap:6px;
+  font-family:var(--f-mono);font-size:var(--fs-2xs);font-weight:600;
+  letter-spacing:var(--track-label);color:var(--texto-2);
+  animation:dica-rolagem-pulsa 2.2s ease-in-out infinite;
+  pointer-events:none;
+}
+.dica-rolagem svg{animation:dica-rolagem-desce 1.6s ease-in-out infinite}
+@keyframes dica-rolagem-pulsa{0%,100%{opacity:.45}50%{opacity:.95}}
+@keyframes dica-rolagem-desce{0%,100%{transform:translateY(0)}50%{transform:translateY(5px)}}
 .nome-superficie{
   position:relative;
   display:flex;justify-content:center;
@@ -492,13 +508,17 @@ h1 em{font-style:normal;color:var(--gold-claro)}
   position:absolute;inset:0;z-index:2;
   overflow:visible;pointer-events:none;
 }
+/* Mesmo material das bolhas de clique (`.cursor-bolha-clique`) — só troca a
+   animação, contínua e em loop em vez de um único impulso por clique. */
 .bolhas-nome i{
   position:absolute;left:var(--bolha-x);top:78%;
   width:var(--bolha-tamanho);height:var(--bolha-tamanho);
-  border:1px solid rgba(199,238,233,.72);
   border-radius:50%;
-  background:radial-gradient(circle at 32% 28%,rgba(255,255,255,.3),rgba(56,189,227,.06) 52%,transparent 70%);
-  box-shadow:inset 0 0 4px rgba(56,189,227,.16),0 0 5px rgba(56,189,227,.12);
+  border:1px solid rgba(199,238,255,.72);
+  background:
+    radial-gradient(circle at 31% 25%,rgba(255,255,255,.72),transparent 20%),
+    radial-gradient(circle at 42% 40%,rgba(56,189,227,.16),rgba(20,58,89,.08) 66%,transparent 72%);
+  box-shadow:inset 0 0 4px rgba(199,238,255,.2),0 0 7px rgba(56,189,227,.2);
   opacity:0;
   animation:bolha-nome var(--bolha-duracao) linear infinite var(--bolha-atraso);
 }
@@ -928,18 +948,25 @@ p strong{color:var(--texto);font-weight:600}
     linear-gradient(145deg,rgba(56,189,227,.13),rgba(4,16,26,.24));
 }
 .comentarios-feed .comentario-placeholder.comentario-ativo{opacity:1}
-.avaliacao-bolhas{display:block;width:112px;height:24px;margin:2px 0 14px;overflow:visible}
-.comentarios-feed header .avaliacao-bolhas{flex:none;width:92px;height:auto;margin:0}
-.avaliacao-bolhas .bolha-corpo{fill:rgba(56,189,227,.045)}
-.avaliacao-bolhas .bolha-membrana{fill:none;stroke-width:.65;opacity:.62}
-.avaliacao-bolhas .bolha-contorno{fill:none;stroke:rgba(56,189,227,.48);stroke-width:.85}
-.avaliacao-bolhas .bolha-reflexo{fill:rgba(255,255,255,.13)}
-.avaliacao-bolhas .bolha-refracao{fill:none;stroke:rgba(151,211,239,.22);stroke-width:.72;stroke-linecap:round}
-.avaliacao-bolhas .bolha-luz{fill:rgba(255,255,255,.16)}
-.avaliacao-bolhas .ativa .bolha-contorno{stroke:rgba(199,238,255,.72)}
-.avaliacao-bolhas .ativa .bolha-reflexo{fill:rgba(255,255,255,.72)}
-.avaliacao-bolhas .ativa .bolha-refracao{stroke:rgba(207,242,255,.52)}
-.avaliacao-bolhas .ativa .bolha-luz{fill:rgba(255,255,255,.54)}
+/* Mesmo material das bolhas de clique (`.cursor-bolha-clique`): a nota é uma
+   fileira de cinco, apagadas até `rating` e acesas (`.ativa`) dali pra
+   baixo — sem animação, é indicador parado, não efeito. */
+.avaliacao-bolhas{display:flex;align-items:center;gap:9px;margin:2px 0 14px}
+.comentarios-feed header .avaliacao-bolhas{flex:none;margin:0}
+.avaliacao-bolhas i{
+  width:14px;height:14px;border-radius:50%;flex:none;
+  border:1px solid rgba(199,238,255,.24);
+  background:
+    radial-gradient(circle at 31% 25%,rgba(255,255,255,.24),transparent 20%),
+    radial-gradient(circle at 42% 40%,rgba(56,189,227,.06),rgba(20,58,89,.04) 66%,transparent 72%);
+}
+.avaliacao-bolhas i.ativa{
+  border-color:rgba(199,238,255,.72);
+  background:
+    radial-gradient(circle at 31% 25%,rgba(255,255,255,.72),transparent 20%),
+    radial-gradient(circle at 42% 40%,rgba(56,189,227,.16),rgba(20,58,89,.08) 66%,transparent 72%);
+  box-shadow:inset 0 0 4px rgba(199,238,255,.2),0 0 7px rgba(56,189,227,.2);
+}
 .comentarios-nota{margin-top:5px;border:0}
 .comentarios-nota legend{
   margin-bottom:10px;font-family:var(--f-mono);font-size:var(--fs-xs);font-weight:700;
@@ -948,15 +975,22 @@ p strong{color:var(--texto);font-weight:600}
 .comentarios-nota-opcoes{display:flex;flex-direction:row-reverse;justify-content:flex-end;gap:9px;width:max-content}
 .comentarios-nota-opcoes label{display:block;margin:0;cursor:pointer}
 .comentarios-nota-opcoes input{position:absolute;inline-size:1px;block-size:1px;opacity:0}
+/* Mesma bolha de sempre — só maior e clicável, com opacidade fazendo o papel
+   de "apagada/acesa" que o filtro SVG antigo fazia com saturação. */
 .comentarios-nota-icone{
-  display:block;width:30px;height:30px;overflow:visible;opacity:.28;
-  filter:saturate(.48);transition:transform .2s,opacity .2s,filter .2s;
+  display:block;width:30px;height:30px;border-radius:50%;opacity:.32;
+  border:1px solid rgba(199,238,255,.72);
+  background:
+    radial-gradient(circle at 31% 25%,rgba(255,255,255,.72),transparent 20%),
+    radial-gradient(circle at 42% 40%,rgba(56,189,227,.16),rgba(20,58,89,.08) 66%,transparent 72%);
+  box-shadow:inset 0 0 4px rgba(199,238,255,.2),0 0 7px rgba(56,189,227,.2);
+  transition:transform .2s,opacity .2s;
 }
 .comentarios-nota-opcoes label:hover .comentarios-nota-icone,
 .comentarios-nota-opcoes label:hover~label .comentarios-nota-icone,
 .comentarios-nota-opcoes input:checked~.comentarios-nota-icone,
 .comentarios-nota-opcoes label:has(input:checked)~label .comentarios-nota-icone{
-  opacity:1;filter:saturate(1.08) drop-shadow(0 0 6px rgba(56,189,227,.52));
+  opacity:1;
 }
 .comentarios-nota-opcoes label:hover .comentarios-nota-icone{transform:scale(1.14)}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
@@ -1048,6 +1082,12 @@ p strong{color:var(--texto);font-weight:600}
   width:100%;height:100%;
   display:block;
   cursor:grab;
+  /* Sem isto o navegador lê o arrasto horizontal como gesto de navegação
+     (voltar/avançar) ou tenta paginar o próprio canvas antes que o pointerdown
+     chegue ao JS — no toque, o carrossel nunca girava. A página já trava o
+     scroll vertical enquanto esta cena ocupa a tela (useProjectMapScene), então
+     não há rolagem para preservar aqui. */
+  touch-action:none;
 }
 .mapa-projetos-canvas.sobre-card{cursor:pointer}
 .mapa-projetos-canvas.arrastando{cursor:grabbing}
@@ -1058,46 +1098,6 @@ body.cursor-personalizado .mapa-projetos-canvas{cursor:none}
   font:600 var(--fs-sm) var(--f-mono);letter-spacing:var(--track-label);
   color:var(--texto-2);
 }
-.mapa-carrossel-controles{
-  position:absolute;inset:0;z-index:5;
-  pointer-events:none;
-  opacity:0;
-  transition:opacity .35s ease;
-}
-.mapa-carrossel-controles.visivel{opacity:1}
-.mapa-carrossel-controles button{
-  position:absolute;top:50%;
-  display:grid;place-items:center;
-  width:clamp(48px,5vw,66px);height:clamp(48px,5vw,66px);
-  padding:0;border:1px solid var(--controle-borda);border-radius:50%;
-  color:var(--gold-claro);
-  background:var(--controle-fundo);
-  box-shadow:var(--controle-sombra);
-  -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
-  pointer-events:auto;
-  cursor:pointer;
-  transform:translateY(-50%);
-  transition:var(--controle-transicao);
-}
-.mapa-carrossel-controles button:first-child{left:clamp(18px,4vw,58px)}
-.mapa-carrossel-controles button:last-child{right:clamp(18px,4vw,58px)}
-.mapa-carrossel-controles button span{
-  display:block;
-  font-family:Arial,sans-serif;font-size:clamp(34px,4vw,48px);font-weight:300;
-  line-height:.8;
-  transform:translateY(-2px);
-}
-/* O `translateY(-50%)` é o que centra o botão na vertical, então o realce de
-   hover precisa recompor a translação — um `scale` sozinho aqui derrubaria a
-   seta meia altura para baixo. */
-.mapa-carrossel-controles button:hover,
-.mapa-carrossel-controles button:focus-visible{
-  color:var(--controle-texto-ativo);
-  border-color:var(--gold-claro);
-  box-shadow:var(--controle-sombra-ativa);
-  transform:translateY(-50%) scale(1.08);
-}
-.mapa-carrossel-controles button:focus-visible{outline:2px solid rgba(174,181,183,.72);outline-offset:4px}
 .voltar-oceano{
   position:fixed;top:82px;left:clamp(20px,4vw,48px);z-index:4;
   font-family:var(--f-mono);font-size:var(--fs-xs);font-weight:700;letter-spacing:var(--track-label);
@@ -1204,8 +1204,14 @@ body.cursor-personalizado .mapa-projetos-canvas{cursor:none}
    duas camadas de padding (a dele e a do .caderno) sem ganhar nada em troca —
    o padding lateral fica só no .caderno, então cada seção usa a largura
    inteira que a página já reserva. */
+/* `.bloco` também é uma `<section>`, e a regra genérica acima dá a toda
+   `<section>` `min-height:100vh` mais `justify-content:center` — certo para
+   as seções de tela cheia da home, errado aqui: no caderno de /about o bloco
+   deve ter só a altura do próprio conteúdo, senão uma seção curta (como
+   "Certificações e prêmios") sobra em espaço vazio até completar a tela. */
 .bloco{
-  position:relative;margin-bottom:clamp(44px,7vh,76px);padding:clamp(26px,4vw,44px) 0;
+  position:relative;min-height:0;justify-content:flex-start;
+  margin-bottom:clamp(44px,7vh,76px);padding:clamp(26px,4vw,44px) 0;
 }
 .bloco::before{
   content:'';position:absolute;left:0;top:-4px;width:38px;height:7px;border-radius:99px;
@@ -1276,7 +1282,9 @@ body.cursor-personalizado .mapa-projetos-canvas{cursor:none}
 }
 .palco-cartao{
   display:flex;flex-direction:column;align-items:flex-start;
+  position:relative;
   padding:clamp(16px,1.6vw,24px);
+  padding-bottom:clamp(34px,3vw,42px);
   border:1px solid rgba(56,189,227,.14);border-radius:16px;
   /* Fundo opaco de propósito: é ele que faz a caixa em cena cobrir a que
      divide a mesma célula. */
@@ -1287,8 +1295,9 @@ body.cursor-personalizado .mapa-projetos-canvas{cursor:none}
   box-shadow:0 18px 44px rgba(0,0,0,.24),inset 0 1px rgba(255,255,255,.045);
 }
 .palco-periodo{
+  position:absolute;right:clamp(16px,1.6vw,24px);bottom:clamp(14px,1.4vw,18px);
   font-family:var(--f-mono);font-size:var(--fs-2xs);font-weight:700;
-  letter-spacing:var(--track-label);color:var(--dourado-claro);margin-bottom:12px;
+  letter-spacing:var(--track-label);color:var(--dourado-claro);margin-bottom:0;
 }
 .palco-cartao h3{
   font-family:var(--f-serif);font-weight:600;font-size:clamp(20px,1.7vw,30px);
@@ -1593,33 +1602,6 @@ footer{
   color:var(--texto-2);letter-spacing:var(--track-wide);
 }
 
-/* Selo de disponibilidade — home e /contato. Reaproveita o material dos
-   controles (--controle-*) de propósito: é uma superfície de conteúdo, não um
-   quarto vocabulário entre "ação" (cinza) e "navegação" (aqua). O raio é de
-   caixa, e não de pílula, porque são duas linhas. */
-.selo-disponibilidade{
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
-  /* `min-height`, e não `height`: o conteúdo cabe com folga, e se um dia não
-     couber é melhor o card crescer do que vazar por fora da borda. */
-  min-height:var(--altura-status,auto);
-  padding:13px 24px;
-  border:1px solid var(--controle-borda);border-radius:18px;
-  background:var(--controle-fundo);
-  box-shadow:var(--controle-sombra);
-  -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
-  font-family:var(--f-mono);text-align:center;
-}
-.selo-disponibilidade p{margin:0;max-width:none}
-.disponibilidade-status{
-  display:flex;align-items:center;gap:10px;
-  font-size:var(--fs-sm);font-weight:600;letter-spacing:var(--track-label);
-  line-height:1.25;white-space:nowrap;
-  color:var(--gold-claro);
-}
-.disponibilidade-detalhe{
-  font-size:var(--fs-2xs);font-weight:500;letter-spacing:var(--track-tight);
-  line-height:1.5;white-space:nowrap;color:var(--texto-2);
-}
 /* O verde é o mesmo da bioluminescência dos peixes-lanterna da cena (#5ae8b8):
    o farol lê como parte do fundo do oceano, não como um widget colado por cima. */
 .disponibilidade-farol{
@@ -1640,34 +1622,53 @@ footer{
   0%{transform:scale(1);opacity:.7}
   100%{transform:scale(3.4);opacity:0}
 }
-/* Pelo mesmo motivo dos ícones do hero: desfoque de fundo sai no celular. */
-@media(max-width:760px){
-  .selo-disponibilidade{-webkit-backdrop-filter:none;backdrop-filter:none}
-}
-/* A chamada e o selo formam um par: agrupá-los mantém `.contato-conteudo` com
-   dois filhos, para o `gap` grande dele não abrir uma terceira vala. */
 .contato-acao{display:flex;flex-direction:column;align-items:center;gap:18px}
 
-/* ===== ACESSO A /precos ===== */
-/* Altura do par botão + selo, num único lugar.
-   A primeira tentativa foi deixar o botão esticar junto com o selo e tirar a
-   largura da altura com `aspect-ratio` — e não funciona: num item flex o motor
-   resolve a largura antes de conhecer a altura do stretch, então a razão não
-   tem de onde sair e o botão fica retangular. Aqui a altura é a medida
-   declarada, e os dois lados a leem: o quadrado é quadrado por construção.
+/* ===== ACESSO A /precos E STATUS "ONLINE" ===== */
+/* O par vira dois botões redondos, do mesmo tamanho e material do seletor de
+   idiomas, fixos logo abaixo dele — em toda página (StatusBadges.jsx é
+   renderizado junto ao seletor em App.jsx), e não só no Hero.
 
-   64px é o conteúdo do selo arredondado para cima — 13px de padding em cima e
-   embaixo, 13px × 1.25 do status, 6px de gap e 10px × 1.5 do relógio dão
-   63,25px. Por isso as duas linhas têm `line-height` explícito e `nowrap`
-   logo abaixo: sem isso a conta muda de navegador para navegador. */
-.status-linha{
-  --altura-status:64px;
-  display:flex;align-items:center;justify-content:center;gap:12px;
+   O `right` soma um recuo extra ao do seletor porque as duas fileiras têm
+   larguras diferentes e ambas usam `right` (não há como centralizar uma sob a
+   outra só com `align-items`, já que não dividem um contêiner comum): a do
+   seletor mede padding 4px×2 + 3 botões de 38px + 2 vãos de 2px = 126px; a
+   daqui, dois círculos de 36px + 8px de vão = 80px. Metade da diferença, 23px,
+   é o quanto falta somar ao `right` do seletor para os centros baterem. */
+.status-badges{
+  position:fixed;top:62px;right:calc(clamp(18px,3vw,38px) + 23px);z-index:110;
+  display:flex;flex-direction:row;align-items:center;gap:8px;
 }
-.hero-status{margin-bottom:clamp(26px,4vh,40px)}
+.status-badges .botao-valores,
+.status-badges .selo-disponibilidade-compacto{
+  width:36px;height:36px;border-radius:50%;
+}
+.status-badges .botao-valores svg{width:16px;height:16px}
+.selo-disponibilidade-compacto{
+  display:grid;place-items:center;flex:none;
+  border:1px solid var(--controle-borda);
+  background:var(--controle-fundo);
+  box-shadow:var(--controle-sombra);
+  -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
+  text-decoration:none;transition:var(--controle-transicao);
+}
+.selo-disponibilidade-compacto:hover,
+.selo-disponibilidade-compacto:focus-visible{
+  border-color:rgba(90,232,184,.55);
+  box-shadow:var(--controle-sombra-ativa);
+}
+@media(max-width:760px){
+  .selo-disponibilidade-compacto{-webkit-backdrop-filter:none;backdrop-filter:none}
+}
+@media(max-width:520px){
+  /* Mesma conta do bloco acima, com as medidas móveis do seletor: padding
+     4px×2 + 3 botões de 34px + 2 vãos de 2px = 114px; metade da diferença
+     para os 80px daqui é 17px. */
+  .status-badges{top:58px;right:31px}
+}
 .botao-valores{
   display:grid;place-items:center;flex:none;
-  width:var(--altura-status,52px);height:var(--altura-status,52px);
+  width:52px;height:52px;
   border:1px solid var(--controle-borda);border-radius:18px;
   background:var(--controle-fundo);
   box-shadow:var(--controle-sombra);
@@ -1779,6 +1780,7 @@ footer{
   .rosa-anel-graus{animation:none}
   .nome-palavra,.competencia-icone,.nome-superficie::after,.bolhas-nome i{animation:none}
   .disponibilidade-farol::after{animation:none}
+  .dica-rolagem,.dica-rolagem svg{animation:none}
   .carrossel-trilha{transition:none}
   .admin-alerta{animation:none}
   html{scroll-behavior:auto}

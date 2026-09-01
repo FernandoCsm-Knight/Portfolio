@@ -6,13 +6,7 @@ import { EXTERNAL_LINK_PROPS } from '../../utils/links';
 export default function ProjectMapPage({ onReady }) {
   const { t, locale } = useI18n();
   const labels = useMemo(() => t('projects'), [t]);
-  const {
-    canvasRef, apiRef, falhou, projetosVazios, carrosselVisivel, projects,
-  } = useProjectMapScene(onReady, { labels, locale });
-
-  function navegarCarrossel(direction) {
-    apiRef.current?.navigateCarousel(direction);
-  }
+  const { canvasRef, falhou, projetosVazios, projects } = useProjectMapScene(onReady, { labels, locale });
 
   return (
     <main className="mapa-projetos-page">
@@ -23,18 +17,6 @@ export default function ProjectMapPage({ onReady }) {
         hidden={falhou || projetosVazios}
       />
       {projetosVazios && <p className="mapa-projetos-vazio">{labels.empty}</p>}
-      <nav
-        className={`mapa-carrossel-controles${carrosselVisivel ? ' visivel' : ''}`}
-        aria-label={labels.navigation}
-        aria-hidden={!carrosselVisivel}
-      >
-        <button type="button" onClick={() => navegarCarrossel(-1)} aria-label={labels.previous}>
-          <span aria-hidden="true">‹</span>
-        </button>
-        <button type="button" onClick={() => navegarCarrossel(1)} aria-label={labels.next}>
-          <span aria-hidden="true">›</span>
-        </button>
-      </nav>
       {/* Fora da vista, como a lista da home: a cena só responde a ponteiro e
           a WebGL, então sem isto a rota seria um beco sem saída para teclado e
           leitor de tela. Reaparece quando um link recebe foco. */}

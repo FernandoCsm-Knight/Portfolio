@@ -148,7 +148,6 @@ export function createProjectMapScene(canvas, projects, { reducedMotion = false,
     return {
       hoveredProject,
       letterHovered: fishOcean.containsPointer(pointer),
-      carouselVisible: carousel.isVisible(),
     };
   }
 

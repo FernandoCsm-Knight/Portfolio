@@ -12,13 +12,11 @@ import { useSceneMount } from './useSceneMount';
  */
 export function useProjectMapScene(onReady, { labels, locale }) {
   const canvasRef = useRef(null);
-  const apiRef = useRef(null);
   /* Cache das linhas cruas do Supabase: uma troca de idioma remonta a cena
      (como já acontecia antes, já que `labels`/`t` mudam de referência a cada
      troca), mas não precisa buscar os projetos de novo — só relocaliza. */
   const rowsRef = useRef(null);
   const [projetosVazios, setProjetosVazios] = useState(false);
-  const [carrosselVisivel, setCarrosselVisivel] = useState(false);
   const [projects, setProjects] = useState([]);
 
   /* Trava o scroll da página enquanto o mapa ocupa a tela inteira — sempre
@@ -66,7 +64,6 @@ export function useProjectMapScene(onReady, { labels, locale }) {
       api.dispose();
       return undefined;
     }
-    apiRef.current = api;
 
     let resizeRaf = null;
     function handleResize() {
@@ -165,7 +162,6 @@ export function useProjectMapScene(onReady, { labels, locale }) {
     let framesAquecidos = 0;
     let ultimoHover = null;
     let ultimoHoverLetra = false;
-    let ultimoEstadoCarrossel = false;
     function loop(now) {
       rafId = requestAnimationFrame(loop);
       if (document.hidden || now - lastFrameTime < frameInterval) return;
@@ -190,11 +186,6 @@ export function useProjectMapScene(onReady, { labels, locale }) {
         ultimoHoverLetra = hoverLetra;
         canvas.classList.toggle('sobre-card', Boolean(hover) || hoverLetra);
       }
-      const estadoCarrossel = Boolean(frame?.carouselVisible);
-      if (estadoCarrossel !== ultimoEstadoCarrossel) {
-        ultimoEstadoCarrossel = estadoCarrossel;
-        setCarrosselVisivel(estadoCarrossel);
-      }
     }
     rafId = requestAnimationFrame(loop);
 
@@ -214,13 +205,12 @@ export function useProjectMapScene(onReady, { labels, locale }) {
       /* sem isto o rótulo fica preso na tela ao voltar para a home */
       anunciarHover(null);
       api.dispose();
-      apiRef.current = null;
     };
   }, [labels, locale, onReady]);
 
   const { cenaIndisponivel: falhou } = useSceneMount(canvasRef, mount, onReady, 'o mapa de expedições');
 
   return {
-    canvasRef, apiRef, falhou, projetosVazios, carrosselVisivel, projects,
+    canvasRef, falhou, projetosVazios, projects,
   };
 }

@@ -117,9 +117,6 @@ export default function AboutPage({ onReady }) {
 
         <section className="bloco" aria-labelledby="titulo-publicacoes">
           <h2 id="titulo-publicacoes">{t('about.papersTitle')}</h2>
-          <p className="bloco-intro">
-            {t('about.papersIntro')}
-          </p>
           <CarrosselPublicacoes />
         </section>
 
