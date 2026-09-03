@@ -1,6 +1,6 @@
 /** Limita a resolução interna do WebGL para equilibrar nitidez e fill-rate. */
 export function getWebGLPixelRatio(viewportWidth) {
-  return Math.min(window.devicePixelRatio || 1, viewportWidth < 768 ? 1.35 : 1.6);
+  return Math.min(window.devicePixelRatio || 1, viewportWidth < 768 ? 2 : 1.6);
 }
 
 /** Pré-compila os programas do contexto definitivo. Não renderiza aqui: os

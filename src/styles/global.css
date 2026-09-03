@@ -51,6 +51,10 @@
   --controle-transicao:transform .25s,border-color .25s,box-shadow .25s,color .25s;
 }
 *{margin:0;padding:0;box-sizing:border-box}
+/* No celular, tocar em link/botão pinta um retângulo azul (o realce de toque
+   padrão do WebKit/Chrome). Os controles já têm seu próprio feedback de
+   :active/:focus-visible, então zeramos o realce nativo. */
+*{-webkit-tap-highlight-color:transparent}
 html{scroll-behavior:smooth}
 html.rolagem-cursor{scroll-behavior:auto}
 /* Rede de segurança contra estouro horizontal. `overflow-x` só no body é
