@@ -1114,6 +1114,41 @@ body.cursor-personalizado .mapa-projetos-canvas{cursor:none}
 }
 .voltar-oceano:hover{color:var(--gold-claro);border-color:rgba(174,181,183,.55)}
 
+/* ===== 404 ===== */
+.pagina-404{
+  position:relative;z-index:10;min-height:100vh;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:18px;padding:clamp(96px,14vh,160px) clamp(22px,6vw,64px) 120px;
+  text-align:center;
+}
+.pagina-404-codigo{
+  font-family:var(--f-mono);font-weight:700;
+  font-size:clamp(64px,18vw,140px);line-height:.9;
+  letter-spacing:var(--track-wide);
+  color:transparent;-webkit-text-stroke:1px rgba(56,189,227,.5);
+}
+.pagina-404-titulo{
+  font-family:var(--f-serif);font-weight:700;font-style:italic;
+  font-size:clamp(24px,5vw,40px);color:var(--texto);
+}
+.pagina-404-corpo{
+  max-width:46ch;
+  font-family:var(--f-mono);font-size:var(--fs-sm);line-height:1.7;
+  color:var(--texto-2);
+}
+.pagina-404-voltar{
+  margin-top:10px;
+  font-family:var(--f-mono);font-size:var(--fs-xs);font-weight:700;
+  letter-spacing:var(--track-label);
+  color:var(--aqua);text-decoration:none;
+  border:1px solid rgba(56,189,227,.38);
+  background:rgba(4,16,26,.68);
+  border-radius:99px;padding:12px 18px;
+  backdrop-filter:blur(6px);
+  transition:color .25s,border-color .25s;
+}
+.pagina-404-voltar:hover{color:var(--gold-claro);border-color:rgba(174,181,183,.55)}
+
 /* ===== CADERNO DE BORDO (/sobre) ===== */
 .caderno{
   position:relative;z-index:10;

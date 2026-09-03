@@ -7,6 +7,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 import HomePage from './components/HomePage';
 import LanguageSwitcher from './components/LanguageSwitcher';
 import LoadingScreen from './components/LoadingScreen';
+import NotFound from './components/NotFound';
 import SonarNav from './components/SonarNav';
 import StatusBadges from './components/StatusBadges';
 import { useI18n } from './i18n/context';
@@ -109,6 +110,7 @@ function App() {
   const isPrecos = route === '/pricing';
   const isContato = route === '/contact';
   const isAdmin = route === '/admin';
+  const rotaConhecida = ROTAS.includes(route);
   const handlePageReady = useCallback(() => setCarregando(false), []);
 
   return (
@@ -148,7 +150,8 @@ function App() {
             <AdminPage onReady={handlePageReady} />
           </Suspense>
         )}
-        {!isProjectMap && !isSobre && !isPrecos && !isContato && !isAdmin && <HomePage onReady={handlePageReady} />}
+        {!isProjectMap && !isSobre && !isPrecos && !isContato && !isAdmin && rotaConhecida && <HomePage onReady={handlePageReady} />}
+        {!rotaConhecida && <NotFound onReady={handlePageReady} />}
       </ErrorBoundary>
     </>
   );
