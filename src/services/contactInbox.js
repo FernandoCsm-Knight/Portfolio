@@ -1,10 +1,14 @@
+import { abrirDemandas } from './contactCrypto';
 import { requireSupabase, unwrap } from './supabase';
 
 /* Só o /admin importa este módulo. Manter separado de contact.js é o que
    impede as consultas de moderação de entrarem no bundle de quem apenas
    visita /contact — mesma divisão que comments.js / commentModeration.js. */
 
-const CAMPOS = 'id,name,email,company,subject,message,status,created_at,read_at';
+/* Nome, e-mail, empresa e mensagem não são mais colunas: vêm dentro de
+   `payload_enc` e só existem depois de decifrar no navegador. O que sobrou em
+   claro é o que o painel precisa para filtrar e ordenar sem abrir nada. */
+const CAMPOS = 'id,subject,status,created_at,read_at,payload_enc';
 
 export const INBOX_FILTERS = [
   { value: 'new', label: 'Novas' },
@@ -12,13 +16,18 @@ export const INBOX_FILTERS = [
   { value: 'archived', label: 'Arquivadas' },
 ];
 
+/**
+ * Com o cofre trancado a consulta ainda acontece e as linhas voltam — só que
+ * com `decifrada: false`. É o que permite ao painel mostrar quantas demandas
+ * existem, e em que fila, antes de pedir a senha.
+ */
 export async function listContactRequests(status = 'new') {
-  return unwrap(requireSupabase()
+  return abrirDemandas(await unwrap(requireSupabase()
     .from('contact_requests')
     .select(CAMPOS)
     .eq('status', status)
     .order('created_at', { ascending: false })
-    .limit(100));
+    .limit(100)));
 }
 
 export async function countNewContactRequests() {

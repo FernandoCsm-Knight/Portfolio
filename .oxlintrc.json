@@ -25,7 +25,8 @@
   "overrides": [
     {
       "files": [
-        "api/**/*.js"
+        "api/**/*.js",
+        "scripts/**/*.mjs"
       ],
       "env": {
         "node": true,

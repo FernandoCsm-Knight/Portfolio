@@ -25,3 +25,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Chave privada da caixa de entrada, fechada sob senha (scripts/gerar-chave-contato.mjs).
+# Fechada, mas é a única cópia da chave: fora do repositório, dentro do gerenciador de senhas.
+chave-contato.json

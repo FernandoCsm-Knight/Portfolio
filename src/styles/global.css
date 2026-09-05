@@ -2169,6 +2169,44 @@ footer{
 .admin-responder:hover{border-color:var(--gold-claro);background:rgba(133,142,145,.12)}
 .admin-mensagem footer button:hover:not(:disabled){border-color:var(--aqua);background:rgba(56,189,227,.1)}
 .admin-mensagem footer button:disabled{opacity:.45}
+/* Cofre da chave privada da caixa de entrada. Espelha o cartão de login em vez
+   de reaproveitar `.admin-login`: aquele seletor zera o padding de `section`
+   para um cartão que ocupa a tela sozinho, e este convive com a lista abaixo. */
+.admin-cofre{display:block;min-height:0;width:min(100%,560px);margin:0 auto 26px;padding:clamp(22px,3.4vw,32px)}
+.admin-cofre h2{margin-top:16px;font-family:var(--f-serif);font-size:clamp(26px,4vw,34px);font-weight:600}
+.admin-cofre>p{margin-top:8px;color:var(--texto-2);line-height:1.7}
+.admin-cofre code{font:600 13px var(--f-mono);color:var(--aqua)}
+.admin-cofre form{display:grid;gap:8px;margin-top:20px}
+.admin-cofre label{margin-top:8px;font-size:13px;font-weight:600;letter-spacing:var(--track-label);color:var(--texto-2)}
+.admin-cofre input,.admin-cofre textarea{
+  width:100%;padding:14px 16px;border:1px solid rgba(56,189,227,.25);border-radius:12px;
+  font:inherit;color:var(--texto);background:rgba(2,11,23,.48);outline:none;
+}
+/* O JSON da chave é uma parede de base64 sem espaço: sem `anywhere` ele estica
+   o cartão em vez de quebrar. */
+.admin-cofre textarea{font:13px/1.6 var(--f-mono);resize:vertical;overflow-wrap:anywhere}
+.admin-cofre input:focus,.admin-cofre textarea:focus{border-color:var(--aqua);box-shadow:0 0 0 3px rgba(56,189,227,.08)}
+.admin-cofre button[type=submit]{
+  margin-top:14px;padding:14px 18px;border-radius:99px;
+  border:1px solid rgba(56,189,227,.3);color:var(--texto);background:rgba(4,16,26,.5);
+  font:600 13px var(--f-mono);letter-spacing:var(--track-tight);transition:.2s ease;
+}
+.admin-cofre button[type=submit]:hover,.admin-cofre button[type=submit]:focus-visible{
+  border-color:var(--gold-claro);background:rgba(133,142,145,.12);
+}
+.admin-cofre button[type=submit]:disabled{opacity:.45}
+.admin-cofre-descartar{
+  margin-top:16px;padding:0;border:0;background:none;color:var(--texto-2);
+  font:600 12px var(--f-mono);letter-spacing:var(--track-tight);text-decoration:underline;
+}
+.admin-cofre-descartar:hover{color:var(--gold-claro)}
+.admin-cofre-trancar{margin-left:auto;display:inline-flex;align-items:center;gap:8px}
+/* Silhueta da mensagem cifrada: mostra que há texto ali sem inventar conteúdo,
+   e sem deixar a linha com altura de cartão vazio. */
+.admin-mensagem-cifrada{
+  flex:1;color:rgba(133,142,145,.2);line-height:1.75;overflow-wrap:anywhere;
+  -webkit-user-select:none;user-select:none;
+}
 
 /* ----- Aviso de demanda recém-chegada ----- */
 .admin-alerta{

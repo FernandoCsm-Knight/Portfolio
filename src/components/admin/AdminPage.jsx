@@ -7,6 +7,7 @@ import {
   signOutAdmin,
 } from '../../services/commentModeration';
 import { subjectLabel } from '../../services/contact';
+import { abrirDemanda } from '../../services/contactCrypto';
 import { countNewContactRequests, subscribeToContactRequests } from '../../services/contactInbox';
 import { supabaseConfigured } from '../../services/supabase';
 import CommentsPanel from './CommentsPanel';
@@ -93,7 +94,12 @@ function AdminPage({ onReady }) {
         if (!active) return;
         setNovas((total) => total + 1);
         setSinalNovaMensagem((valor) => valor + 1);
-        setAlerta(linha);
+        /* A linha chega cifrada pelo Realtime como chega pela consulta. Se a
+           chave já estiver destravada o aviso mostra o remetente; se não,
+           `abrirDemanda` devolve a linha intacta e o aviso cai para o assunto,
+           que é coluna em claro. Nunca lança, então o aviso não some por causa
+           de um pacote que não abriu. */
+        abrirDemanda(linha).then((aberta) => { if (active) setAlerta(aberta); });
       },
       onStatus: (status) => {
         if (!active || status === 'SUBSCRIBED' || intervalo !== null) return;
@@ -240,7 +246,9 @@ function AdminPage({ onReady }) {
           <FaBell className="admin-alerta-icone" aria-hidden="true" />
           <div className="admin-alerta-texto">
             <strong>Nova demanda</strong>
-            <span>{alerta.name} · {subjectLabel(alerta.subject)}</span>
+            <span>
+              {alerta.decifrada ? `${alerta.name} · ` : ''}{subjectLabel(alerta.subject)}
+            </span>
           </div>
           <button
             type="button"
