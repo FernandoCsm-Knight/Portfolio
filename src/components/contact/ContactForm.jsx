@@ -179,7 +179,20 @@ export default function ContactForm({ onClose }) {
                   rows="6"
                   required
                   disabled={!contactConfigured || sending}
+                  aria-describedby="contato-mensagem-cifrada"
                 />
+                {/* Encostado no campo que ele descreve, e não no rodapé: quem
+                    hesita antes de escrever um contexto sensível hesita aqui.
+                    O texto promete o que o sistema faz — cifrada antes de ser
+                    guardada — e não sigilo de ponta a ponta: /api/contact vê o
+                    texto claro por um instante, o tempo de validar e selar. */}
+                <p className="contato-cifrado" id="contato-mensagem-cifrada">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M7 10V7a5 5 0 0 1 10 0v3" />
+                    <rect x="4.5" y="10" width="15" height="10.5" rx="2.5" />
+                  </svg>
+                  {t('contact.encrypted')}
+                </p>
               </div>
 
               <input

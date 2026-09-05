@@ -808,6 +808,19 @@ p strong{color:var(--texto);font-weight:600}
 }
 .comentarios-form textarea,
 .contato-form textarea{min-height:124px;resize:vertical}
+/* O Safari do iOS dá zoom em qualquer campo com fonte menor que 16px assim que
+   ele recebe foco — e não desfaz o zoom ao sair. O formulário fica maior que a
+   tela, a página passa a rolar de lado e o resto do site vai junto. Os 16px
+   aqui não são escolha tipográfica: são o limiar que desliga esse
+   comportamento. `pointer:coarse` para não engordar a fonte numa janela
+   estreita de desktop, que não tem o problema. */
+@media(pointer:coarse){
+  .comentarios-form input,
+  .comentarios-form textarea,
+  .contato-form input,
+  .contato-form select,
+  .contato-form textarea{font-size:16px}
+}
 .comentarios-form input::placeholder,
 .comentarios-form textarea::placeholder,
 .contato-form input::placeholder,
@@ -1010,6 +1023,15 @@ p strong{color:var(--texto);font-weight:600}
 .comentarios-modal,
 .contato-modal{
   position:relative;width:min(640px,100%);max-height:min(88vh,780px);overflow-y:auto;
+  /* `dvh` desconta as barras do navegador do celular, que `vh` ignora: com
+     `vh` o cartão pede 88% de uma altura que a tela não tem, e o rodapé com o
+     botão de enviar nasce fora do alcance. A linha de `vh` acima fica como
+     reserva para quem não conhece a unidade. */
+  max-height:min(88dvh,780px);
+  /* Sem isto, chegar ao fim da rolagem do cartão passa o gesto adiante e a
+     página atrás começa a rolar junto — o `overflow:hidden` que o React põe no
+     body não segura isso no iOS. */
+  overscroll-behavior:contain;
   padding:clamp(24px,4vw,42px);border:1px solid rgba(56,189,227,.32);border-radius:26px;
   background:
     radial-gradient(circle at 15% 0%,rgba(225,245,252,.17),transparent 42%),
@@ -1900,6 +1922,18 @@ footer{
   background:var(--seta) no-repeat right 15px center/12px 8px,rgba(2,11,21,.58);
 }
 .contato-form select option{color:var(--texto);background:#04121f}
+/* Aviso de que a demanda vai cifrada. `align-items:start` porque o texto quebra
+   em duas linhas num celular e o cadeado tem que ficar na primeira, junto do
+   começo da frase, e não centralizado no bloco todo. */
+.contato-cifrado{
+  display:flex;align-items:start;gap:8px;margin:2px 0 0;
+  font-size:var(--fs-xs);line-height:1.5;letter-spacing:var(--track-tight);
+  color:var(--texto-2);opacity:.72;
+}
+.contato-cifrado svg{
+  flex:none;width:13px;height:13px;margin-top:2px;
+  fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;
+}
 .contato-form-rodape{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-top:4px}
 .contato-form-rodape span{
   font-size:var(--fs-xs);letter-spacing:var(--track-tight);
@@ -1916,6 +1950,34 @@ footer{
   color:var(--texto);background:rgba(4,16,26,.5);transition:.2s ease;
 }
 .contato-recibo-fechar:hover{border-color:var(--gold-claro);color:var(--gold-claro)}
+/* Os dois modais num telefone. O corte em 520px, e não nos 760px usados no
+   resto do arquivo, porque até ali o cartão ainda tem folga: o que aperta de
+   verdade é a soma das molduras contra uma largura de ~390px. */
+@media(max-width:520px){
+  /* 16px de recuo no fundo mais 24px no cartão gastavam 80px dos 390px da tela
+     em margem, antes de qualquer campo existir. */
+  .comentarios-modal-fundo,
+  .contato-modal-fundo{padding:12px}
+  .comentarios-modal,
+  .contato-modal{padding:20px 18px 22px;border-radius:20px}
+  /* O h2 global é clamp(30px,4vw,48px), e num telefone os 4vw não alcançam
+     nada: o título trava nos 30px e ocupa três linhas de Playfair antes de o
+     formulário começar. Aqui ele responde à largura de novo. */
+  .comentarios-modal h2,
+  .contato-modal h2{font-size:24px;margin:0 46px 8px 0}
+  .contato-modal-apoio{font-size:13px}
+  /* 38px fica abaixo dos 44px que iOS e Android pedem como alvo de toque, e
+     este botão fecha um formulário já preenchido — errar o alvo custa caro. */
+  .comentarios-modal-fechar,
+  .contato-modal-fechar{top:12px;right:12px;width:44px;height:44px}
+  /* Seis linhas de textarea, com o teclado aberto tomando metade da tela,
+     empurram o botão de enviar para fora do alcance. `resize:vertical` continua
+     valendo para quem quiser mais espaço. */
+  .comentarios-form textarea,
+  .contato-form textarea{height:104px;min-height:104px}
+  .contato-form{gap:12px;margin-top:16px}
+  .contato-form-linha{gap:12px}
+}
 .contato-radial::before{
   content:'';position:absolute;inset:8%;z-index:-2;border-radius:50%;
   background:
