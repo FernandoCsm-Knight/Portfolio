@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createProjectMapScene } from '../services/projectMap/sceneService';
 import { listProjects, localizeProject, projectsConfigured } from '../services/projects';
-import { medirViewport } from '../services/scene/viewportSync';
 import { useSceneMount } from './useSceneMount';
 
 /**
@@ -65,7 +64,14 @@ export function useProjectMapScene(onReady, { labels, locale }) {
 
     const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
     const api = createProjectMapScene(canvas, projetosLocalizados, { reducedMotion, labels });
-    const viewportInicial = medirViewport();
+    /* A câmera deve usar exatamente a caixa exibida pelo canvas. No mobile,
+       a altura do viewport de layout pode incluir a área sob a barra do
+       navegador, deixando o card abaixo do centro visível. */
+    function canvasSize() {
+      const rect = canvas.getBoundingClientRect();
+      return { largura: Math.max(1, rect.width), altura: Math.max(1, rect.height) };
+    }
+    const viewportInicial = canvasSize();
     api.resize(viewportInicial.largura, viewportInicial.altura);
     await api.prepare?.();
     if (!isCurrent()) {
@@ -80,7 +86,7 @@ export function useProjectMapScene(onReady, { labels, locale }) {
       if (resizeRaf !== null) return;
       resizeRaf = requestAnimationFrame(() => {
         resizeRaf = null;
-        const { largura, altura } = medirViewport();
+        const { largura, altura } = canvasSize();
         if (largura === ultimaLargura && altura === ultimaAltura) return;
         ultimaLargura = largura;
         ultimaAltura = altura;
@@ -88,6 +94,8 @@ export function useProjectMapScene(onReady, { labels, locale }) {
       });
     }
     window.addEventListener('resize', handleResize);
+    const canvasObserver = new ResizeObserver(handleResize);
+    canvasObserver.observe(canvas);
 
     let pendingPointer = null;
     let dragStartX = null;
@@ -95,7 +103,7 @@ export function useProjectMapScene(onReady, { labels, locale }) {
 
     function handlePointerMove(e) {
       pendingPointer = { x: e.clientX, y: e.clientY };
-      if (dragStartX !== null) api.dragCarousel(e.clientX - dragStartX, medirViewport().largura);
+      if (dragStartX !== null) api.dragCarousel(e.clientX - dragStartX, canvasSize().largura);
     }
     function handlePointerLeave() {
       pendingPointer = null;
@@ -129,7 +137,7 @@ export function useProjectMapScene(onReady, { labels, locale }) {
         return;
       }
       const distance = e.clientX - dragStartX;
-      api.dragCarousel(distance, medirViewport().largura);
+      api.dragCarousel(distance, canvasSize().largura);
       dragStartX = null;
       canvas.classList.remove('arrastando');
       const moved = api.endCarouselDrag(distance) ?? false;
@@ -212,6 +220,7 @@ export function useProjectMapScene(onReady, { labels, locale }) {
       cancelAnimationFrame(rafId);
       if (resizeRaf !== null) cancelAnimationFrame(resizeRaf);
       window.removeEventListener('resize', handleResize);
+      canvasObserver.disconnect();
       canvas.removeEventListener('pointermove', handlePointerMove);
       canvas.removeEventListener('pointerleave', handlePointerLeave);
       canvas.removeEventListener('pointerdown', handlePointerDown);

@@ -26,6 +26,7 @@ export function createProjectMapScene(canvas, projects, { reducedMotion = false,
     stencil: false,
     powerPreference: 'high-performance',
   });
+  const coarsePointer = matchMedia('(pointer: coarse)').matches;
   renderer.setPixelRatio(mapPixelRatio(window.innerWidth, window.innerHeight));
   renderer.setClearColor(0x061326, 1);
 
@@ -74,7 +75,7 @@ export function createProjectMapScene(canvas, projects, { reducedMotion = false,
     pointer.x = ((clientX - rect.left) / rect.width) * 2 - 1;
     pointer.y = -(((clientY - rect.top) / rect.height) * 2 - 1);
     pointer.active = true;
-    if (!reducedMotion) {
+    if (!reducedMotion && !coarsePointer) {
       targetRotY = pointer.x * 0.08;
       targetRotX = -pointer.y * 0.05;
     }

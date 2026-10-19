@@ -209,9 +209,11 @@ export function makeProjectCarousel(projects, centerZ, reducedMotion = false, la
   let unlocked = false;
   let hoveredProject = null;
   let viewportScale = 1;
+  let mobileViewport = false;
 
   function resize(width, height) {
-    if (width > 760) {
+    mobileViewport = width <= 760;
+    if (!mobileViewport) {
       viewportScale = 1;
       return;
     }
@@ -238,7 +240,11 @@ export function makeProjectCarousel(projects, centerZ, reducedMotion = false, la
   }
 
   function dragBy(distance, viewportWidth, time = performance.now() / 1000) {
-    return motion.dragBy(distance, viewportWidth, time);
+    /* Um mesmo deslocamento em pixels representa uma fração muito maior da
+       tela estreita. Dobrar a largura efetiva reduz giro e impulso do flick,
+       mantendo o carrossel livre para percorrer vários cards. */
+    const dragWidth = viewportWidth <= 760 ? viewportWidth * 1.8 : viewportWidth;
+    return motion.dragBy(distance, dragWidth, time);
   }
 
   function endDrag(distance, time = performance.now() / 1000, cancelled = false) {
@@ -281,13 +287,13 @@ export function makeProjectCarousel(projects, centerZ, reducedMotion = false, la
     cards.forEach((card, index) => {
       const angle = angleOffset + (index / cards.length) * Math.PI * 2;
       const depth = (Math.cos(angle) + 1) * 0.5;
-      const hoverTarget = card.userData.project === hoveredProject ? 1 : 0;
+      const hoverTarget = !mobileViewport && card.userData.project === hoveredProject ? 1 : 0;
       const hoverEase = reducedMotion ? 1 : Math.min(1, dt * 8.5);
       card.userData.hoverAmount += (hoverTarget - card.userData.hoverAmount) * hoverEase;
       const hoverAmount = card.userData.hoverAmount;
       card.position.set(
         Math.sin(angle) * 38,
-        Math.cos(angle * 2 + time * 0.16) * 1.15 + hoverAmount * 0.62,
+        mobileViewport ? 0 : Math.cos(angle * 2 + time * 0.16) * 1.15 + hoverAmount * 0.62,
         centerZ + Math.cos(angle) * 14,
       );
       const scale = reveal
