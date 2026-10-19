@@ -1,9 +1,10 @@
-import { memo, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { FaArrowLeft, FaArrowRight } from 'react-icons/fa';
 import { createComment, commentsConfigured, listComments } from '../../services/comments';
 import { remainingCooldown, writeLastSentAt } from '../../services/cooldown';
 import BubbleButton from '../ui/BubbleButton';
 import { useI18n } from '../../i18n/context';
+import { createCarouselMotion } from '../../services/carouselMotion';
 
 const COMMENT_COOLDOWN_MS = 30000;
 const COMMENT_TIMESTAMP_KEY = 'portfolio:last-comment-at';
@@ -31,9 +32,12 @@ function Comments() {
     day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit',
   }), [localeTag]);
   const dragRef = useRef(null);
+  const carouselRef = useRef(null);
+  const motionRef = useRef(null);
+  const frameRef = useRef(0);
+  const lastFrameRef = useRef(0);
   const [comments, setComments] = useState([]);
   const [activeIndex, setActiveIndex] = useState(0);
-  const [dragOffset, setDragOffset] = useState(0);
   const [dragging, setDragging] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [loading, setLoading] = useState(commentsConfigured);
@@ -101,36 +105,82 @@ function Comments() {
     }
   }
 
-  function moveCarousel(direction) {
-    if (!carouselItems.length) return;
-    setActiveIndex((current) => (current + direction + carouselItems.length) % carouselItems.length);
-  }
-
   const carouselItems = comments.length > 0
     ? comments
     : (!loading ? t('comments.placeholders').map((comment) => ({ ...comment, placeholder: true })) : []);
 
-  function getCircularOffset(index) {
-    let offset = index - activeIndex;
-    const middle = carouselItems.length / 2;
-    if (offset > middle) offset -= carouselItems.length;
-    if (offset < -middle) offset += carouselItems.length;
-    return offset;
+  function paintCarousel(time = performance.now() / 1000, dt = 0) {
+    const track = carouselRef.current;
+    const motion = motionRef.current;
+    if (!track || !motion) return;
+    const count = track.children.length;
+    const angleOffset = motion.update(time, dt);
+    const radius = Math.min(390, track.clientWidth * (window.innerWidth <= 900 ? 0.56 : 0.4));
+    const front = count ? ((Math.round(-angleOffset * count / (Math.PI * 2)) % count) + count) % count : 0;
+    Array.from(track.children).forEach((card, index) => {
+      const angle = angleOffset + index * Math.PI * 2 / count;
+      const depth = (Math.cos(angle) + 1) / 2;
+      const x = Math.sin(angle) * radius;
+      card.style.transform = `translate(-50%, -50%) translate3d(${x}px, 0, ${-(1 - depth) * 210}px) rotateY(${-Math.sin(angle) * 17}deg) scale(${0.75 + depth * 0.25})`;
+      card.style.opacity = String(0.28 + depth * 0.72);
+      card.style.zIndex = String(Math.round(depth * 100));
+      card.style.visibility = depth < 0.12 ? 'hidden' : 'visible';
+      card.setAttribute('aria-hidden', depth < 0.3 ? 'true' : 'false');
+      card.classList.toggle('comentario-ativo', index === front);
+    });
+    if (!motion.moving) setActiveIndex((current) => current === front ? current : front);
+  }
+
+  function tick(frameTime) {
+    frameRef.current = 0;
+    const time = frameTime / 1000;
+    paintCarousel(time, Math.min(0.05, Math.max(0, time - lastFrameRef.current)));
+    lastFrameRef.current = time;
+    if (motionRef.current?.moving) frameRef.current = requestAnimationFrame(tick);
+  }
+
+  function scheduleFrame() {
+    if (!frameRef.current) {
+      lastFrameRef.current = performance.now() / 1000;
+      frameRef.current = requestAnimationFrame(tick);
+    }
+  }
+
+  useLayoutEffect(() => {
+    const track = carouselRef.current;
+    motionRef.current = createCarouselMotion(
+      carouselItems.length,
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+    );
+    paintCarousel();
+    const resizeObserver = new ResizeObserver(() => paintCarousel());
+    if (track) resizeObserver.observe(track);
+    return () => {
+      resizeObserver.disconnect();
+      cancelAnimationFrame(frameRef.current);
+      frameRef.current = 0;
+      motionRef.current = null;
+    };
+  }, [carouselItems.length]);
+
+  function moveCarousel(direction) {
+    if (motionRef.current?.navigate(direction)) scheduleFrame();
   }
 
   function handleCarouselPointerDown(event) {
     if (event.pointerType === 'mouse' && event.button !== 0) return;
     if (event.pointerType === 'mouse') event.preventDefault();
+    if (!motionRef.current?.beginDrag()) return;
     dragRef.current = { pointerId: event.pointerId, startX: event.clientX };
     event.currentTarget.setPointerCapture?.(event.pointerId);
     setDragging(true);
-    setDragOffset(0);
   }
 
   function handleCarouselPointerMove(event) {
     if (dragRef.current?.pointerId !== event.pointerId) return;
     const distance = event.clientX - dragRef.current.startX;
-    setDragOffset(Math.max(-180, Math.min(180, distance)));
+    motionRef.current?.dragBy(distance, event.currentTarget.clientWidth);
+    paintCarousel();
   }
 
   function finishCarouselDrag(event, cancelled = false) {
@@ -139,10 +189,8 @@ function Comments() {
     dragRef.current = null;
     event.currentTarget.releasePointerCapture?.(event.pointerId);
     setDragging(false);
-    setDragOffset(0);
-    if (!cancelled && Math.abs(distance) >= Math.min(70, event.currentTarget.clientWidth * 0.12)) {
-      moveCarousel(distance < 0 ? 1 : -1);
-    }
+    motionRef.current?.endDrag(distance, performance.now() / 1000, cancelled);
+    scheduleFrame();
   }
 
   return (
@@ -160,8 +208,8 @@ function Comments() {
         />
         {loading && <p className="comentarios-vazio">{t('comments.loading')}</p>}
         <ol
+          ref={carouselRef}
           className={dragging ? 'arrastando' : ''}
-          style={{ '--arrasto': `${dragOffset}px` }}
           aria-live="polite"
           aria-label={t('comments.carousel')}
           tabIndex="0"
@@ -169,6 +217,11 @@ function Comments() {
           onPointerMove={handleCarouselPointerMove}
           onPointerUp={finishCarouselDrag}
           onPointerCancel={(event) => finishCarouselDrag(event, true)}
+          onWheel={(event) => {
+            if (Math.abs(event.deltaX) > Math.abs(event.deltaY) && motionRef.current?.spinWheel(event.deltaX)) {
+              scheduleFrame();
+            }
+          }}
           onKeyDown={(event) => {
             if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
               event.preventDefault();
@@ -177,18 +230,11 @@ function Comments() {
           }}
         >
           {carouselItems.map((comment, index) => {
-            const offset = getCircularOffset(index);
-            const distance = Math.abs(offset);
             return (
             <li
               key={comment.id ?? comment.name}
-              className={`${comment.placeholder ? 'comentario-placeholder ' : ''}${offset === 0 ? 'comentario-ativo' : ''}${distance > 2 ? ' comentario-distante' : ''}`}
-              style={{
-                '--deslocamento': offset,
-                '--distancia': distance,
-                zIndex: Math.max(1, 10 - distance),
-              }}
-              aria-hidden={distance > 2}
+              className={`${comment.placeholder ? 'comentario-placeholder ' : ''}${index === activeIndex ? 'comentario-ativo' : ''}`}
+              aria-hidden={index !== activeIndex}
             >
               <header>
                 <strong>{comment.name}</strong>

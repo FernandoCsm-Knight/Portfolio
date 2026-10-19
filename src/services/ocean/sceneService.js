@@ -43,6 +43,7 @@ function corProf(t, out = corProfScratch) {
 export function createOceanScene(canvas, { reducedMotion = false } = {}) {
   const reduz = reducedMotion;
   const fMov = reduz ? 0.3 : 1;
+  const telaTatil = matchMedia('(pointer: coarse)').matches;
 
   /* O WebGLRenderer já registra seus próprios listeners de webglcontextlost/
      restored: render() vira no-op enquanto o contexto está perdido e o contexto
@@ -515,6 +516,10 @@ export function createOceanScene(canvas, { reducedMotion = false } = {}) {
     scene.add(new THREE.Points(g, m));
     return { g, base, m, N };
   })();
+  // A deriva e lenta: 15 atualizacoes por segundo no toque e 30 no desktop
+  // evitam recalcular e reenviar o buffer de poeira em todos os frames WebGL.
+  const intervaloPoeira = reduz || telaTatil ? 1 / 15 : 1 / 30;
+  let ultimoUpdatePoeira = -Infinity;
 
   /* — neve marinha (abismo) — */
   const neve = (function () {
@@ -611,7 +616,12 @@ export function createOceanScene(canvas, { reducedMotion = false } = {}) {
   let ultimoInstante = performance.now();
   let elapsed = 0;
   let acum = 0;
-  let mediaTempoFrame = 1 / 60;
+  // No toque, o loop da home roda a 30 fps. Seus 33 ms normais nao devem
+  // ser confundidos com perda de desempenho de uma cena de 60 fps.
+  const intervaloAlvo = reduz || telaTatil ? 1 / 30 : 1 / 60;
+  const limiteLento = reduz || telaTatil ? 1 / 26 : 1 / 45;
+  const limiteRapido = reduz || telaTatil ? 1 / 29 : 1 / 54;
+  let mediaTempoFrame = intervaloAlvo;
   let ultimoAjusteResolucao = ultimoInstante;
   let framesDesdeAjuste = 0;
 
@@ -620,7 +630,7 @@ export function createOceanScene(canvas, { reducedMotion = false } = {}) {
     larguraViewport = width;
     alturaViewport = height;
     renderer.setPixelRatio(getWebGLPixelRatio(width) * escalaResolucao);
-    renderer.setSize(width, height);
+    renderer.setSize(width, height, false);
     cam.aspect = width / height;
     cam.updateProjectionMatrix();
   }
@@ -757,9 +767,9 @@ export function createOceanScene(canvas, { reducedMotion = false } = {}) {
     framesDesdeAjuste++;
     if (agora - ultimoAjusteResolucao > 2600 && framesDesdeAjuste > 55) {
       const escalaAnterior = escalaResolucao;
-      if (mediaTempoFrame > 1 / 45 && escalaResolucao > 0.85) {
+      if (mediaTempoFrame > limiteLento && escalaResolucao > 0.85) {
         escalaResolucao = Math.max(0.85, escalaResolucao - 0.15);
-      } else if (mediaTempoFrame < 1 / 54 && escalaResolucao < 1) {
+      } else if (mediaTempoFrame < limiteRapido && escalaResolucao < 1) {
         escalaResolucao = Math.min(1, escalaResolucao + 0.1);
       }
       if (escalaResolucao !== escalaAnterior) {
@@ -843,7 +853,8 @@ export function createOceanScene(canvas, { reducedMotion = false } = {}) {
     /* poeira: cor e deriva */
     poeira.m.color.setRGB(0.5 + (1 - prof) * 0.3, 0.85, 0.85 - prof * 0.15);
     poeira.m.opacity = 0.22 + 0.1 * Math.sin(t * 0.5);
-    {
+    if (t - ultimoUpdatePoeira >= intervaloPoeira) {
+      ultimoUpdatePoeira = t;
       const pp = poeira.g.attributes.position.array;
       for (let i = 0; i < poeira.N; i++) {
         pp[i * 3] = poeira.base[i * 3] + Math.sin(t * 0.4 + i) * 1.4 * fMov;

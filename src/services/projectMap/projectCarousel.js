@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { createCarouselMotion } from '../carouselMotion';
 
 const LETTER_READY_PROGRESS = 0.72;
 
@@ -51,7 +52,7 @@ function wrapLines(context, text, maxWidth, maxLines) {
   return visible;
 }
 
-const MEDIA_RECT = { x: 52, y: 108, width: 596, height: 274, radius: 18 };
+const MEDIA_RECT = { x: 52, y: 56, width: 596, height: 300, radius: 18 };
 
 /* Desenha a capa do projeto ocupando a área reservada, recortada nas mesmas
    bordas arredondadas do cartão e com "cover fit" (preenche sem distorcer,
@@ -62,6 +63,7 @@ function drawCoverImage(context, image) {
   const drawWidth = image.naturalWidth * scale;
   const drawHeight = image.naturalHeight * scale;
   context.save();
+  context.imageSmoothingQuality = 'high';
   roundedRect(context, x, y, width, height, radius);
   context.clip();
   context.drawImage(
@@ -84,10 +86,10 @@ function drawMediaPlaceholder(context, labels) {
   roundedRect(context, x, y, width, height, radius);
   context.fillStyle = media;
   context.fill();
-  context.font = "500 16px 'IBM Plex Mono', monospace";
+  context.font = "500 20px Roboto, sans-serif";
   context.letterSpacing = '2px';
   context.fillStyle = 'rgba(210,214,216,.42)';
-  context.fillText(labels.image ?? 'PROJECT IMAGE', x + 24, y + 242);
+  context.fillText(labels.image ?? 'PROJECT IMAGE', x + 24, y + height - 32);
 }
 
 function makeCardTexture(project, labels) {
@@ -124,38 +126,38 @@ function makeCardTexture(project, labels) {
   }
   context.restore();
 
-  context.font = "500 22px 'IBM Plex Mono', monospace";
-  context.letterSpacing = '3px';
-  context.fillStyle = '#8d9296';
-  context.fillText(`${labels.project ?? 'PROJECT'}  ${project.num}`, 52, 70);
-
   drawMediaPlaceholder(context, labels);
 
-  context.font = "600 52px 'Cormorant Garamond', serif";
+  context.font = "600 56px 'Playfair Display', Georgia, serif";
   context.letterSpacing = '0px';
   context.fillStyle = '#f1f1ee';
   wrapLines(context, project.title, 596, 2).forEach((line, index) => {
-    context.fillText(line, 52, 452 + index * 56);
+    context.fillText(line, 52, 426 + index * 60);
   });
 
   context.fillStyle = '#a3a6a8';
-  context.font = "400 19px 'IBM Plex Mono', monospace";
+  context.font = "400 26px Roboto, sans-serif";
   wrapLines(context, project.description, 596, 7).forEach((line, index) => {
-    context.fillText(line, 52, 590 + index * 31);
+    context.fillText(line, 52, 566 + index * 33);
   });
 
-  context.font = "500 18px 'IBM Plex Mono', monospace";
+  context.font = "500 22px Roboto, sans-serif";
   context.fillStyle = '#707477';
   const tags = trimLine(context, project.tags.slice(0, 3).join('  ·  '), 596);
-  context.fillText(tags, 52, 838);
+  context.fillText(tags, 52, 822);
 
   context.fillStyle = '#d9dad7';
-  context.font = "500 20px 'IBM Plex Mono', monospace";
+  context.font = "500 24px Roboto, sans-serif";
   context.fillText(`${labels.open ?? 'OPEN PROJECT'}  ↗`, 52, 928);
 
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
-  texture.minFilter = THREE.LinearMipmapLinearFilter;
+  // Os mipmaps pre-reduzem o texto do card: na maioria das telas de PC a
+  // textura escolhida tem metade ou um quarto da resolucao original, e as
+  // letras chegam borradas ao canvas WebGL. Amostrar a textura original uma
+  // unica vez preserva os contornos finos da tipografia.
+  texture.generateMipmaps = false;
+  texture.minFilter = THREE.LinearFilter;
   texture.magFilter = THREE.LinearFilter;
 
   if (project.imageUrl) {
@@ -199,16 +201,10 @@ export function makeProjectCarousel(projects, centerZ, reducedMotion = false, la
 
   const raycaster = new THREE.Raycaster();
   /* Ângulo zero coloca o primeiro card em x=0 e no ponto frontal do anel. */
-  let angleOffset = 0;
-  let transitionFrom = angleOffset;
-  let transitionTarget = angleOffset;
-  let transitionStart = 0;
-  let transitioning = false;
+  const motion = createCarouselMotion(cards.length, reducedMotion);
   let lastAutomaticStep = 0;
   let automaticSteps = 0;
   let automaticEnabled = true;
-  let dragging = false;
-  let dragStartAngle = angleOffset;
   let reveal = 0;
   let unlocked = false;
   let hoveredProject = null;
@@ -230,43 +226,33 @@ export function makeProjectCarousel(projects, centerZ, reducedMotion = false, la
   }
 
   function navigate(direction, time = performance.now() / 1000, userInitiated = true) {
-    if (!unlocked || transitioning) return false;
-    transitionFrom = angleOffset;
-    transitionTarget = angleOffset - Math.sign(direction || 1) * ((Math.PI * 2) / cards.length);
-    transitionStart = time;
-    transitioning = true;
+    if (!unlocked || !motion.navigate(direction, time)) return false;
     if (userInitiated) automaticEnabled = false;
     return true;
   }
 
   function beginDrag() {
-    if (!unlocked || transitioning) return false;
-    dragging = true;
-    dragStartAngle = angleOffset;
+    if (!unlocked || !motion.beginDrag()) return false;
+    automaticEnabled = false;
     return true;
   }
 
-  function dragBy(distance, viewportWidth) {
-    if (!dragging) return false;
-    angleOffset = dragStartAngle + (distance / Math.max(1, viewportWidth)) * Math.PI * 1.2;
-    return true;
+  function dragBy(distance, viewportWidth, time = performance.now() / 1000) {
+    return motion.dragBy(distance, viewportWidth, time);
   }
 
-  function endDrag(distance, time = performance.now() / 1000) {
-    if (!dragging) return false;
-    dragging = false;
-    transitionFrom = angleOffset;
-    const moved = Math.abs(distance) >= 34;
-    transitionTarget = moved
-      ? dragStartAngle + Math.sign(distance) * ((Math.PI * 2) / cards.length)
-      : dragStartAngle;
-    transitionStart = time;
-    transitioning = true;
-    if (moved) automaticEnabled = false;
-    return moved;
+  function endDrag(distance, time = performance.now() / 1000, cancelled = false) {
+    return motion.endDrag(distance, time, cancelled);
   }
 
-  function update(time, dt, formationProgress, activated, pointer, camera, scene) {
+  function spinWheel(delta, time = performance.now() / 1000) {
+    if (!unlocked) return false;
+    const handled = motion.spinWheel(delta, time);
+    automaticEnabled = false;
+    return handled;
+  }
+
+  function update(time, dt, formationProgress, activated, camera, scene) {
     if (!unlocked && activated && formationProgress >= LETTER_READY_PROGRESS) {
       unlocked = true;
       lastAutomaticStep = time;
@@ -290,16 +276,7 @@ export function makeProjectCarousel(projects, centerZ, reducedMotion = false, la
       }
     }
 
-    if (transitioning) {
-      const duration = reducedMotion ? 0.01 : 0.75;
-      const progress = THREE.MathUtils.clamp((time - transitionStart) / duration, 0, 1);
-      const eased = THREE.MathUtils.smootherstep(progress, 0, 1);
-      angleOffset = THREE.MathUtils.lerp(transitionFrom, transitionTarget, eased);
-      if (progress >= 1) {
-        angleOffset = transitionTarget;
-        transitioning = false;
-      }
-    }
+    const angleOffset = motion.update(time, dt);
 
     cards.forEach((card, index) => {
       const angle = angleOffset + (index / cards.length) * Math.PI * 2;
@@ -344,5 +321,5 @@ export function makeProjectCarousel(projects, centerZ, reducedMotion = false, la
     return hoveredProject;
   }
 
-  return { group, resize, update, pick, navigate, beginDrag, dragBy, endDrag };
+  return { group, resize, update, pick, navigate, beginDrag, dragBy, endDrag, spinWheel };
 }

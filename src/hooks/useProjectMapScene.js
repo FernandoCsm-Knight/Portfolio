@@ -48,8 +48,16 @@ export function useProjectMapScene(onReady, { labels, locale }) {
     }));
     setProjects(projetosLocalizados);
 
-    /* A Norican só é usada no canvas que amostra o glifo do monograma. */
-    if (document.fonts?.load) await document.fonts.load("900px 'Norican'", 'F');
+    /* As fontes precisam estar carregadas antes de virar pixels nas texturas:
+       document.fonts.ready sozinho nao baixa familias sem uso visivel no DOM. */
+    if (document.fonts?.load) {
+      await Promise.all([
+        document.fonts.load("900px 'Norican'", 'F'),
+        document.fonts.load("600 56px 'Playfair Display'", 'Projeto'),
+        document.fonts.load('500 24px Roboto', 'Projeto'),
+        document.fonts.load('400 26px Roboto', 'Projeto'),
+      ]);
+    }
     if (document.fonts?.ready) await document.fonts.ready;
     if (!isCurrent()) return undefined;
     await new Promise((resolve) => requestAnimationFrame(resolve));
@@ -66,11 +74,16 @@ export function useProjectMapScene(onReady, { labels, locale }) {
     }
 
     let resizeRaf = null;
+    let ultimaLargura = viewportInicial.largura;
+    let ultimaAltura = viewportInicial.altura;
     function handleResize() {
       if (resizeRaf !== null) return;
       resizeRaf = requestAnimationFrame(() => {
         resizeRaf = null;
         const { largura, altura } = medirViewport();
+        if (largura === ultimaLargura && altura === ultimaAltura) return;
+        ultimaLargura = largura;
+        ultimaAltura = altura;
         api.resize(largura, altura);
       });
     }
@@ -78,7 +91,7 @@ export function useProjectMapScene(onReady, { labels, locale }) {
 
     let pendingPointer = null;
     let dragStartX = null;
-    let suppressClick = false;
+    let pressedLetter = false;
 
     function handlePointerMove(e) {
       pendingPointer = { x: e.clientX, y: e.clientY };
@@ -88,44 +101,51 @@ export function useProjectMapScene(onReady, { labels, locale }) {
       pendingPointer = null;
       api.clearPointer();
     }
-    function handleClick(e) {
-      if (suppressClick) {
-        suppressClick = false;
-        return;
-      }
-      const projeto = api.handleClick(e.clientX, e.clientY);
+    function openProjectAt(clientX, clientY) {
+      const projeto = api.handleClick(clientX, clientY);
       if (!projeto?.href || projeto.href === '#') return;
       window.open(projeto.href, '_blank', 'noopener,noreferrer');
     }
     function handlePointerDown(e) {
       if (e.pointerType === 'mouse' && e.button !== 0) return;
       api.updatePointer(e.clientX, e.clientY);
+      if (api.triggerLetterAt(e.clientX, e.clientY)) {
+        pressedLetter = true;
+        canvas.setPointerCapture?.(e.pointerId);
+        return;
+      }
+      if (!api.beginCarouselDrag()) return;
       dragStartX = e.clientX;
-      api.beginCarouselDrag();
       canvas.classList.add('arrastando');
       canvas.setPointerCapture?.(e.pointerId);
     }
     function handlePointerUp(e) {
-      if (dragStartX === null) return;
+      if (pressedLetter) {
+        pressedLetter = false;
+        return;
+      }
+      if (dragStartX === null) {
+        openProjectAt(e.clientX, e.clientY);
+        return;
+      }
       const distance = e.clientX - dragStartX;
+      api.dragCarousel(distance, medirViewport().largura);
       dragStartX = null;
       canvas.classList.remove('arrastando');
       const moved = api.endCarouselDrag(distance) ?? false;
-      if (moved) {
-        suppressClick = true;
-        window.setTimeout(() => { suppressClick = false; }, 80);
-      }
+      if (!moved) openProjectAt(e.clientX, e.clientY);
     }
     function handlePointerCancel() {
-      if (dragStartX !== null) api.endCarouselDrag(0);
+      if (dragStartX !== null) api.endCarouselDrag(0, true);
       dragStartX = null;
+      pressedLetter = false;
       canvas.classList.remove('arrastando');
     }
     function handleWheel(e) {
-      if (Math.abs(e.deltaX) < 8 && Math.abs(e.deltaY) < 8) return;
+      if (Math.abs(e.deltaX) < 0.01 && Math.abs(e.deltaY) < 0.01) return;
       e.preventDefault();
       const direction = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
-      api.navigateCarousel(direction > 0 ? 1 : -1);
+      api.spinCarouselWheel(direction * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? canvas.clientHeight : 1));
     }
     function handleKeyDown(e) {
       if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
@@ -139,7 +159,6 @@ export function useProjectMapScene(onReady, { labels, locale }) {
     canvas.addEventListener('pointerup', handlePointerUp);
     canvas.addEventListener('pointercancel', handlePointerCancel);
     canvas.addEventListener('wheel', handleWheel, { passive: false });
-    canvas.addEventListener('click', handleClick);
     window.addEventListener('keydown', handleKeyDown);
 
     /* Mesmo evento que a cena do oceano dispara na home, então o rótulo do
@@ -199,7 +218,6 @@ export function useProjectMapScene(onReady, { labels, locale }) {
       canvas.removeEventListener('pointerup', handlePointerUp);
       canvas.removeEventListener('pointercancel', handlePointerCancel);
       canvas.removeEventListener('wheel', handleWheel);
-      canvas.removeEventListener('click', handleClick);
       canvas.classList.remove('arrastando', 'sobre-card');
       window.removeEventListener('keydown', handleKeyDown);
       /* sem isto o rótulo fica preso na tela ao voltar para a home */

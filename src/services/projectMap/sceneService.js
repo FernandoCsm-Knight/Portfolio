@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { disposeSceneResources, getWebGLPixelRatio, precompileRenderer } from '../ocean/webglUtils';
+import { disposeSceneResources, precompileRenderer } from '../ocean/webglUtils';
 import { makeFishOcean } from './fish';
 import { makeProjectCarousel } from './projectCarousel';
 
@@ -8,6 +8,17 @@ import { makeProjectCarousel } from './projectCarousel';
  * uma altura plana apenas como referência espacial para desenhar o monograma.
  */
 export function createProjectMapScene(canvas, projects, { reducedMotion = false, labels = {} } = {}) {
+  // O mapa contem texto rasterizado nos cards. Ele precisa de mais resolucao
+  // que o oceano, mas o teto de pixels evita buffers enormes em celulares altos.
+  function mapPixelRatio(width, height) {
+    const pixelBudget = width < 768 ? 2500000 : 6000000;
+    const maxRatio = width < 768 ? 3 : 2;
+    return Math.min(
+      window.devicePixelRatio || 1,
+      maxRatio,
+      Math.max(1, Math.sqrt(pixelBudget / Math.max(1, width * height))),
+    );
+  }
   const renderer = new THREE.WebGLRenderer({
     canvas,
     antialias: true,
@@ -15,7 +26,7 @@ export function createProjectMapScene(canvas, projects, { reducedMotion = false,
     stencil: false,
     powerPreference: 'high-performance',
   });
-  renderer.setPixelRatio(getWebGLPixelRatio(window.innerWidth));
+  renderer.setPixelRatio(mapPixelRatio(window.innerWidth, window.innerHeight));
   renderer.setClearColor(0x061326, 1);
 
   const scene = new THREE.Scene();
@@ -51,8 +62,8 @@ export function createProjectMapScene(canvas, projects, { reducedMotion = false,
   let last = performance.now();
 
   function resize(width, height) {
-    renderer.setPixelRatio(getWebGLPixelRatio(width));
-    renderer.setSize(width, height);
+    renderer.setPixelRatio(mapPixelRatio(width, height));
+    renderer.setSize(width, height, false);
     camera.aspect = width / height;
     camera.updateProjectionMatrix();
     carousel.resize(width, height);
@@ -88,16 +99,18 @@ export function createProjectMapScene(canvas, projects, { reducedMotion = false,
     pointer.worldY = pointerWorld.y;
   }
 
-  function handleClick(clientX, clientY) {
+  function triggerLetterAt(clientX, clientY) {
     if (Number.isFinite(clientX) && Number.isFinite(clientY)) {
       updatePointer(clientX, clientY);
       updatePointerWorld();
     }
-    if (fishOcean.containsPointer(pointer)) {
-      fishOcean.triggerExplosion(pointer);
-      return null;
-    }
-    return hoveredProject;
+    return fishOcean.containsPointer(pointer) && fishOcean.triggerExplosion(pointer);
+  }
+
+  function handleClick(clientX, clientY) {
+    updatePointer(clientX, clientY);
+    updatePointerWorld();
+    return carousel.pick(pointer, camera, scene);
   }
 
   function navigateCarousel(direction) {
@@ -112,8 +125,12 @@ export function createProjectMapScene(canvas, projects, { reducedMotion = false,
     return carousel.dragBy(distance, viewportWidth);
   }
 
-  function endCarouselDrag(distance) {
-    return carousel.endDrag(distance);
+  function endCarouselDrag(distance, cancelled = false) {
+    return carousel.endDrag(distance, performance.now() / 1000, cancelled);
+  }
+
+  function spinCarouselWheel(delta) {
+    return carousel.spinWheel(delta);
   }
 
   function update() {
@@ -139,7 +156,6 @@ export function createProjectMapScene(canvas, projects, { reducedMotion = false,
       dt,
       fishState.formationProgress,
       fishState.exploded,
-      pointer,
       camera,
       scene,
     );
@@ -168,10 +184,12 @@ export function createProjectMapScene(canvas, projects, { reducedMotion = false,
     updatePointer,
     clearPointer,
     handleClick,
+    triggerLetterAt,
     navigateCarousel,
     beginCarouselDrag,
     dragCarousel,
     endCarouselDrag,
+    spinCarouselWheel,
     prepare,
     update,
     dispose,

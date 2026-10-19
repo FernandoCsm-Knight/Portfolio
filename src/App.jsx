@@ -19,6 +19,7 @@ const AboutPage = lazy(() => import('./components/sobre/AboutPage'));
 const ContactPage = lazy(() => import('./components/contact/ContactPage'));
 const PricingPage = lazy(() => import('./components/pricing/PricingPage'));
 const AdminPage = lazy(() => import('./components/admin/AdminPage'));
+const PhotoEasterEgg = lazy(() => import('./components/photos/PhotoEasterEgg'));
 
 function normalizePathname(pathname) {
   return pathname.length > 1 ? pathname.replace(/\/+$/, '') : pathname;
@@ -28,7 +29,7 @@ function normalizePathname(pathname) {
    para um arquivo estático (os PDFs do currículo em /docs, por exemplo) seria
    engolido pelo roteador: viraria um pushState e renderizaria a home no lugar
    de o navegador abrir o arquivo. */
-const ROTAS = ['/', '/projects', '/about', '/pricing', '/contact', '/admin'];
+const ROTAS = ['/', '/projects', '/about', '/pricing', '/contact', '/admin', '/photos'];
 
 function App() {
   const { t } = useI18n();
@@ -105,11 +106,31 @@ function App() {
     return () => document.removeEventListener('click', handleNavClick);
   }, [handleNavClick]);
 
+  useEffect(() => {
+    function handleSecretShortcut(event) {
+      if (event.key !== '/' || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey || route === '/admin') return;
+      const target = event.target;
+      if (target instanceof Element && target.closest('input, textarea, select, [contenteditable="true"]')) return;
+      event.preventDefault();
+      if (route === '/photos') {
+        document.getElementById('photo-search-input')?.focus();
+        return;
+      }
+      window.history.pushState({}, '', '/photos');
+      setCarregando(true);
+      setRoute('/photos');
+      window.scrollTo(0, 0);
+    }
+    window.addEventListener('keydown', handleSecretShortcut);
+    return () => window.removeEventListener('keydown', handleSecretShortcut);
+  }, [route]);
+
   const isProjectMap = route === '/projects';
   const isSobre = route === '/about';
   const isPrecos = route === '/pricing';
   const isContato = route === '/contact';
   const isAdmin = route === '/admin';
+  const isPhotos = route === '/photos';
   const rotaConhecida = ROTAS.includes(route);
   const handlePageReady = useCallback(() => setCarregando(false), []);
 
@@ -150,7 +171,12 @@ function App() {
             <AdminPage onReady={handlePageReady} />
           </Suspense>
         )}
-        {!isProjectMap && !isSobre && !isPrecos && !isContato && !isAdmin && rotaConhecida && <HomePage onReady={handlePageReady} />}
+        {isPhotos && (
+          <Suspense fallback={null}>
+            <PhotoEasterEgg onReady={handlePageReady} />
+          </Suspense>
+        )}
+        {!isProjectMap && !isSobre && !isPrecos && !isContato && !isAdmin && !isPhotos && rotaConhecida && <HomePage onReady={handlePageReady} />}
         {!rotaConhecida && <NotFound onReady={handlePageReady} />}
       </ErrorBoundary>
     </>

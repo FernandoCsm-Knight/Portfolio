@@ -11,6 +11,15 @@ cp .env.example .env.local
 npm run dev
 ```
 
+## Arquivo secreto de fotografias
+
+O ano no rodapé da página inicial e a tecla `/` abrem `/photos`. A busca usa
+`/api/pexels`, que lê `PEXELS_API_KEY` de `.env.local` no desenvolvimento e das
+variáveis de ambiente da Vercel em produção. Cadastre a chave na Vercel também
+para que o recurso funcione depois do deploy. O navegador recebe apenas as
+fotografias, sem acesso à chave. O botão de outra imagem sorteia entre os
+resultados já recebidos, sem fazer uma nova chamada à API.
+
 ## Supabase
 
 1. Crie um projeto no Supabase.

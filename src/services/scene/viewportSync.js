@@ -23,8 +23,12 @@ export function medirViewport() {
 export function attachViewportSync(api) {
   const raiz = document.documentElement;
   let scrollMax = raiz.scrollHeight - raiz.clientHeight;
-  let ultimaLargura = 0;
-  let ultimaAltura = 0;
+  // A cena ja recebeu o tamanho inicial antes de conectar os observadores.
+  const viewportInicial = medirViewport();
+  let ultimaLargura = viewportInicial.largura;
+  let ultimaAltura = viewportInicial.altura;
+  const telaTatil = matchMedia('(pointer: coarse)').matches;
+  let resizeTimeout = null;
 
   function medirScrollMax() {
     scrollMax = raiz.scrollHeight - raiz.clientHeight;
@@ -33,9 +37,23 @@ export function attachViewportSync(api) {
   /* Redimensionar a cena realoca o buffer de desenho do WebGL, então só vale
      a pena quando a caixa mudou de fato — o observador abaixo também dispara
      por mudanças de altura do documento, que não mexem no viewport. */
-  function sincronizarTamanho() {
+  function sincronizarTamanho(forcar = false) {
     const { largura, altura } = medirViewport();
     if (largura === ultimaLargura && altura === ultimaAltura) return;
+    // As barras do navegador movel alteram a altura durante o scroll. Esperar
+    // o fim dessa mudanca evita realocar o buffer WebGL a cada quadro do gesto.
+    if (telaTatil && !forcar && largura === ultimaLargura) {
+      if (resizeTimeout !== null) clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(() => {
+        resizeTimeout = null;
+        sincronizarTamanho(true);
+      }, 250);
+      return;
+    }
+    if (resizeTimeout !== null) {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = null;
+    }
     ultimaLargura = largura;
     ultimaAltura = altura;
     api.resize(largura, altura);
@@ -48,6 +66,7 @@ export function attachViewportSync(api) {
       resizeRaf = null;
       sincronizarTamanho();
       medirScrollMax();
+      aplicarProgresso();
     });
   }
   window.addEventListener('resize', agendarSincronia);
@@ -78,6 +97,7 @@ export function attachViewportSync(api) {
   return () => {
     if (resizeRaf !== null) cancelAnimationFrame(resizeRaf);
     if (scrollRaf !== null) cancelAnimationFrame(scrollRaf);
+    if (resizeTimeout !== null) clearTimeout(resizeTimeout);
     window.removeEventListener('resize', agendarSincronia);
     window.removeEventListener('scroll', handleScroll);
     observadorRaiz.disconnect();

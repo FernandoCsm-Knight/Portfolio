@@ -120,7 +120,7 @@ export function createAboutScene(canvas, { reducedMotion = false } = {}) {
 
   function resize(largura, altura) {
     renderer.setPixelRatio(getWebGLPixelRatio(largura));
-    renderer.setSize(largura, altura);
+    renderer.setSize(largura, altura, false);
     cam.aspect = largura / altura;
     cam.updateProjectionMatrix();
   }

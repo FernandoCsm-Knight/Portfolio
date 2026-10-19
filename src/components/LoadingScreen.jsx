@@ -2,7 +2,7 @@ import { useI18n } from '../i18n/context';
 
 export default function LoadingScreen({ visible, route }) {
   const { t } = useI18n();
-  const routeKey = { '/': 'home', '/projects': 'projects', '/about': 'about', '/pricing': 'pricing', '/contact': 'contact' }[route] ?? 'home';
+  const routeKey = { '/': 'home', '/projects': 'projects', '/about': 'about', '/pricing': 'pricing', '/contact': 'contact', '/photos': 'photos' }[route] ?? 'home';
   return (
     <div
       className={`tela-carregamento${visible ? ' visivel' : ''}`}
@@ -20,7 +20,7 @@ export default function LoadingScreen({ visible, route }) {
         </div>
 
         <p className="carregamento-etiqueta">{t('loading.system')}</p>
-        <p className="carregamento-mensagem">{t(`loading.${routeKey}`)}</p>
+        <p className="carregamento-mensagem">{route === '/photos' ? t('photoEgg.loading') : t(`loading.${routeKey}`)}</p>
         <span className="carregamento-linha" aria-hidden="true"><i /></span>
       </div>
     </div>

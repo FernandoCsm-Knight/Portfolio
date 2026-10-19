@@ -22,10 +22,7 @@ export function useOceanScene(onReady) {
      depois do primeiro paint e apenas quando este canvas realmente existe;
      assim a rota /projects não baixa nem inicializa a cena da home. */
   const mount = useCallback(async (canvas, { isCurrent }) => {
-    const [{ createOceanScene }] = await Promise.all([
-      import('../services/ocean/sceneService'),
-      document.fonts?.ready ?? Promise.resolve(),
-    ]);
+    const { createOceanScene } = await import('../services/ocean/sceneService');
     if (!isCurrent()) return undefined;
 
     /* O primeiro ciclo de efeitos do StrictMode é desmontado antes deste

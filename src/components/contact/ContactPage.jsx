@@ -118,7 +118,7 @@ export default function ContactPage({ onReady }) {
                 ))}
               </g>
 
-              <g className="rosa-pontas" filter="url(#rosa-brilho)">
+              <g filter="url(#rosa-brilho)">
                 {[0, 90, 180, 270].map((deg) => (
                   <g key={`cardeal-${deg}`} transform={`rotate(${deg} 50 50)`}>
                     <use
@@ -147,7 +147,7 @@ export default function ContactPage({ onReady }) {
 
               {/* Miolo raiado atrás do brasão, como o centro gravado de um
                   instrumento de latão — as pontas espiam além da borda do logo. */}
-              <g className="rosa-miolo">
+              <g>
                 {Array.from({ length: 16 }, (_, i) => i * 22.5).map((deg) => (
                   <line
                     key={`raio-${deg}`}

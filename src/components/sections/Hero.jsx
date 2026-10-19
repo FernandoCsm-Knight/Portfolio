@@ -14,9 +14,11 @@ function Hero() {
     <section id="home" className="hero-superficie">
       <div className="nome-superficie">
         <h1 aria-label="Fernando Dal' Maria">
-          <span className="nome-palavra" aria-hidden="true">Fernando</span>
-          <span className="nome-palavra nome-destaque" aria-hidden="true">Dal&apos;</span>
-          <span className="nome-palavra nome-destaque" aria-hidden="true">Maria</span>
+          <a className="nome-link" href="/contact" aria-label={t('hero.nameContact')}>
+            <span className="nome-palavra" aria-hidden="true">Fernando</span>
+            <span className="nome-palavra nome-destaque" aria-hidden="true">Dal&apos;</span>
+            <span className="nome-palavra nome-destaque" aria-hidden="true">Maria</span>
+          </a>
         </h1>
         <span className="bolhas-nome" aria-hidden="true">
           <i /><i /><i /><i /><i /><i /><i /><i /><i />
