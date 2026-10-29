@@ -12,8 +12,9 @@
 import { TRANSLATIONS } from '../src/i18n/translations.js'
 import { PUBLICACOES } from '../src/data/sobre.js'
 import { CV_LINKS } from '../src/data/socialLinks.js'
+import { ROUTE_META, SITE_URL } from '../src/data/seo.js'
 
-const SITE = 'https://fernandocsdm.com'
+const SITE = SITE_URL
 const NAME = "Fernando Campos Silva Dal' Maria"
 
 /* REST direto em vez do cliente supabase-js: aqui é Node no build, sem sessão,
@@ -174,7 +175,7 @@ function buildFallbackHtml(projects, contacts) {
 
   return `
       <main style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0">
-        <h1>${escapeHtml(NAME)}</h1>
+        <h1>${escapeHtml(NAME)} — Desenvolvedor de Software em Belo Horizonte</h1>
         <p>${escapeHtml(t.about.role)}</p>
         <p>${escapeHtml(t.about.summary)}</p>
         <p>${escapeHtml(t.hero.areas)}: ${escapeHtml([t.hero.graphics, t.hero.ai, t.hero.performance].join(', '))}. ${escapeHtml(t.about.location)}.</p>
@@ -211,10 +212,44 @@ export function llmsContent(env) {
       const fallback = buildFallbackHtml(await loadProjects(), contacts)
       return html.replace('<div id="root"></div>', `<div id="root">${fallback}</div>`)
     },
-    async generateBundle() {
-      const projects = await loadProjects()
-      this.emitFile({ type: 'asset', fileName: 'llms.txt', source: buildLlmsTxt(projects, contacts) })
-      this.emitFile({ type: 'asset', fileName: 'llms-full.txt', source: buildLlmsFullTxt(projects, contacts) })
+    generateBundle: {
+      /* 'post' para rodar depois do plugin de HTML do Vite, que é quem emite
+         o index.html final (com os <script> já com hash) que copiamos abaixo. */
+      order: 'post',
+      async handler(_options, bundle) {
+        const projects = await loadProjects()
+        this.emitFile({ type: 'asset', fileName: 'llms.txt', source: buildLlmsTxt(projects, contacts) })
+        this.emitFile({ type: 'asset', fileName: 'llms-full.txt', source: buildLlmsFullTxt(projects, contacts) })
+
+        const index = bundle['index.html']
+        if (!index) return
+        const html = String(index.source)
+        index.source = withRouteMeta(html, '/')
+        for (const route of Object.keys(ROUTE_META)) {
+          if (route === '/') continue
+          this.emitFile({ type: 'asset', fileName: `${route.slice(1)}.html`, source: withRouteMeta(html, route) })
+        }
+      },
     },
   }
+}
+
+/* Uma cópia do index.html por rota, cada uma com título, descrição e canonical
+   próprios. Antes, /about, /projects etc. reescreviam para o mesmo index.html
+   com canonical apontando para a home — o que diz ao Google "esta página é uma
+   duplicata da raiz" e a tira do índice. O vercel.json aponta cada rota para o
+   seu arquivo. */
+function withRouteMeta(html, route) {
+  const { title, description } = ROUTE_META[route]
+  const url = route === '/' ? `${SITE_URL}/` : `${SITE_URL}${route}`
+  const attr = escapeHtml
+  return html
+    .replace(/<title>[^<]*<\/title>/, `<title>${attr(title)}</title>`)
+    .replace(/(<link rel="canonical" href=")[^"]*/, `$1${url}`)
+    .replace(/(<meta property="og:url" content=")[^"]*/, `$1${url}`)
+    .replace(/(<meta\s+name="description"\s+content=")[^"]*/, `$1${attr(description)}`)
+    .replace(/(<meta\s+property="og:description"\s+content=")[^"]*/, `$1${attr(description)}`)
+    .replace(/(<meta\s+name="twitter:description"\s+content=")[^"]*/, `$1${attr(description)}`)
+    .replace(/(<meta property="og:title" content=")[^"]*/, `$1${attr(title)}`)
+    .replace(/(<meta name="twitter:title" content=")[^"]*/, `$1${attr(title)}`)
 }

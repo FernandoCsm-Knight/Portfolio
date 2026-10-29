@@ -553,6 +553,14 @@ h1 em{font-style:normal;color:var(--gold-claro)}
   92%{opacity:.34}
   100%{opacity:0;transform:translate(9px,-76vh) scale(1.16)}
 }
+/* Única frase em texto corrido da home: é ela que diz ao Google (e a quem
+   chega) o que o nome acima faz e onde. */
+.hero-tagline{
+  margin-top:clamp(18px,3vh,28px);
+  font:500 var(--fs-sm) var(--f-mono);
+  letter-spacing:var(--track-wide);text-transform:uppercase;
+  color:var(--texto-2);
+}
 .competencias-flutuantes{
   display:flex;align-items:center;justify-content:center;
   gap:clamp(24px,5vw,64px);

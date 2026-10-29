@@ -12,21 +12,23 @@
     />
     <meta name="theme-color" content="#0b3350" />
     <meta name="author" content="Fernando Campos Silva Dal' Maria" />
-    <meta name="robots" content="index, follow" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <meta name="geo.region" content="BR-MG" />
+    <meta name="geo.placename" content="Belo Horizonte" />
     <link rel="canonical" href="https://fernandocsdm.com/" />
     <link rel="alternate" type="text/markdown" href="/llms.txt" title="llms.txt" />
     <meta
       name="description"
-      content="Portfólio de Fernando Campos Silva Dal' Maria — computação gráfica, inteligência artificial e computação de alto desempenho. Frameworks de aprendizado profundo em C++/CUDA, ferramentas visuais de grafos e autômatos, e pesquisa em interpretabilidade de modelos."
+      content="Desenvolvedor de software e pesquisador em Belo Horizonte (MG): computação gráfica, inteligência artificial e alto desempenho. Projetos sob medida, consultoria técnica e pesquisa."
     />
 
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Fernando Dal' Maria" />
     <meta property="og:url" content="https://fernandocsdm.com/" />
-    <meta property="og:title" content="Fernando Dal' Maria" />
+    <meta property="og:title" content="Fernando Dal' Maria · Desenvolvedor de Software em Belo Horizonte" />
     <meta
       property="og:description"
-      content="Computação gráfica, inteligência artificial e alto desempenho. Estudante de Ciência da Computação na PUC Minas."
+      content="Desenvolvedor de software e pesquisador em Belo Horizonte (MG): computação gráfica, inteligência artificial e alto desempenho. Projetos sob medida, consultoria técnica e pesquisa."
     />
     <meta property="og:locale" content="pt_BR" />
     <meta property="og:locale:alternate" content="en_US" />
@@ -40,56 +42,106 @@
     />
 
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Fernando Dal' Maria" />
+    <meta name="twitter:title" content="Fernando Dal' Maria · Desenvolvedor de Software em Belo Horizonte" />
     <meta
       name="twitter:description"
-      content="Computação gráfica, inteligência artificial e alto desempenho. Estudante de Ciência da Computação na PUC Minas."
+      content="Desenvolvedor de software e pesquisador em Belo Horizonte (MG): computação gráfica, inteligência artificial e alto desempenho. Projetos sob medida, consultoria técnica e pesquisa."
     />
     <meta name="twitter:image" content="https://fernandocsdm.com/images/preview.png" />
 
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
-        "@type": "Person",
-        "name": "Fernando Campos Silva Dal' Maria",
-        "alternateName": "Fernando Dal' Maria",
-        "url": "https://fernandocsdm.com/",
-        "image": "https://fernandocsdm.com/images/preview.png",
-        "jobTitle": "Desenvolvedor e pesquisador em Ciência da Computação",
-        "description": "Computação gráfica, inteligência artificial e software de alto desempenho — frameworks de aprendizado profundo em C++/CUDA, ferramentas visuais de grafos e autômatos, e pesquisa em interpretabilidade de modelos.",
-        "knowsAbout": [
-          "Computação gráfica",
-          "Inteligência artificial",
-          "Computação de alto desempenho",
-          "CUDA",
-          "C++",
-          "PyTorch",
-          "Aprendizado profundo",
-          "Computação paralela",
-          "Interpretabilidade de modelos"
-        ],
-        "alumniOf": [
+        "@graph": [
           {
-            "@type": "CollegeOrUniversity",
-            "name": "Pontifícia Universidade Católica de Minas Gerais"
+            "@type": "WebSite",
+            "@id": "https://fernandocsdm.com/#website",
+            "url": "https://fernandocsdm.com/",
+            "name": "Fernando Dal' Maria",
+            "inLanguage": ["pt-BR", "en-US", "es-ES"],
+            "publisher": { "@id": "https://fernandocsdm.com/#person" }
           },
           {
-            "@type": "CollegeOrUniversity",
-            "name": "Faculdade Ciências Médicas de Minas Gerais"
+            "@type": "Person",
+            "@id": "https://fernandocsdm.com/#person",
+            "name": "Fernando Campos Silva Dal' Maria",
+            "alternateName": "Fernando Dal' Maria",
+            "url": "https://fernandocsdm.com/",
+            "image": "https://fernandocsdm.com/images/preview.png",
+            "jobTitle": "Desenvolvedor de Software",
+            "description": "Desenvolvedor de software e pesquisador em Belo Horizonte (MG): computação gráfica, inteligência artificial e software de alto desempenho — frameworks de aprendizado profundo em C++/CUDA, ferramentas visuais de grafos e autômatos, e pesquisa em interpretabilidade de modelos.",
+            "address": {
+              "@type": "PostalAddress",
+              "addressLocality": "Belo Horizonte",
+              "addressRegion": "MG",
+              "addressCountry": "BR"
+            },
+            "homeLocation": { "@type": "City", "name": "Belo Horizonte" },
+            "hasOccupation": {
+              "@type": "Occupation",
+              "name": "Desenvolvedor de Software",
+              "occupationLocation": { "@type": "City", "name": "Belo Horizonte" },
+              "skills": "C++, CUDA, Python, PyTorch, TypeScript, React, Rust, aprendizado profundo, computação paralela"
+            },
+            "knowsAbout": [
+              "Desenvolvimento de software",
+              "Computação gráfica",
+              "Inteligência artificial",
+              "Computação de alto desempenho",
+              "CUDA",
+              "C++",
+              "PyTorch",
+              "TypeScript",
+              "React",
+              "Aprendizado profundo",
+              "Computação paralela",
+              "Interpretabilidade de modelos"
+            ],
+            "alumniOf": [
+              {
+                "@type": "CollegeOrUniversity",
+                "name": "Pontifícia Universidade Católica de Minas Gerais"
+              },
+              {
+                "@type": "CollegeOrUniversity",
+                "name": "Faculdade Ciências Médicas de Minas Gerais"
+              }
+            ],
+            "worksFor": {
+              "@type": "Organization",
+              "name": "Tribunal de Contas do Estado de Minas Gerais"
+            },
+            "sameAs": [
+              "https://github.com/FernandoCsm-Knight",
+              "https://www.linkedin.com/in/fernandocsdm"
+            ]
+          },
+          {
+            "@type": "ProfessionalService",
+            "@id": "https://fernandocsdm.com/#service",
+            "name": "Fernando Dal' Maria — Desenvolvimento de Software",
+            "url": "https://fernandocsdm.com/",
+            "image": "https://fernandocsdm.com/images/preview.png",
+            "description": "Desenvolvimento de software sob medida, consultoria técnica e pesquisa em inteligência artificial, computação gráfica e alto desempenho.",
+            "founder": { "@id": "https://fernandocsdm.com/#person" },
+            "address": {
+              "@type": "PostalAddress",
+              "addressLocality": "Belo Horizonte",
+              "addressRegion": "MG",
+              "addressCountry": "BR"
+            },
+            "areaServed": [
+              { "@type": "City", "name": "Belo Horizonte" },
+              { "@type": "State", "name": "Minas Gerais" },
+              { "@type": "Country", "name": "Brasil" }
+            ],
+            "serviceType": ["Desenvolvimento de software", "Consultoria técnica", "Inteligência artificial", "Pesquisa e desenvolvimento"]
           }
-        ],
-        "worksFor": {
-          "@type": "Organization",
-          "name": "Tribunal de Contas do Estado de Minas Gerais"
-        },
-        "sameAs": [
-          "https://github.com/FernandoCsm-Knight",
-          "https://www.linkedin.com/in/fernandocsdm"
         ]
       }
     </script>
 
-    <title>Fernando Dal' Maria</title>
+    <title>Fernando Dal' Maria · Desenvolvedor de Software em Belo Horizonte</title>
   </head>
   <body>
     <div id="root"></div>

@@ -24,6 +24,7 @@ function Hero() {
           <i /><i /><i /><i /><i /><i /><i /><i /><i />
         </span>
       </div>
+      <p className="hero-tagline">{t('hero.tagline')}</p>
       <ul className="competencias-flutuantes" aria-label={t('hero.areas')}>
         {competencias.map(({ label, Icone }) => (
           <li

@@ -11,6 +11,7 @@ import NotFound from './components/NotFound';
 import SonarNav from './components/SonarNav';
 import StatusBadges from './components/StatusBadges';
 import { useI18n } from './i18n/context';
+import { ROUTE_META, SITE_URL } from './data/seo';
 
 /* cena 3D separada e pesada (Three.js) usada só em /projects — não deve
    entrar no bundle/execução inicial de quem visita a home. */
@@ -31,6 +32,20 @@ function normalizePathname(pathname) {
    de o navegador abrir o arquivo. */
 const ROTAS = ['/', '/projects', '/about', '/pricing', '/contact', '/admin', '/photos'];
 
+/* O build já entrega cada rota com o <head> certo (ver scripts/llms.js); isto
+   só mantém título, descrição e canonical em dia quando a navegação acontece
+   por pushState, sem recarregar. Rotas fora de ROUTE_META (/admin, 404)
+   cuidam do próprio título. */
+function aplicarMetaDaRota(route) {
+  const meta = ROUTE_META[route];
+  if (!meta) return;
+  document.title = meta.title;
+  document.querySelector('meta[name="description"]')?.setAttribute('content', meta.description);
+  document
+    .querySelector('link[rel="canonical"]')
+    ?.setAttribute('href', route === '/' ? `${SITE_URL}/` : `${SITE_URL}${route}`);
+}
+
 function App() {
   const { t } = useI18n();
   const [route, setRoute] = useState(() => normalizePathname(window.location.pathname));
@@ -50,6 +65,10 @@ function App() {
     return () => {
       window.removeEventListener('popstate', handleRouteChange);
     };
+  }, [route]);
+
+  useEffect(() => {
+    aplicarMetaDaRota(route);
   }, [route]);
 
   /* Impede que a página role por baixo da tela de carregamento. O limite é

@@ -25,19 +25,19 @@
   "rewrites": [
     {
       "source": "/projects",
-      "destination": "/index.html"
+      "destination": "/projects.html"
     },
     {
       "source": "/about",
-      "destination": "/index.html"
+      "destination": "/about.html"
     },
     {
       "source": "/pricing",
-      "destination": "/index.html"
+      "destination": "/pricing.html"
     },
     {
       "source": "/contact",
-      "destination": "/index.html"
+      "destination": "/contact.html"
     },
     {
       "source": "/admin",
