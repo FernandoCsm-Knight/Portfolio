@@ -8,6 +8,8 @@ export const REPO_URL = 'https://github.com/FernandoCsm-Knight/Fannar';
 /* Caminho público da página do Fannar no subdomínio (usado no build: fallback
    para crawlers e llms.txt). No navegador, ver routes.js. */
 export const FANNAR_PATH = '/metodo';
+/* Documentação da biblioteca no subdomínio (ver middleware.js). */
+export const DOCS_PATH = '/docs/';
 
 /* Preço inicial de cada pacote, pelo `id` de content.js, em cada moeda. A
    página mostra "a partir de" na moeda do idioma (PRICE_CURRENCY), sem

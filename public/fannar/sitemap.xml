@@ -8,4 +8,8 @@
     <loc>https://fannar.fernandocsdm.com/metodo</loc>
     <priority>0.8</priority>
   </url>
+  <url>
+    <loc>https://fannar.fernandocsdm.com/docs/</loc>
+    <priority>0.7</priority>
+  </url>
 </urlset>

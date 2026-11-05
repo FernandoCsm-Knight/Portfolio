@@ -2,3 +2,4 @@ User-agent: *
 Allow: /
 
 Sitemap: https://fannar.fernandocsdm.com/sitemap.xml
+Sitemap: https://fannar.fernandocsdm.com/docs/sitemap.xml

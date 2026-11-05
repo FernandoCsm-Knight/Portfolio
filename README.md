@@ -190,6 +190,7 @@ portfólio além do serviço de reCAPTCHA. Sai no mesmo build e no mesmo deploy.
 | caminhos no navegador | `src/fannar/routes.js` |
 | fallback para crawlers e `llms.txt` | `src/fannar/vitePlugin.js` (registrado em `vite.config.js`) |
 | figuras dos casos, favicon, robots, sitemap | `public/fannar/` (figuras copiadas de `../Fannar-Showcase/figures`) |
+| documentação da biblioteca (gerada, não editar aqui) | `public/fannar/docs/` (vem de `../Fannar`: `bash scripts/publish_docs.sh`) |
 
 No dev, as páginas abrem em `http://localhost:5173/fannar.html` e
 `/fannar-metodo.html`. Para trocar uma figura, redesenhe em `Fannar-Showcase`
@@ -199,8 +200,9 @@ em `src/fannar/content-fannar.js`.
 
 **Subdomínio.** `middleware.js` (Routing Middleware da Vercel) atende o host
 `fannar.fernandocsdm.com`: `/` → `fannar.html`, `/metodo` → `fannar-metodo.html`,
-e `robots.txt`, `sitemap.xml`, `llms.txt` e `favicon.svg` → as versões em
-`/fannar/`. No domínio do portfólio, `/fannar.html` e `/fannar-metodo.html`
+`/docs/…` → `public/fannar/docs/` (a documentação, com `index.html` nas
+URLs que terminam em barra) e `robots.txt`, `sitemap.xml`, `llms.txt` e
+`favicon.svg` → as versões em `/fannar/`. No domínio do portfólio, `/fannar.html` e `/fannar-metodo.html`
 redirecionam para o subdomínio. Para publicar: em **Settings → Domains** deste
 projeto na Vercel, adicionar `fannar.fernandocsdm.com`, com
 `CNAME fannar → cname.vercel-dns.com` no DNS (automático se o DNS já estiver na

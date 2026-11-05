@@ -8,9 +8,11 @@
 
 const onSubdomain = typeof window !== 'undefined' && window.location.hostname.startsWith('fannar.');
 
+/* A documentação da biblioteca é um site estático gerado no repositório do
+   Fannar (scripts/publish_docs.sh) e copiado para public/fannar/docs. */
 export const ROUTES = onSubdomain
-  ? { home: '/', metodo: '/metodo' }
-  : { home: '/fannar.html', metodo: '/fannar-metodo.html' };
+  ? { home: '/', metodo: '/metodo', docs: '/docs/' }
+  : { home: '/fannar.html', metodo: '/fannar-metodo.html', docs: '/fannar/docs/index.html' };
 
 export function currentPage() {
   const path = window.location.pathname.replace(/\/+$/, '');

@@ -9,7 +9,7 @@
      servido como /llms.txt no subdomínio pelo middleware.js. */
 
 import { CONTENT } from './content.js';
-import { CONTACT_URL, FANNAR_PATH, HOURLY_URL, PACKAGE_PRICES, PORTFOLIO_URL, PRICE_CURRENCY, REPO_URL, SITE_URL } from './config.js';
+import { CONTACT_URL, DOCS_PATH, FANNAR_PATH, HOURLY_URL, PACKAGE_PRICES, PORTFOLIO_URL, PRICE_CURRENCY, REPO_URL, SITE_URL } from './config.js';
 
 /* Entradas HTML do módulo, para o build.rollupOptions.input da raiz. */
 export const FANNAR_PAGES = { fannar: 'fannar.html', 'fannar-metodo': 'fannar-metodo.html' };
@@ -50,7 +50,7 @@ function homeHtml() {
       <p>${esc(c.limits.body)}</p>
       <h2>${esc(c.faq.title)}</h2>
       ${pairs(c.faq.items)}
-      <p><a href="${esc(CONTACT_URL)}">${esc(c.cta.button)}</a> · <a href="${esc(HOURLY_URL)}">${esc(c.packages.hourlyLink)}</a> · <a href="${esc(REPO_URL)}">${esc(c.research.link)}</a> · <a href="${esc(PORTFOLIO_URL)}">${esc(c.about.name)}</a></p>
+      <p><a href="${esc(CONTACT_URL)}">${esc(c.cta.button)}</a> · <a href="${esc(HOURLY_URL)}">${esc(c.packages.hourlyLink)}</a> · <a href="${DOCS_PATH}">${esc(c.research.docs)}</a> · <a href="${esc(REPO_URL)}">${esc(c.research.link)}</a> · <a href="${esc(PORTFOLIO_URL)}">${esc(c.about.name)}</a></p>
     </main>`;
 }
 
@@ -72,7 +72,7 @@ function fannarHtml() {
       ${p.cases.items.map((k) => `<h3>${esc(k.title)}</h3><p>${esc(k.model)} · ${esc(k.data)}. ${esc(k.body)}</p><ul>${k.findings.map((f) => li(esc(f))).join('')}</ul>`).join('')}
       <h2>${esc(p.scope.title)}</h2>
       <p>${esc(p.scope.body)}</p>
-      <p><a href="/">${esc(c.nav.home)}</a> · <a href="${esc(CONTACT_URL)}">${esc(c.cta.button)}</a> · <a href="${esc(REPO_URL)}">${esc(c.research.link)}</a></p>
+      <p><a href="/">${esc(c.nav.home)}</a> · <a href="${esc(CONTACT_URL)}">${esc(c.cta.button)}</a> · <a href="${DOCS_PATH}">${esc(c.research.docs)}</a> · <a href="${esc(REPO_URL)}">${esc(c.research.link)}</a></p>
     </main>`;
 }
 
@@ -96,7 +96,7 @@ function markdown(locale) {
     lines.push('');
   }
   lines.push(`### ${p.scope.title}`, '', p.scope.body, '');
-  lines.push(`## Links`, '', `- [${c.cta.button}](${CONTACT_URL})`, `- [${c.packages.hourlyLink}](${HOURLY_URL})`, `- [${c.research.link}](${REPO_URL})`, `- [${c.about.name}](${PORTFOLIO_URL})`);
+  lines.push(`## Links`, '', `- [${c.cta.button}](${CONTACT_URL})`, `- [${c.packages.hourlyLink}](${HOURLY_URL})`, `- [${c.research.docs}](${SITE_URL}${DOCS_PATH})`, `- [${c.research.link}](${REPO_URL})`, `- [${c.about.name}](${PORTFOLIO_URL})`);
   return lines.join('\n');
 }
 

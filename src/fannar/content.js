@@ -124,6 +124,7 @@ const HOME = {
       title: 'Pesquisa aberta',
       body: 'O método é descrito no artigo “Construção de Espaços via Tensores de Similaridade em Espaços de Hilbert com Núcleo Reprodutor: Um Método de Interpretabilidade Mecanicista”. A biblioteca e o texto estão abertos para uso não comercial.',
       link: 'Código e artigo no GitHub',
+      docs: 'Documentação da biblioteca',
     },
     about: {
       name: "Fernando Dal' Maria",
@@ -174,7 +175,7 @@ const HOME = {
       body: 'Conte qual modelo, quais dados e o que você precisa responder. A primeira resposta já diz se o Fannar se aplica.',
       button: 'Enviar uma demanda',
     },
-    footer: { tagline: 'Interpretabilidade de modelos de IA', portfolio: 'Portfólio', pricing: 'Valores por hora', code: 'GitHub', fannar: 'O Fannar' },
+    footer: { tagline: 'Interpretabilidade de modelos de IA', portfolio: 'Portfólio', pricing: 'Valores por hora', code: 'GitHub', fannar: 'O Fannar', docs: 'Documentação' },
   },
 
   en: {
@@ -292,6 +293,7 @@ const HOME = {
       title: 'Open research',
       body: 'The method is described in the paper “Building Spaces via Similarity Tensors in Reproducing Kernel Hilbert Spaces: A Mechanistic Interpretability Method”. The library and the paper are open for non-commercial use.',
       link: 'Code and paper on GitHub',
+      docs: 'Library documentation',
     },
     about: {
       name: "Fernando Dal' Maria",
@@ -342,7 +344,7 @@ const HOME = {
       body: 'Tell me which model, which data, and what you need to answer. The first reply already says whether Fannar applies.',
       button: 'Send a project brief',
     },
-    footer: { tagline: 'AI model interpretability', portfolio: 'Portfolio', pricing: 'Hourly rates', code: 'GitHub', fannar: 'Fannar' },
+    footer: { tagline: 'AI model interpretability', portfolio: 'Portfolio', pricing: 'Hourly rates', code: 'GitHub', fannar: 'Fannar', docs: 'Docs' },
   },
 
   es: {
@@ -460,6 +462,7 @@ const HOME = {
       title: 'Investigación abierta',
       body: 'El método se describe en el artículo “Construcción de espacios mediante tensores de similitud en espacios de Hilbert con núcleo reproductor: un método de interpretabilidad mecanicista”. La biblioteca y el texto están abiertos para uso no comercial.',
       link: 'Código y artículo en GitHub',
+      docs: 'Documentación de la biblioteca',
     },
     about: {
       name: "Fernando Dal' Maria",
@@ -510,7 +513,7 @@ const HOME = {
       body: 'Cuéntame qué modelo, qué datos y qué necesitas responder. La primera respuesta ya dice si Fannar se aplica.',
       button: 'Enviar una propuesta',
     },
-    footer: { tagline: 'Interpretabilidad de modelos de IA', portfolio: 'Portafolio', pricing: 'Tarifas por hora', code: 'GitHub', fannar: 'Fannar' },
+    footer: { tagline: 'Interpretabilidad de modelos de IA', portfolio: 'Portafolio', pricing: 'Tarifas por hora', code: 'GitHub', fannar: 'Fannar', docs: 'Documentación' },
   },
 };
 

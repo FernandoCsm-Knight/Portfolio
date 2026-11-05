@@ -1,6 +1,6 @@
 import { Analytics } from '@vercel/analytics/react';
 import { useEffect, useState } from 'react';
-import { FaGithub } from 'react-icons/fa6';
+import { FaBook, FaGithub } from 'react-icons/fa6';
 import {
   LuArrowRight,
   LuArrowUpRight,
@@ -321,6 +321,7 @@ function Footer() {
         </div>
         <nav aria-label="Links">
           <a href={ROUTES.metodo}>{c.footer.fannar}</a>
+          <a href={ROUTES.docs}>{c.footer.docs}</a>
           <a href={PORTFOLIO_URL}>{c.footer.portfolio}</a>
           <a href={HOURLY_URL}>{c.footer.pricing}</a>
           <a href={REPO_URL} target="_blank" rel="noreferrer">{c.footer.code}</a>
@@ -542,9 +543,14 @@ function HomePage() {
           <article className="card card-plain">
             <h3>{c.research.title}</h3>
             <p>{c.research.body}</p>
-            <a className="text-link" href={REPO_URL} target="_blank" rel="noreferrer">
-              <FaGithub aria-hidden="true" /> {c.research.link}
-            </a>
+            <div className="card-links">
+              <a className="text-link" href={ROUTES.docs}>
+                <FaBook aria-hidden="true" /> {c.research.docs}
+              </a>
+              <a className="text-link" href={REPO_URL} target="_blank" rel="noreferrer">
+                <FaGithub aria-hidden="true" /> {c.research.link}
+              </a>
+            </div>
           </article>
           <article className="card card-plain about">
             <h3>{c.about.name}</h3>
@@ -714,9 +720,14 @@ function FannarPage() {
           <article className="card card-plain">
             <h3>{c.research.title}</h3>
             <p>{c.research.body}</p>
-            <a className="text-link" href={REPO_URL} target="_blank" rel="noreferrer">
-              <FaGithub aria-hidden="true" /> {c.research.link}
-            </a>
+            <div className="card-links">
+              <a className="text-link" href={ROUTES.docs}>
+                <FaBook aria-hidden="true" /> {c.research.docs}
+              </a>
+              <a className="text-link" href={REPO_URL} target="_blank" rel="noreferrer">
+                <FaGithub aria-hidden="true" /> {c.research.link}
+              </a>
+            </div>
           </article>
         </div>
       </section>
