@@ -1,5 +1,6 @@
 import { memo } from 'react';
 import { FaBrain, FaCube, FaGaugeHigh } from 'react-icons/fa6';
+import { FANNAR_URL } from '../../data/seo';
 import { useI18n } from '../../i18n/context';
 import ScrollHint from './ScrollHint';
 
@@ -7,7 +8,8 @@ function Hero() {
   const { t } = useI18n();
   const competencias = [
     { label: t('hero.graphics'), Icone: FaCube },
-    { label: t('hero.ai'), Icone: FaBrain },
+    /* O círculo de IA leva ao Fannar, o site de interpretabilidade de modelos. */
+    { label: t('hero.aiFannar'), Icone: FaBrain, href: FANNAR_URL, linkLabel: t('pricing.fannar') },
     { label: t('hero.performance'), Icone: FaGaugeHigh },
   ];
   return (
@@ -26,7 +28,13 @@ function Hero() {
       </div>
       <p className="hero-tagline">{t('hero.tagline')}</p>
       <ul className="competencias-flutuantes" aria-label={t('hero.areas')}>
-        {competencias.map(({ label, Icone }) => (
+        {competencias.map(({ label, Icone, href, linkLabel }) => (href ? (
+          <li key={label} className="competencia-icone competencia-com-link" data-label={label}>
+            <a className="competencia-link" href={href} aria-label={linkLabel}>
+              <Icone aria-hidden="true" />
+            </a>
+          </li>
+        ) : (
           <li
             key={label}
             className="competencia-icone"
@@ -36,7 +44,7 @@ function Hero() {
           >
             <Icone aria-hidden="true" />
           </li>
-        ))}
+        )))}
       </ul>
       <ScrollHint />
     </section>
