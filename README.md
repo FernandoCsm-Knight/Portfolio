@@ -175,6 +175,46 @@ O aviso de demanda nova em tempo real depende de a tabela estar publicada em
 `supabase_realtime` — `supabase/contact_requests.sql` faz isso, e o painel cai
 para uma consulta a cada 60s se a publicação não existir.
 
+## Fannar (fannar.fernandocsdm.com)
+
+O site de serviços de interpretabilidade é um módulo isolado deste projeto, em
+`src/fannar/`: tem o próprio React, i18n, estilos e textos, e não importa nada do
+portfólio além do serviço de reCAPTCHA. Sai no mesmo build e no mesmo deploy.
+
+| o quê | onde |
+|---|---|
+| páginas (entradas do Vite) | `fannar.html` (início) e `fannar-metodo.html` (o método e os casos) |
+| textos da página inicial (PT, EN, ES), pacotes, FAQ | `src/fannar/content.js` |
+| textos da página do Fannar: método, três métodos, casos | `src/fannar/content-fannar.js` |
+| preços dos pacotes, links | `src/fannar/config.js` (`PACKAGE_PRICES`, `PRICE_CURRENCY`) |
+| caminhos no navegador | `src/fannar/routes.js` |
+| fallback para crawlers e `llms.txt` | `src/fannar/vitePlugin.js` (registrado em `vite.config.js`) |
+| figuras dos casos, favicon, robots, sitemap | `public/fannar/` (figuras copiadas de `../Fannar-Showcase/figures`) |
+
+No dev, as páginas abrem em `http://localhost:5173/fannar.html` e
+`/fannar-metodo.html`. Para trocar uma figura, redesenhe em `Fannar-Showcase`
+(`bash run_all.sh plots`), copie o `.webp` dos três idiomas para
+`public/fannar/casos/<idioma>/` e, se o tamanho mudar, atualize `FIGURE_SIZES`
+em `src/fannar/content-fannar.js`.
+
+**Subdomínio.** `middleware.js` (Routing Middleware da Vercel) atende o host
+`fannar.fernandocsdm.com`: `/` → `fannar.html`, `/metodo` → `fannar-metodo.html`,
+e `robots.txt`, `sitemap.xml`, `llms.txt` e `favicon.svg` → as versões em
+`/fannar/`. No domínio do portfólio, `/fannar.html` e `/fannar-metodo.html`
+redirecionam para o subdomínio. Para publicar: em **Settings → Domains** deste
+projeto na Vercel, adicionar `fannar.fernandocsdm.com`, com
+`CNAME fannar → cname.vercel-dns.com` no DNS (automático se o DNS já estiver na
+Vercel).
+
+**Formulário de demanda.** O formulário no fim das duas páginas envia para
+`/api/contact` na mesma origem, com o mesmo reCAPTCHA (ação `contact`) e a mesma
+selagem do contato do portfólio. A demanda chega em **Mensagens** no `/admin`,
+com o assunto "Consultoria técnica" e a mensagem começando por
+`[Fannar] Pacote: … · Modelo: …`. A chave do reCAPTCHA precisa aceitar o
+subdomínio; se `fernandocsdm.com` está na lista de domínios da chave, os
+subdomínios entram junto. O pedido de orçamento para um modelo específico vai
+para `/contact` do portfólio.
+
 ## Verificação
 
 ```bash

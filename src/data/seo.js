@@ -7,6 +7,9 @@
    App, que repete a troca a cada navegação interna. */
 export const SITE_URL = 'https://fernandocsdm.com';
 
+/* Site próprio dos serviços de interpretabilidade (pasta fannar/, deploy à parte). */
+export const FANNAR_URL = 'https://fannar.fernandocsdm.com/';
+
 export const ROUTE_META = {
   '/': {
     title: "Fernando Dal' Maria · Desenvolvedor de Software em Belo Horizonte",

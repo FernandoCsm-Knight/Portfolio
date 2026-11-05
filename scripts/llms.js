@@ -12,7 +12,8 @@
 import { TRANSLATIONS } from '../src/i18n/translations.js'
 import { PUBLICACOES } from '../src/data/sobre.js'
 import { CV_LINKS } from '../src/data/socialLinks.js'
-import { ROUTE_META, SITE_URL } from '../src/data/seo.js'
+import { FANNAR_URL, ROUTE_META, SITE_URL } from '../src/data/seo.js'
+import { isFannarPage } from '../src/fannar/vitePlugin.js'
 
 const SITE = SITE_URL
 const NAME = "Fernando Campos Silva Dal' Maria"
@@ -109,6 +110,7 @@ function pagesSection() {
     `- [Projects](${SITE}/projects): interactive map of published projects`,
     `- [Pricing](${SITE}/pricing): hourly rates by type of work, adjusted per region`,
     `- [Contact](${SITE}/contact): encrypted contact form for project requests`,
+    `- [Fannar](${FANNAR_URL}): model interpretability services (separate site), with fixed-scope packages`,
   ].join('\n')
 }
 
@@ -208,7 +210,10 @@ export function llmsContent(env) {
 
   return {
     name: 'llms-content',
-    async transformIndexHtml(html) {
+    async transformIndexHtml(html, ctx) {
+      /* As páginas do módulo Fannar têm o próprio fallback
+         (src/fannar/vitePlugin.js). */
+      if (isFannarPage(ctx.path)) return html
       const fallback = buildFallbackHtml(await loadProjects(), contacts)
       return html.replace('<div id="root"></div>', `<div id="root">${fallback}</div>`)
     },

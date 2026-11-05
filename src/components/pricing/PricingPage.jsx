@@ -9,6 +9,7 @@ import {
   selectMarketRates,
 } from '../../services/pricing';
 import { useI18n } from '../../i18n/context';
+import { FANNAR_URL } from '../../data/seo';
 
 function nomeDoPais(codigo, localeTag) {
   try {
@@ -128,6 +129,9 @@ export default function PricingPage({ onReady }) {
             <FaPaperPlane aria-hidden="true" />
             <span>{t('contact.action')}</span>
           </a>
+          {/* Os pacotes de escopo fechado moram no subdomínio; esta tabela é
+              só a da contratação por hora. */}
+          <a className="precos-fannar" href={FANNAR_URL}>{t('pricing.fannar')} →</a>
         </footer>
       </main>
     </>

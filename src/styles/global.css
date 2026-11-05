@@ -2436,3 +2436,10 @@ footer{
   .admin-projeto-acoes{width:100%;justify-content:flex-end}
   .admin-projeto-imagem{flex-wrap:wrap}
 }
+
+/* Atalho de /pricing para o site do Fannar (pacotes de escopo fechado). */
+.precos-fannar{
+  font:600 var(--fs-xs) var(--f-mono);letter-spacing:var(--track-label);
+  color:var(--aqua);text-decoration:none;border-bottom:1px solid rgba(56,189,227,.35);padding-bottom:3px;
+}
+.precos-fannar:hover,.precos-fannar:focus-visible{color:var(--texto);border-color:var(--texto)}
