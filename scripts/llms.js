@@ -110,7 +110,7 @@ function pagesSection() {
     `- [Projects](${SITE}/projects): interactive map of published projects`,
     `- [Pricing](${SITE}/pricing): hourly rates by type of work, adjusted per region`,
     `- [Contact](${SITE}/contact): encrypted contact form for project requests`,
-    `- [Fannar](${FANNAR_URL}): model interpretability services (separate site), with fixed-scope packages`,
+    `- [Fannar](${FANNAR_URL}): model interpretability services on a subdomain: audits of trained models (trees, neural networks, vision, text, time series) with Fannar, SHAP, and LIME, fixed-scope packages, and worked examples. Full content: ${FANNAR_URL}llms.txt`,
   ].join('\n')
 }
 
