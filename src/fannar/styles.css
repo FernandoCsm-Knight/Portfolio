@@ -130,7 +130,8 @@ p{color:var(--ink-2)}
 .menu-toggle{display:none;width:40px;height:40px;place-items:center;border-radius:9px;border:1px solid var(--line)}
 .menu-toggle svg{width:20px;height:20px}
 
-@media(max-width:960px){
+/* 1024, não 960: com o link da documentação, o menu em pt/es precisa de ~920px. */
+@media(max-width:1024px){
   .menu-toggle{display:grid}
   .header-cta{display:none}
   .site-nav{

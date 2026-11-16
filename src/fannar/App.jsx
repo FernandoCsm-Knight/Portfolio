@@ -110,6 +110,7 @@ function Header({ page }) {
   const links = [
     [`${home}#servicos`, c.nav.services],
     [ROUTES.metodo, c.nav.fannar, page === 'fannar'],
+    [ROUTES.docs, c.nav.docs],
     [`${home}#pacotes`, c.nav.packages],
     [`${home}#processo`, c.nav.process],
     [`${home}#duvidas`, c.nav.faq],

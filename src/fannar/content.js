@@ -16,7 +16,7 @@ const HOME = {
       description: 'Auditoria e explicação de modelos de IA: o que o modelo aprendeu, onde vai errar e por que decide como decide. Árvores, redes neurais, visão, texto e séries temporais, com Fannar, SHAP e LIME. Pacotes com escopo fechado.',
     },
     language: 'Idioma',
-    nav: { services: 'Serviços', fannar: 'O Fannar', packages: 'Pacotes', process: 'Processo', faq: 'Dúvidas', contact: 'Fale comigo', menu: 'Abrir menu', close: 'Fechar menu', home: 'Início' },
+    nav: { services: 'Serviços', fannar: 'O Fannar', docs: 'Documentação', packages: 'Pacotes', process: 'Processo', faq: 'Dúvidas', contact: 'Fale comigo', menu: 'Abrir menu', close: 'Fechar menu', home: 'Início' },
     hero: {
       title: 'Saiba o que o seu modelo aprendeu antes de confiar nele.',
       lead: 'Audito modelos de IA já treinados, de árvores de decisão a redes neurais, com o Fannar, um método de interpretabilidade que eu mesmo desenvolvi, junto com SHAP e LIME. O relatório mostra onde o modelo acerta, onde vai errar e por que decide como decide, e diz até onde cada conclusão vale.',
@@ -185,7 +185,7 @@ const HOME = {
       description: 'Auditing and explaining AI models: what the model learned, where it will fail, and why it decides the way it does. Trees, neural networks, vision, text, and time series, with Fannar, SHAP, and LIME. Fixed-scope packages.',
     },
     language: 'Language',
-    nav: { services: 'Services', fannar: 'Fannar', packages: 'Packages', process: 'Process', faq: 'FAQ', contact: 'Get in touch', menu: 'Open menu', close: 'Close menu', home: 'Home' },
+    nav: { services: 'Services', fannar: 'Fannar', docs: 'Docs', packages: 'Packages', process: 'Process', faq: 'FAQ', contact: 'Get in touch', menu: 'Open menu', close: 'Close menu', home: 'Home' },
     hero: {
       title: 'Know what your model learned before you trust it.',
       lead: 'I audit trained AI models, from decision trees to neural networks, with Fannar, an interpretability method I developed, alongside SHAP and LIME. The report shows where the model is right, where it will fail, and why it decides the way it does, and states how far each conclusion holds.',
@@ -354,7 +354,7 @@ const HOME = {
       description: 'Auditoría y explicación de modelos de IA: qué aprendió el modelo, dónde va a fallar y por qué decide como decide. Árboles, redes neuronales, visión, texto y series temporales, con Fannar, SHAP y LIME. Paquetes de alcance cerrado.',
     },
     language: 'Idioma',
-    nav: { services: 'Servicios', fannar: 'Fannar', packages: 'Paquetes', process: 'Proceso', faq: 'Preguntas', contact: 'Hablemos', menu: 'Abrir menú', close: 'Cerrar menú', home: 'Inicio' },
+    nav: { services: 'Servicios', fannar: 'Fannar', docs: 'Documentación', packages: 'Paquetes', process: 'Proceso', faq: 'Preguntas', contact: 'Hablemos', menu: 'Abrir menú', close: 'Cerrar menú', home: 'Inicio' },
     hero: {
       title: 'Sabe qué aprendió tu modelo antes de confiar en él.',
       lead: 'Audito modelos de IA ya entrenados, de árboles de decisión a redes neuronales, con Fannar, un método de interpretabilidad que desarrollé, junto con SHAP y LIME. El informe muestra dónde acierta el modelo, dónde va a fallar y por qué decide como decide, y dice hasta dónde vale cada conclusión.',
