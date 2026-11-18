@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState } from 'react';
 import { PROFUNDIDADE_MAX_M } from '../services/ocean/constants';
+import { criarFundoOceano } from '../services/ocean/backgroundLayers';
 import { attachViewportSync, medirViewport } from '../services/scene/viewportSync';
 import { useSceneMount } from './useSceneMount';
 
@@ -82,10 +83,7 @@ export function useOceanScene(onReady) {
     let last = { depthMeters: -1 };
     let ultimoHudUpdate = 0;
     let ultimoHoverPeixe = false;
-    /* evita reescrever o gradiente de tela cheia (#fundo) quando o valor não
-       mudou de fato — atribuir o mesmo background ainda pode custar um recálculo
-       de estilo em alguns navegadores. */
-    let lastBg = { depth: '', surface: '', css: '' };
+    const fundo = fundoRef.current ? criarFundoOceano(fundoRef.current) : null;
     function loop(now) {
       rafId = requestAnimationFrame(loop);
       if (document.hidden) return;
@@ -110,20 +108,8 @@ export function useOceanScene(onReady) {
         if (framesAquecidos === 5) onReady?.();
       }
 
-      if (fundoRef.current) {
-        if (frame.bgDepth !== lastBg.depth) {
-          fundoRef.current.style.setProperty('--bg-depth', frame.bgDepth);
-          lastBg.depth = frame.bgDepth;
-        }
-        if (frame.bgSurface !== lastBg.surface) {
-          fundoRef.current.style.setProperty('--bg-surface', frame.bgSurface);
-          lastBg.surface = frame.bgSurface;
-        }
-        if (frame.backgroundCss !== lastBg.css) {
-          fundoRef.current.style.background = frame.backgroundCss;
-          lastBg.css = frame.backgroundCss;
-        }
-      }
+      /* Só opacidades: barato o bastante para acompanhar todo quadro. */
+      fundo?.update(frame.prof);
 
       /* O HUD não precisa acompanhar os 60 quadros da cena. Limitá-lo a
          10Hz evita reconciliar a árvore React a cada metro percorrido. */
@@ -142,6 +128,7 @@ export function useOceanScene(onReady) {
 
     return () => {
       cancelAnimationFrame(rafId);
+      fundo?.dispose();
       detachViewport();
       window.removeEventListener('ocean-submarine-move', handleSubmarineMove);
       document.documentElement.removeEventListener('pointerleave', handlePointerLeave);
