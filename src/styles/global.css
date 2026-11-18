@@ -179,6 +179,9 @@ html.pagina-carregando body{overflow:hidden}
 }
 
 canvas#mar{position:fixed;inset:0;width:100%;height:100%;z-index:1;display:block;pointer-events:none}
+/* Altura fixa no viewport grande: as barras do navegador móvel não mudam o
+   tamanho do canvas (casado com `medirViewport` em viewportSync.js). */
+@media(pointer:coarse){canvas#mar{bottom:auto;height:100lvh}}
 #fundo{
   position:fixed;inset:0;z-index:0;overflow:hidden;
   --bg-surface:1;
@@ -770,6 +773,17 @@ h1 em{font-style:normal;color:var(--gold-claro)}
   .competencia-icone,
   .grafo-habilidades li,
   .grafo-habilidades li::after{
+    -webkit-backdrop-filter:none;backdrop-filter:none;
+  }
+}
+/* Mesmo motivo para os controles fixos que ficam por cima do canvas: ele
+   redesenha a cada quadro, então o desfoque atrás deles também é refeito a
+   cada quadro. O fundo semiopaco que já têm basta para a leitura. */
+@media(max-width:760px),(pointer:coarse){
+  .seletor-idioma,
+  #sonar .item,
+  .comentarios-carrossel-controles,
+  .perfil-botao{
     -webkit-backdrop-filter:none;backdrop-filter:none;
   }
 }

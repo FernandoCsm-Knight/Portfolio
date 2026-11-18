@@ -68,12 +68,15 @@ export function useOceanScene(onReady) {
 
     let rafId;
     /* 45fps não divide 120Hz nem 60Hz: o cap fazia frames caírem de forma
-       irregular (judder visível). 60 divide as duas taxas comuns — e 30
-       também, que é o teto no celular: este laço era metade de todo o trabalho
-       de JS da thread principal durante a rolagem, e a cena é uma ambientação
-       de fundo lenta, onde 30fps não se distingue de 60. */
-    const telaTatil = matchMedia('(pointer: coarse)').matches;
-    const frameInterval = reducedMotion || telaTatil ? 1000 / 30 : 1000 / 60;
+       irregular (judder visível). 60 divide as duas taxas comuns. O celular
+       também roda a 60: a câmera acompanha a rolagem, e com a cena a 30fps o
+       fundo andava em degraus enquanto o texto deslizava a 60/120Hz. O custo
+       extra foi compensado com menos pixels (teto de DPR e sem MSAA). */
+    const frameInterval = reducedMotion ? 1000 / 30 : 1000 / 60;
+    /* Os timestamps do rAF oscilam ~1ms. Sem folga, um quadro que chega a
+       16,5ms de um intervalo de 16,7 é pulado e o seguinte sai com o dobro do
+       tempo — o ritmo vira 16/33/16/33, pior que um teto estável. */
+    const toleranciaFrame = 2;
     let lastFrameTime = 0;
     let framesAquecidos = 0;
     let last = { depthMeters: -1 };
@@ -85,8 +88,12 @@ export function useOceanScene(onReady) {
     let lastBg = { depth: '', surface: '', css: '' };
     function loop(now) {
       rafId = requestAnimationFrame(loop);
-      if (document.hidden || now - lastFrameTime < frameInterval) return;
-      lastFrameTime = now - ((now - lastFrameTime) % frameInterval);
+      if (document.hidden) return;
+      const decorrido = now - lastFrameTime;
+      if (decorrido < frameInterval - toleranciaFrame) return;
+      /* Avança a grade de tempo em passos fixos para manter o ritmo médio;
+         depois de uma pausa longa (aba oculta, travada) recomeça do agora. */
+      lastFrameTime = decorrido > frameInterval * 2 ? now : lastFrameTime + frameInterval;
       const frame = api.update();
       const hoverPeixe = Boolean(frame.fishHovered);
       if (hoverPeixe !== ultimoHoverPeixe) {

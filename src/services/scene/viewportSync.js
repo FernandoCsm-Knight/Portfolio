@@ -17,7 +17,29 @@
  */
 export function medirViewport() {
   const raiz = document.documentElement;
-  return { largura: raiz.clientWidth, altura: raiz.clientHeight };
+  const altura = TELA_TATIL
+    ? Math.max(raiz.clientHeight, alturaViewportGrande())
+    : raiz.clientHeight;
+  return { largura: raiz.clientWidth, altura };
+}
+
+/* No celular as barras do navegador entram e saem durante a rolagem, e cada
+   mudança de altura custava realocar o buffer WebGL (com um engasgo logo
+   depois do gesto). No toque o canvas é dimensionado pela altura do viewport
+   grande (`100lvh`, ver `canvas#mar` no CSS), que não muda com as barras: a
+   parte de baixo só fica atrás delas quando estão visíveis. */
+const TELA_TATIL = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
+let sondaLvh = null;
+function alturaViewportGrande() {
+  if (!sondaLvh) {
+    if (!globalThis.CSS?.supports?.('height', '100lvh')) return 0;
+    sondaLvh = document.createElement('div');
+    sondaLvh.setAttribute('aria-hidden', 'true');
+    sondaLvh.style.cssText =
+      'position:fixed;top:0;left:0;width:0;height:100lvh;visibility:hidden;pointer-events:none';
+    document.body.appendChild(sondaLvh);
+  }
+  return sondaLvh.offsetHeight;
 }
 
 export function attachViewportSync(api) {
