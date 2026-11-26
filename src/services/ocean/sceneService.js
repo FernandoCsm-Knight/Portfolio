@@ -767,8 +767,9 @@ export function createOceanScene(canvas, { reducedMotion = false } = {}) {
     framesDesdeAjuste++;
     if (agora - ultimoAjusteResolucao > 2600 && framesDesdeAjuste > 55) {
       const escalaAnterior = escalaResolucao;
-      if (mediaTempoFrame > limiteLento && escalaResolucao > 0.85) {
-        escalaResolucao = Math.max(0.85, escalaResolucao - 0.15);
+      const escalaMinima = telaTatil ? 0.7 : 0.85;
+      if (mediaTempoFrame > limiteLento && escalaResolucao > escalaMinima) {
+        escalaResolucao = Math.max(escalaMinima, escalaResolucao - 0.15);
       } else if (mediaTempoFrame < limiteRapido && escalaResolucao < 1) {
         escalaResolucao = Math.min(1, escalaResolucao + 0.1);
       }
