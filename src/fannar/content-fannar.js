@@ -27,7 +27,7 @@ export const PAGE = {
   pt: {
     meta: {
       title: 'Interpretabilidade de modelos de IA: método e casos | Fannar',
-      description: 'Como o Fannar interpreta modelos de IA, como ele trabalha junto com SHAP e LIME, e seis modelos interpretados: XGBoost, Random Forest, rede neural, ResNet, DistilBERT e CNN para séries temporais.',
+      description: 'Entenda como Fannar, SHAP e LIME explicam modelos de IA. Veja o método e seis casos com árvores, redes neurais, visão, texto e séries temporais.',
     },
     hero: {
       title: 'Como o Fannar interpreta modelos de IA.',

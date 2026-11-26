@@ -14,7 +14,7 @@ export const ROUTE_META = {
   '/': {
     title: "Fernando Dal' Maria · Desenvolvedor de Software em Belo Horizonte",
     description:
-      'Desenvolvedor de software e pesquisador em Belo Horizonte (MG): computação gráfica, inteligência artificial e alto desempenho. Projetos sob medida, consultoria técnica e pesquisa.',
+      "Fernando Dal' Maria, desenvolvedor de software em Belo Horizonte: projetos sob medida em inteligência artificial, computação gráfica e alto desempenho.",
   },
   '/about': {
     title: "Sobre · Fernando Dal' Maria, desenvolvedor em Belo Horizonte",
@@ -24,7 +24,7 @@ export const ROUTE_META = {
   '/projects': {
     title: "Projetos · Fernando Dal' Maria",
     description:
-      'Projetos de software em C++/CUDA, TypeScript e Python: framework de aprendizado profundo, editor de grafos e autômatos, análise de redes e interpretabilidade de modelos.',
+      "Projetos de Fernando Dal' Maria em C++/CUDA, TypeScript e Python: aprendizado profundo, grafos, autômatos e interpretabilidade de modelos.",
   },
   '/pricing': {
     title: "Valores · Desenvolvedor freelancer em Belo Horizonte · Fernando Dal' Maria",

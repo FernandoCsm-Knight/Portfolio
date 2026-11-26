@@ -13,7 +13,7 @@ const HOME = {
     localeTag: 'pt-BR',
     meta: {
       title: 'Auditoria e explicação de modelos de IA | Fannar',
-      description: 'Auditoria e explicação de modelos de IA: o que o modelo aprendeu, onde vai errar e por que decide como decide. Árvores, redes neurais, visão, texto e séries temporais, com Fannar, SHAP e LIME. Pacotes com escopo fechado.',
+      description: 'Auditoria e explicação de modelos de IA com Fannar, SHAP e LIME. Entenda decisões, erros e limites de árvores, redes neurais, visão e texto.',
     },
     language: 'Idioma',
     nav: { services: 'Serviços', fannar: 'O Fannar', docs: 'Documentação', packages: 'Pacotes', process: 'Processo', faq: 'Dúvidas', contact: 'Fale comigo', menu: 'Abrir menu', close: 'Fechar menu', home: 'Início' },
