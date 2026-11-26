@@ -1734,8 +1734,9 @@ footer{
 
 /* Arquivo secreto: uma cena leve, sem WebGL ou recursos da home. */
 .foto-egg{
-  position:relative;isolation:isolate;z-index:10;min-height:100svh;
-  display:grid;place-items:center;padding:clamp(80px,10svh,110px) 24px 40px;overflow:hidden;
+  position:relative;isolation:isolate;z-index:10;height:100vh;height:100dvh;
+  display:grid;grid-template-rows:minmax(0,1fr);place-items:center;
+  padding:clamp(80px,10svh,110px) 24px 40px;overflow:hidden;
   background:radial-gradient(ellipse at 50% 25%,#12425a 0%,#061d30 50%,#020b17 100%);
 }
 .foto-egg-orbita{
@@ -1744,7 +1745,10 @@ footer{
   box-shadow:0 0 0 10vw rgba(174,181,183,.025),0 0 0 22vw rgba(174,181,183,.02);
   pointer-events:none;
 }
-.foto-egg-conteudo{width:min(100%,900px);text-align:center;transform:translateY(-clamp(30px,6svh,80px))}
+.foto-egg-conteudo{
+  width:min(100%,900px);max-height:100%;min-height:0;overflow-y:auto;
+  text-align:center;transform:translateY(-clamp(30px,6svh,80px));
+}
 .foto-egg-com-foto .foto-egg-conteudo{transform:none}
 .foto-egg h1{margin:0 0 12px;font:400 clamp(38px,6vw,68px)/1.12 var(--f-serif);color:var(--texto)}
 .foto-egg-busca{width:min(100%,680px);margin:30px auto 0;text-align:left}
@@ -1778,7 +1782,7 @@ footer{
 .foto-egg-foto figcaption a{color:var(--dourado-claro);text-decoration:underline;text-underline-offset:3px}
 .foto-egg-outra{margin-top:22px}
 @media(max-width:600px){
-  .foto-egg{padding:110px 20px 32px}
+  .foto-egg{padding:clamp(72px,12svh,110px) 20px 24px}
   .foto-egg-conteudo{transform:none}
   .foto-egg-busca button{min-height:48px}
   .foto-egg-foto figcaption{flex-direction:column;gap:8px}

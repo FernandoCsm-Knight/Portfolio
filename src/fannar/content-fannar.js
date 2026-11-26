@@ -26,11 +26,11 @@ export const FIGURE_SIZES = {
 export const PAGE = {
   pt: {
     meta: {
-      title: 'O Fannar · Método, exemplos e resultados',
+      title: 'Interpretabilidade de modelos de IA: método e casos | Fannar',
       description: 'Como o Fannar interpreta modelos de IA, como ele trabalha junto com SHAP e LIME, e seis modelos interpretados: XGBoost, Random Forest, rede neural, ResNet, DistilBERT e CNN para séries temporais.',
     },
     hero: {
-      title: 'O Fannar olha para dentro do modelo.',
+      title: 'Como o Fannar interpreta modelos de IA.',
       lead: 'Ele reúne o que o modelo calcula por dentro, como ativações, gradientes, parâmetros ou, em árvores, os caminhos de decisão, num único espaço geométrico, e lê esse espaço camada a camada. Nesta página: como o método funciona, como ele trabalha junto com SHAP e LIME e o que ele encontrou em seis modelos.',
       primary: 'Ver os casos',
       secondary: 'Como funciona',
@@ -179,11 +179,11 @@ export const PAGE = {
 
   en: {
     meta: {
-      title: 'Fannar · Method, examples, and results',
+      title: 'AI Interpretability: Method and Case Studies | Fannar',
       description: 'How Fannar interprets AI models, how it works alongside SHAP and LIME, and six interpreted models: XGBoost, Random Forest, a neural network, ResNet, DistilBERT, and a CNN for time series.',
     },
     hero: {
-      title: 'Fannar looks inside the model.',
+      title: 'How Fannar interprets AI models.',
       lead: 'It gathers what the model computes inside, such as activations, gradients, parameters or, in trees, the decision paths, into a single geometric space, and reads that space layer by layer. On this page: how the method works, how it works alongside SHAP and LIME, and what it found in six models.',
       primary: 'See the cases',
       secondary: 'How it works',
@@ -332,11 +332,11 @@ export const PAGE = {
 
   es: {
     meta: {
-      title: 'Fannar · Método, ejemplos y resultados',
+      title: 'Interpretabilidad de modelos de IA: método y casos | Fannar',
       description: 'Cómo Fannar interpreta modelos de IA, cómo trabaja junto con SHAP y LIME, y seis modelos interpretados: XGBoost, Random Forest, una red neuronal, ResNet, DistilBERT y una CNN para series temporales.',
     },
     hero: {
-      title: 'Fannar mira dentro del modelo.',
+      title: 'Cómo Fannar interpreta modelos de IA.',
       lead: 'Reúne lo que el modelo calcula por dentro, como activaciones, gradientes, parámetros o, en árboles, los caminos de decisión, en un único espacio geométrico, y lee ese espacio capa a capa. En esta página: cómo funciona el método, cómo trabaja junto con SHAP y LIME y qué encontró en seis modelos.',
       primary: 'Ver los casos',
       secondary: 'Cómo funciona',

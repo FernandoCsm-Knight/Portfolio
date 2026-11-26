@@ -8,6 +8,7 @@ import HomePage from './components/HomePage';
 import LanguageSwitcher from './components/LanguageSwitcher';
 import LoadingScreen from './components/LoadingScreen';
 import NotFound from './components/NotFound';
+import PhotoEasterEgg from './components/photos/PhotoEasterEgg';
 import SonarNav from './components/SonarNav';
 import StatusBadges from './components/StatusBadges';
 import { useI18n } from './i18n/context';
@@ -20,7 +21,6 @@ const AboutPage = lazy(() => import('./components/sobre/AboutPage'));
 const ContactPage = lazy(() => import('./components/contact/ContactPage'));
 const PricingPage = lazy(() => import('./components/pricing/PricingPage'));
 const AdminPage = lazy(() => import('./components/admin/AdminPage'));
-const PhotoEasterEgg = lazy(() => import('./components/photos/PhotoEasterEgg'));
 
 function normalizePathname(pathname) {
   return pathname.length > 1 ? pathname.replace(/\/+$/, '') : pathname;
@@ -49,7 +49,7 @@ function aplicarMetaDaRota(route) {
 function App() {
   const { t } = useI18n();
   const [route, setRoute] = useState(() => normalizePathname(window.location.pathname));
-  const [carregando, setCarregando] = useState(true);
+  const [carregando, setCarregando] = useState(route !== '/photos');
 
   useEffect(() => {
     function handleRouteChange() {
@@ -58,7 +58,7 @@ function App() {
          cena; abrir o loader nesse caso faria ele esperar por um novo frame de
          inicialização que, corretamente, nunca viria. */
       if (proximaRota === route) return;
-      setCarregando(true);
+      setCarregando(proximaRota !== '/photos');
       setRoute(proximaRota);
     }
     window.addEventListener('popstate', handleRouteChange);
@@ -108,7 +108,7 @@ function App() {
     if (!ROTAS.includes(rotaDestino)) return;
 
     e.preventDefault();
-    setCarregando(true);
+    setCarregando(rotaDestino !== '/photos');
     window.history.pushState({}, '', destino);
     setRoute(rotaDestino);
     requestAnimationFrame(() => {
@@ -136,7 +136,7 @@ function App() {
         return;
       }
       window.history.pushState({}, '', '/photos');
-      setCarregando(true);
+      setCarregando(false);
       setRoute('/photos');
       window.scrollTo(0, 0);
     }
@@ -190,11 +190,7 @@ function App() {
             <AdminPage onReady={handlePageReady} />
           </Suspense>
         )}
-        {isPhotos && (
-          <Suspense fallback={null}>
-            <PhotoEasterEgg onReady={handlePageReady} />
-          </Suspense>
-        )}
+        {isPhotos && <PhotoEasterEgg onReady={handlePageReady} />}
         {!isProjectMap && !isSobre && !isPrecos && !isContato && !isAdmin && !isPhotos && rotaConhecida && <HomePage onReady={handlePageReady} />}
         {!rotaConhecida && <NotFound onReady={handlePageReady} />}
       </ErrorBoundary>
