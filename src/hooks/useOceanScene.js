@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState } from 'react';
 import { PROFUNDIDADE_MAX_M } from '../services/ocean/constants';
+import { criarFundoOceano } from '../services/ocean/backgroundLayers';
 import { attachViewportSync, medirViewport } from '../services/scene/viewportSync';
 import { useSceneMount } from './useSceneMount';
 
@@ -68,25 +69,29 @@ export function useOceanScene(onReady) {
 
     let rafId;
     /* 45fps não divide 120Hz nem 60Hz: o cap fazia frames caírem de forma
-       irregular (judder visível). 60 divide as duas taxas comuns — e 30
-       também, que é o teto no celular: este laço era metade de todo o trabalho
-       de JS da thread principal durante a rolagem, e a cena é uma ambientação
-       de fundo lenta, onde 30fps não se distingue de 60. */
-    const telaTatil = matchMedia('(pointer: coarse)').matches;
-    const frameInterval = reducedMotion || telaTatil ? 1000 / 30 : 1000 / 60;
+       irregular (judder visível). 60 divide as duas taxas comuns. O celular
+       também roda a 60: a câmera acompanha a rolagem, e com a cena a 30fps o
+       fundo andava em degraus enquanto o texto deslizava a 60/120Hz. O custo
+       extra foi compensado com menos pixels (teto de DPR e sem MSAA). */
+    const frameInterval = reducedMotion ? 1000 / 30 : 1000 / 60;
+    /* Os timestamps do rAF oscilam ~1ms. Sem folga, um quadro que chega a
+       16,5ms de um intervalo de 16,7 é pulado e o seguinte sai com o dobro do
+       tempo — o ritmo vira 16/33/16/33, pior que um teto estável. */
+    const toleranciaFrame = 2;
     let lastFrameTime = 0;
     let framesAquecidos = 0;
     let last = { depthMeters: -1 };
     let ultimoHudUpdate = 0;
     let ultimoHoverPeixe = false;
-    /* evita reescrever o gradiente de tela cheia (#fundo) quando o valor não
-       mudou de fato — atribuir o mesmo background ainda pode custar um recálculo
-       de estilo em alguns navegadores. */
-    let lastBg = { depth: '', surface: '', css: '' };
+    const fundo = fundoRef.current ? criarFundoOceano(fundoRef.current) : null;
     function loop(now) {
       rafId = requestAnimationFrame(loop);
-      if (document.hidden || now - lastFrameTime < frameInterval) return;
-      lastFrameTime = now - ((now - lastFrameTime) % frameInterval);
+      if (document.hidden) return;
+      const decorrido = now - lastFrameTime;
+      if (decorrido < frameInterval - toleranciaFrame) return;
+      /* Avança a grade de tempo em passos fixos para manter o ritmo médio;
+         depois de uma pausa longa (aba oculta, travada) recomeça do agora. */
+      lastFrameTime = decorrido > frameInterval * 2 ? now : lastFrameTime + frameInterval;
       const frame = api.update();
       const hoverPeixe = Boolean(frame.fishHovered);
       if (hoverPeixe !== ultimoHoverPeixe) {
@@ -103,20 +108,8 @@ export function useOceanScene(onReady) {
         if (framesAquecidos === 5) onReady?.();
       }
 
-      if (fundoRef.current) {
-        if (frame.bgDepth !== lastBg.depth) {
-          fundoRef.current.style.setProperty('--bg-depth', frame.bgDepth);
-          lastBg.depth = frame.bgDepth;
-        }
-        if (frame.bgSurface !== lastBg.surface) {
-          fundoRef.current.style.setProperty('--bg-surface', frame.bgSurface);
-          lastBg.surface = frame.bgSurface;
-        }
-        if (frame.backgroundCss !== lastBg.css) {
-          fundoRef.current.style.background = frame.backgroundCss;
-          lastBg.css = frame.backgroundCss;
-        }
-      }
+      /* Só opacidades: barato o bastante para acompanhar todo quadro. */
+      fundo?.update(frame.prof);
 
       /* O HUD não precisa acompanhar os 60 quadros da cena. Limitá-lo a
          10Hz evita reconciliar a árvore React a cada metro percorrido. */
@@ -135,6 +128,7 @@ export function useOceanScene(onReady) {
 
     return () => {
       cancelAnimationFrame(rafId);
+      fundo?.dispose();
       detachViewport();
       window.removeEventListener('ocean-submarine-move', handleSubmarineMove);
       document.documentElement.removeEventListener('pointerleave', handlePointerLeave);

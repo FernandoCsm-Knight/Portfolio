@@ -179,6 +179,9 @@ html.pagina-carregando body{overflow:hidden}
 }
 
 canvas#mar{position:fixed;inset:0;width:100%;height:100%;z-index:1;display:block;pointer-events:none}
+/* Altura fixa no viewport grande: as barras do navegador móvel não mudam o
+   tamanho do canvas (casado com `medirViewport` em viewportSync.js). */
+@media(pointer:coarse){canvas#mar{bottom:auto;height:100lvh}}
 #fundo{
   position:fixed;inset:0;z-index:0;overflow:hidden;
   /* A barra do navegador móvel muda a área visível durante a rolagem. A
@@ -194,6 +197,35 @@ canvas#mar{position:fixed;inset:0;width:100%;height:100%;z-index:1;display:block
   filter:blur(.2px);
   transform:translateY(calc(var(--bg-depth) * 18px));
 }
+/* Home: o fundo é montado por camadas fixas (services/ocean/backgroundLayers.js)
+   que só mudam de opacidade — composição pura, sem repaint. O brilho do
+   ::after passou para dentro de .fundo-superficie. */
+#fundo.fundo-oceano::after{display:none}
+.fundo-camada{position:absolute;inset:0;pointer-events:none;will-change:opacity}
+.fundo-escuro{background:linear-gradient(178deg,transparent 22%,rgba(1,7,15,.22) 100%)}
+/* Maior que a tela para a deriva não revelar a borda; tamanhos e posições
+   reajustados para os 116% da caixa. */
+.fundo-deriva{
+  inset:-8%;
+  background:
+    radial-gradient(69% 50% at 64% 17%,rgba(56,189,227,.11) 0%,transparent 66%),
+    radial-gradient(62% 53% at 22% 72%,rgba(133,142,145,.07) 0%,transparent 70%);
+  will-change:opacity,transform;
+  animation:fundo-deriva 80s ease-in-out infinite;
+}
+.fundo-superficie{
+  background:
+    radial-gradient(80% 36% at 50% 0%,rgba(174,181,183,.058),transparent 70%),
+    radial-gradient(110% 52% at 48% -14%,rgba(174,181,183,.24) 0%,rgba(56,189,227,.16) 34%,transparent 76%),
+    linear-gradient(178deg,rgba(255,246,218,.045) 0%,transparent 22%);
+}
+@keyframes fundo-deriva{
+  0%,100%{transform:translate(0,2%)}
+  25%{transform:translate(4%,0)}
+  50%{transform:translate(0,-2%)}
+  75%{transform:translate(-4%,0)}
+}
+@media(prefers-reduced-motion:reduce){.fundo-deriva{animation:none}}
 #vinheta{
   position:fixed;inset:0;z-index:2;pointer-events:none;
   min-height:100lvh;
@@ -774,6 +806,17 @@ h1 em{font-style:normal;color:var(--gold-claro)}
   .competencia-icone,
   .grafo-habilidades li,
   .grafo-habilidades li::after{
+    -webkit-backdrop-filter:none;backdrop-filter:none;
+  }
+}
+/* Mesmo motivo para os controles fixos que ficam por cima do canvas: ele
+   redesenha a cada quadro, então o desfoque atrás deles também é refeito a
+   cada quadro. O fundo semiopaco que já têm basta para a leitura. */
+@media(max-width:760px),(pointer:coarse){
+  .seletor-idioma,
+  #sonar .item,
+  .comentarios-carrossel-controles,
+  .perfil-botao{
     -webkit-backdrop-filter:none;backdrop-filter:none;
   }
 }

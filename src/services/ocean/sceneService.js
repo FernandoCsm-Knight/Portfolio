@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { rnd } from './utils';
 import { optimizeParticleGeometry } from './particleBudget';
-import { PROF, LARG, DEPTH_STOPS } from './constants';
+import { PROF, LARG } from './constants';
 import { aquecerUploads, disposeSceneResources, getWebGLPixelRatio, precompileRenderer } from './webglUtils';
 import {
   construirPeixeOrganico,
@@ -21,20 +21,6 @@ import {
   M_TAMBORIL,
 } from './creatureConfigs';
 
-const PARADAS = DEPTH_STOPS.map(([t, hex]) => [t, new THREE.Color(hex)]);
-const corProfScratch = new THREE.Color();
-
-/** Escreve o resultado em `out` (padrão: escopo interno reutilizável) para evitar
- * alocar um THREE.Color novo a cada chamada — é invocada várias vezes por frame. */
-function corProf(t, out = corProfScratch) {
-  for (let i = 0; i < PARADAS.length - 1; i++) {
-    const [a, ca] = PARADAS[i];
-    const [b, cb] = PARADAS[i + 1];
-    if (t <= b) return out.copy(ca).lerp(cb, (t - a) / (b - a));
-  }
-  return out.copy(PARADAS[PARADAS.length - 1][1]);
-}
-
 /**
  * Cria e orquestra toda a cena 3D do oceano (criaturas, ambiente, interação).
  * Não depende de React: recebe um <canvas> e devolve uma API imperativa que
@@ -48,8 +34,10 @@ export function createOceanScene(canvas, { reducedMotion = false } = {}) {
   /* O WebGLRenderer já registra seus próprios listeners de webglcontextlost/
      restored: render() vira no-op enquanto o contexto está perdido e o contexto
      é reinicializado sozinho quando volta. Não há guard manual a manter aqui. */
+  /* MSAA no celular multiplica o custo de cada pixel e quase não aparece numa
+     cena feita de pontos aditivos numa tela densa. */
   const renderer = new THREE.WebGLRenderer({
-    canvas, antialias: true, alpha: true, stencil: false, powerPreference: 'high-performance',
+    canvas, antialias: !telaTatil, alpha: true, stencil: false, powerPreference: 'high-performance',
   });
   let larguraViewport = window.innerWidth;
   let alturaViewport = window.innerHeight;
@@ -594,33 +582,21 @@ export function createOceanScene(canvas, { reducedMotion = false } = {}) {
     mouseMundoDir.set(mouse.nx, mouse.ny, 0.5).unproject(cam).sub(cam.position).normalize();
   }
 
-  /* o gradiente de fundo cobre a tela inteira (#fundo é fixed/inset:0, com
-     mix-blend-mode e filter no CSS) — recalcular e escrever no DOM a 45fps é
-     caro (repaint de tela cheia) e imperceptível; 1 em cada 8 frames (~5-6fps)
-     já é suave o bastante para uma deriva ambiente lenta. bgDepth/bgSurface
-     alimentam variáveis CSS lidas pelos mesmos pseudo-elementos, então
-     precisam do mesmo throttle — do contrário o corpo do gradiente já era
-     limitado, mas essas duas variáveis continuavam disparando repaint a
-     cada frame durante qualquer movimento de câmera. */
-  /* Cada troca da string reescreve o `background` de #fundo, que ocupa a tela
-     inteira — ou seja, um repaint de viewport cheio. A 8 quadros isso
-     acontecia ~7 vezes por segundo, o tempo todo, porque o gradiente também
-     acompanha o relógio da cena. A 20 o desenho anda 0,3px por passo: nada
-     perceptível, um terço dos repaints. */
-  const BG_UPDATE_INTERVAL = 20;
-  let bgFrameCounter = 0;
-  let backgroundCssCache = '';
-  let bgDepthCache = '';
-  let bgSurfaceCache = '';
-
   let ultimoInstante = performance.now();
   let elapsed = 0;
   let acum = 0;
-  // No toque, o loop da home roda a 30 fps. Seus 33 ms normais nao devem
+  // Com movimento reduzido o loop roda a 30 fps. Seus 33 ms normais nao devem
   // ser confundidos com perda de desempenho de uma cena de 60 fps.
-  const intervaloAlvo = reduz || telaTatil ? 1 / 30 : 1 / 60;
-  const limiteLento = reduz || telaTatil ? 1 / 26 : 1 / 45;
-  const limiteRapido = reduz || telaTatil ? 1 / 29 : 1 / 54;
+  const intervaloAlvo = reduz ? 1 / 30 : 1 / 60;
+  const limiteLento = reduz ? 1 / 26 : 1 / 45;
+  const limiteRapido = reduz ? 1 / 29 : 1 / 54;
+  /* No celular a resolução pode cair bem mais antes de mexer na fluidez: uma
+     cena de partículas suaves perde pouco com 0.6x, e um quadro perdido
+     durante a rolagem aparece muito mais. */
+  const escalaMinima = telaTatil ? 0.6 : 0.85;
+  /* Quão rápido a câmera alcança a rolagem. No toque o swipe é rápido e o
+     atraso da suavização é lido como lentidão. */
+  const respostaCamera = telaTatil ? 6 : 3.2;
   let mediaTempoFrame = intervaloAlvo;
   let ultimoAjusteResolucao = ultimoInstante;
   let framesDesdeAjuste = 0;
@@ -767,7 +743,6 @@ export function createOceanScene(canvas, { reducedMotion = false } = {}) {
     framesDesdeAjuste++;
     if (agora - ultimoAjusteResolucao > 2600 && framesDesdeAjuste > 55) {
       const escalaAnterior = escalaResolucao;
-      const escalaMinima = telaTatil ? 0.7 : 0.85;
       if (mediaTempoFrame > limiteLento && escalaResolucao > escalaMinima) {
         escalaResolucao = Math.max(escalaMinima, escalaResolucao - 0.15);
       } else if (mediaTempoFrame < limiteRapido && escalaResolucao < 1) {
@@ -782,7 +757,7 @@ export function createOceanScene(canvas, { reducedMotion = false } = {}) {
     }
 
     const camYAnterior = camY;
-    camY += (alvoY - camY) * Math.min(1, dt * 3.2);
+    camY += (alvoY - camY) * Math.min(1, dt * respostaCamera);
     const deslocamentoCamera = camY - camYAnterior;
     const direcaoRolagem = deslocamentoCamera < -0.0005 ? 1 : deslocamentoCamera > 0.0005 ? -1 : 0;
     const prof = Math.min(1, Math.max(0, -camY / PROF));
@@ -792,24 +767,6 @@ export function createOceanScene(canvas, { reducedMotion = false } = {}) {
     cam.position.y = camY - mouse.ny * 1.6 * mMult;
     cam.lookAt(mouse.nx * 1.4 * mMult, camY, 0);
     if (mouse.ativo) atualizarRaioMouse();
-
-    bgFrameCounter++;
-    if (bgFrameCounter % BG_UPDATE_INTERVAL === 0 || !backgroundCssCache) {
-      bgDepthCache = prof.toFixed(3);
-      bgSurfaceCache = Math.max(0, 1 - prof * 1.55).toFixed(3);
-      const corCss = '#' + corProf(prof).getHexString();
-      const corCss2 = '#' + corProf(Math.min(1, prof + 0.1)).getHexString();
-      const corCss3 = '#' + corProf(Math.min(1, prof + 0.26)).getHexString();
-      backgroundCssCache =
-        `radial-gradient(110% 52% at 48% -14%, rgba(174,181,183,${0.24 * (1 - prof)}) 0%, rgba(56,189,227,${0.16 * (1 - prof)}) 34%, transparent 76%),` +
-        `radial-gradient(80% 58% at ${66 + Math.sin(t * 0.08) * 5}% ${12 + Math.cos(t * 0.07) * 3}%, rgba(56,189,227,${0.11 * (1 - prof * 0.82)}) 0%, transparent 66%),` +
-        `radial-gradient(72% 62% at ${18 + Math.cos(t * 0.06) * 4}% ${76 + Math.sin(t * 0.05) * 5}%, rgba(133,142,145,${0.07 * (1 - prof * 0.55)}) 0%, transparent 70%),` +
-        `linear-gradient(178deg, rgba(255,246,218,${0.045 * (1 - prof)}) 0%, transparent 22%, rgba(1,7,15,${0.22 * prof}) 100%),` +
-        `linear-gradient(164deg, ${corCss} 0%, ${corCss2} 48%, ${corCss3} 100%)`;
-    }
-    const bgDepth = bgDepthCache;
-    const bgSurface = bgSurfaceCache;
-    const backgroundCss = backgroundCssCache;
 
     const surfaceFade = Math.max(0, 1 - prof * 1.65);
     raios.forEach((r, i) => {
@@ -1300,9 +1257,6 @@ export function createOceanScene(canvas, { reducedMotion = false } = {}) {
 
     return {
       prof,
-      bgDepth,
-      bgSurface,
-      backgroundCss,
       fishHovered: cursorSobreAlgumPeixe,
     };
   }

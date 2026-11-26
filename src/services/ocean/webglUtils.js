@@ -1,6 +1,9 @@
-/** Limita a resolução interna do WebGL para equilibrar nitidez e fill-rate. */
+/** Limita a resolução interna do WebGL para equilibrar nitidez e fill-rate.
+ * O celular tem a GPU mais fraca e a tela mais densa: com teto 2 ele desenhava
+ * mais pixels por quadro que o desktop. Partículas aditivas e desfocadas não
+ * ganham nitidez visível acima de ~1.5x numa tela pequena. */
 export function getWebGLPixelRatio(viewportWidth) {
-  return Math.min(window.devicePixelRatio || 1, viewportWidth < 768 ? 1.25 : 1.6);
+  return Math.min(window.devicePixelRatio || 1, viewportWidth < 768 ? 1.5 : 1.6);
 }
 
 /** Pré-compila os programas do contexto definitivo. Não renderiza aqui: os
